@@ -1,0 +1,10 @@
+public/ ├── css/ │ ├── core.css │ └── pages/ │ └── categories.css ├── js/ │ ├──
+app.js ← shared functions (toast, session, fetch helpers) │ └── pages/ │ ├──
+categories.js ← all categories page logic │ └── auth.js ← auth page logic ├──
+components/ │ ├── sidebar.html ← sidebar HTML snippet │ └── topbar.html ← topbar
+HTML snippet └── categories.html ← clean shell, just structure public/ ├── css/
+│ ├── core.css │ └── pages/ │ └── categories.css ├── js/ │ ├── app.js ← shared
+functions (toast, session, fetch helpers) │ └── pages/ │ ├── categories.js ← all
+categories page logic │ └── auth.js ← auth page logic ├── components/ │ ├──
+sidebar.html ← sidebar HTML snippet │ └── topbar.html ← topbar HTML snippet └──
+categories.html ← clean shell, just structure
