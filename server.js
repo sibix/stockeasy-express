@@ -28,20 +28,18 @@ app.use(
 // ── Public routes ──────────────────────────────────────────
 const authRouter = require("./routes/auth");
 app.use("/auth", authRouter);
+app.use("/auth.html", express.static(path.join(__dirname, "public/auth.html")));
 
-// ── Serve ALL static files publicly BEFORE session gate ────
-app.use(express.static("public")); // ← moved up here
+// ── Serve static files publicly ────────────────────────────
+app.use(express.static("public"));
 
 // ── Session gate ───────────────────────────────────────────
 app.use((req, res, next) => {
   if (req.session && req.session.userId) {
     next();
   } else {
-    // Only redirect HTML page requests — not CSS/JS/images
     const ext = path.extname(req.path);
-    if (ext && ext !== ".html") {
-      return next(); // let CSS, JS, images through
-    }
+    if (ext && ext !== ".html") return next();
     res.redirect("/auth.html");
   }
 });
