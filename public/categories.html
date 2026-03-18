@@ -157,7 +157,11 @@
               >
                 Discard
               </button>
-              <button class="btn btn-primary" onclick="saveCategory()">
+              <button
+                class="btn btn-primary"
+                id="save-btn-top"
+                onclick="saveCategory()"
+              >
                 Save Category
               </button>
             </div>
@@ -173,6 +177,7 @@
                   <input
                     class="form-input"
                     type="text"
+                    id="cat-name"
                     placeholder="e.g. Churidars, Kurtis, Sarees"
                   />
                   <span class="form-hint"
@@ -186,6 +191,7 @@
                   <input
                     class="form-input"
                     type="text"
+                    id="cat-hsn"
                     placeholder="e.g. 6204"
                     maxlength="8"
                   />
@@ -877,7 +883,11 @@
           >
             Discard
           </button>
-          <button class="btn btn-primary" onclick="saveCategory()">
+          <button
+            class="btn btn-primary"
+            id="save-btn-footer"
+            onclick="saveCategory()"
+          >
             Save Category
           </button>
         </div>
@@ -893,6 +903,17 @@
     </div>
 
     <script>
+      // Check session on page load
+      async function checkSession() {
+        const response = await fetch("/auth/status");
+        const data = await response.json();
+        if (!data.loggedIn) {
+          window.location.href = "/auth.html";
+        }
+      }
+
+      checkSession();
+
       var collapsed = false;
       function toggleSidebar() {
         collapsed = !collapsed;
@@ -1052,8 +1073,78 @@
         x.parentElement.remove();
       }
 
-      function saveCategory() {
-        showToast("Category saved successfully!", "green");
+      // ── Helper — read a field value safely ────────────────────
+      function val(id) {
+        var el = document.getElementById(id);
+        return el ? el.value.trim() : "";
+      }
+
+      // ── Helper — read a checkbox state ────────────────────────
+      function checked(id) {
+        var el = document.getElementById(id);
+        return el ? (el.checked ? 1 : 0) : 0;
+      }
+
+      // ── Save Category — Card 1 only for now ───────────────────
+      async function saveCategory() {
+        var btn = document.getElementById("save-btn-top");
+
+        // ── CARD 1 — Basic Info ────────────────────────────────
+        var name = val("cat-name");
+        var hsn = val("cat-hsn");
+
+        // Validate
+        if (!name) {
+          showToast("Category name is required", "red");
+          document.getElementById("cat-name").focus();
+          return;
+        }
+
+        // Show loading
+        if (btn) {
+          btn.disabled = true;
+          btn.textContent = "Saving...";
+        }
+
+        try {
+          const response = await fetch("/categories", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              name: name,
+              hsn_code: hsn || null,
+            }),
+          });
+
+          const data = await response.json();
+
+          if (response.ok) {
+            showToast("Category saved successfully!", "green");
+            // Store the new category id for subsequent updates
+            window._categoryId = data.id;
+          } else {
+            showToast(data.error || "Could not save category", "red");
+          }
+        } catch (err) {
+          // showToast("Network error. Please try again.", "red");
+          console.error("Save error:", err);
+          // Check if session expired
+          fetch("/auth/status")
+            .then((r) => r.json())
+            .then((data) => {
+              if (!data.loggedIn) {
+                showToast("Session expired. Redirecting to login...", "amber");
+                setTimeout(() => (window.location.href = "/auth.html"), 1500);
+              } else {
+                showToast("Network error. Please try again.", "red");
+              }
+            });
+        } finally {
+          if (btn) {
+            btn.disabled = false;
+            btn.textContent = "Save Category";
+          }
+        }
       }
     </script>
   </body>
