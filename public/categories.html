@@ -501,6 +501,7 @@
               <label class="toggle-switch"
                 ><input
                   type="checkbox"
+                  id="toggle-dynamic-price"
                   onchange="onToggle(this, 'Dynamic price')" /><span
                   class="toggle-track"
                 ></span
@@ -517,6 +518,7 @@
               <label class="toggle-switch"
                 ><input
                   type="checkbox"
+                  id="toggle-price-edit"
                   checked
                   onchange="onToggle(this, 'Price edit at checkout')" /><span
                   class="toggle-track"
@@ -532,13 +534,13 @@
                   selling.
                 </div>
               </div>
-              <label class="toggle-switch"
-                ><input
+              <label class="toggle-switch"></label>
+                <input
                   type="checkbox"
+                  id="toggle-underprice"
                   checked
-                  onchange="onToggle(this, 'Underprice safety')" /><span
-                  class="toggle-track"
-                ></span
+                  onchange="onToggle(this, 'Underprice safety')" />
+                <span class="toggle-track"></span
               ></label>
             </div>
           </div>
@@ -551,7 +553,7 @@
               <span class="form-hint" style="margin-bottom: var(--gap-sm)"
                 >Units in which you buy from suppliers</span
               >
-              <div class="unit-picker">
+              <div class="unit-picker" id="buy-units">
                 <div class="unit-pill selected" onclick="toggleUnit(this)">
                   Pcs
                 </div>
@@ -577,7 +579,7 @@
               <span class="form-hint" style="margin-bottom: var(--gap-sm)"
                 >Units in which you sell to customers</span
               >
-              <div class="unit-picker">
+              <div class="unit-picker" id="sell-units" >
                 <div class="unit-pill selected" onclick="toggleUnit(this)">
                   Pcs
                 </div>
@@ -785,9 +787,9 @@
                 </div>
               </div>
               <label class="toggle-switch"
-                ><input
-                  type="checkbox"
-                  onchange="onToggle(this, 'Serial number tracking')" /><span
+                >
+                <input type="checkbox" id="toggle-serial"
+  onchange="onToggle(this, 'Serial number tracking')" /><span
                   class="toggle-track"
                 ></span
               ></label>
@@ -811,14 +813,8 @@
                   "
                 >
                   <div style="position: relative; max-width: 160px">
-                    <input
-                      class="form-input"
-                      type="number"
-                      placeholder="0"
-                      min="0"
-                      value="5"
-                      style="padding-right: var(--space-8)"
-                    />
+                    <input class="form-input" type="number" id="min-stock-input"
+  placeholder="0" min="0" value="5" />
                     <span
                       style="
                         position: absolute;
@@ -902,251 +898,7 @@
       <span id="toast-msg"></span>
     </div>
 
-    <!-- moved to js/pages categories.js-->
-    <script>
-      // Check session on page load
-      async function checkSession() {
-        const response = await fetch("/auth/status");
-        const data = await response.json();
-        if (!data.loggedIn) {
-          window.location.href = "/auth.html";
-        }
-      }
-
-      checkSession();
-
-      var collapsed = false;
-      function toggleSidebar() {
-        collapsed = !collapsed;
-        document
-          .getElementById("sidebar")
-          .classList.toggle("collapsed", collapsed);
-      }
-
-      var toastTimer;
-      function showToast(msg, type) {
-        type = type || "green";
-        var icons = { green: "✅", amber: "⚠️", red: "❌" };
-        var borders = {
-          green: "var(--green-500)",
-          amber: "var(--color-warning)",
-          red: "var(--color-danger)",
-        };
-        var el = document.getElementById("toast");
-        document.getElementById("toast-icon").textContent = icons[type];
-        document.getElementById("toast-msg").textContent = msg;
-        el.style.borderLeftColor = borders[type];
-        el.style.display = "flex";
-        clearTimeout(toastTimer);
-        toastTimer = setTimeout(function () {
-          el.style.display = "none";
-        }, 3000);
-      }
-
-      function setGST(mode) {
-        ["standard", "variable", "exempt"].forEach(function (m) {
-          document
-            .getElementById("gst-" + m)
-            .classList.toggle("active", m === mode);
-          document.getElementById("block-" + m).style.display =
-            m === mode ? "block" : "none";
-        });
-      }
-
-      function toggleVariant(cb) {
-        cb.closest(".variant-chip").classList.toggle("active", cb.checked);
-      }
-
-      function setMarginMode(mode) {
-        document
-          .querySelectorAll("#margin-toggle .seg-btn")
-          .forEach(function (btn) {
-            btn.classList.toggle(
-              "active",
-              btn.textContent.toLowerCase().includes(mode),
-            );
-          });
-        document.getElementById("margin-suffix").textContent =
-          mode === "percent" ? "%" : "₹";
-      }
-
-      function toggleUnit(el) {
-        el.classList.toggle("selected");
-      }
-
-      function onToggle(cb, label) {
-        showToast(
-          label + (cb.checked ? " enabled" : " disabled"),
-          cb.checked ? "green" : "amber",
-        );
-      }
-
-      var attrCount = 2;
-      function addAttribute() {
-        var id = "attr-" + attrCount++;
-        var div = document.createElement("div");
-        div.className = "attr-row";
-        div.id = id;
-        div.innerHTML =
-          '<div class="attr-num">' +
-          attrCount +
-          "</div>" +
-          '<div class="attr-fields">' +
-          '<div class="form-group" style="max-width:260px"><label class="form-label">Attribute Name</label>' +
-          '<input class="form-input" type="text" placeholder="e.g. Season, Pattern, Length"></div>' +
-          '<div class="form-group"><label class="form-label">Attribute Values</label>' +
-          '<div class="chip-input-wrap" onclick="focusLast(this)">' +
-          '<input class="chip-text-input" type="text" placeholder="Type and press Enter…" onkeydown="chipKeydown(event,this)"></div>' +
-          '<span class="form-hint">Press Enter or comma to add a value</span></div>' +
-          "</div>" +
-          '<button class="attr-del-btn" onclick="deleteAttr(\'' +
-          id +
-          "')\">×</button>";
-        document.getElementById("attr-list").appendChild(div);
-        div.querySelector(".form-input").focus();
-        renumberAttrs();
-      }
-
-      function deleteAttr(id) {
-        var el = document.getElementById(id);
-        if (!el) return;
-        el.style.transition = "opacity .18s, transform .18s";
-        el.style.opacity = "0";
-        el.style.transform = "translateX(8px)";
-        setTimeout(function () {
-          el.remove();
-          renumberAttrs();
-        }, 200);
-      }
-
-      function renumberAttrs() {
-        document.querySelectorAll(".attr-row").forEach(function (row, i) {
-          row.querySelector(".attr-num").textContent = i + 1;
-        });
-      }
-
-      function focusLast(wrap) {
-        wrap.querySelector(".chip-text-input").focus();
-      }
-
-      function chipKeydown(e, input) {
-        if (e.key === "Enter" || e.key === ",") {
-          e.preventDefault();
-          var val = input.value.replace(/,/g, "").trim();
-          if (!val) return;
-          var chip = document.createElement("span");
-          chip.className = "value-chip";
-          chip.innerHTML =
-            val +
-            '<span class="value-chip-x" onclick="removeChip(this)">×</span>';
-          input.parentNode.insertBefore(chip, input);
-          input.value = "";
-        }
-        if (e.key === "Backspace" && !input.value) {
-          var chips = input.parentNode.querySelectorAll(".value-chip");
-          if (chips.length) chips[chips.length - 1].remove();
-        }
-      }
-
-      function removeChip(x) {
-        x.parentElement.remove();
-      }
-
-      function tagKeydown(e, input) {
-        if (e.key === "Enter" || e.key === ",") {
-          e.preventDefault();
-          var val = input.value.replace(/,/g, "").trim().toLowerCase();
-          if (!val) return;
-          var chip = document.createElement("span");
-          chip.className = "tag-chip";
-          chip.innerHTML =
-            val + '<span class="tag-chip-x" onclick="removeTag(this)">×</span>';
-          input.parentNode.insertBefore(chip, input);
-          input.value = "";
-        }
-        if (e.key === "Backspace" && !input.value) {
-          var chips = input.parentNode.querySelectorAll(".tag-chip");
-          if (chips.length) chips[chips.length - 1].remove();
-        }
-      }
-
-      function removeTag(x) {
-        x.parentElement.remove();
-      }
-
-      // ── Helper — read a field value safely ────────────────────
-      function val(id) {
-        var el = document.getElementById(id);
-        return el ? el.value.trim() : "";
-      }
-
-      // ── Helper — read a checkbox state ────────────────────────
-      function checked(id) {
-        var el = document.getElementById(id);
-        return el ? (el.checked ? 1 : 0) : 0;
-      }
-
-      // ── Save Category — Card 1 only for now ───────────────────
-      async function saveCategory() {
-        var btn = document.getElementById("save-btn-top");
-
-        // ── CARD 1 — Basic Info ────────────────────────────────
-        var name = val("cat-name");
-        var hsn = val("cat-hsn");
-
-        // Validate
-        if (!name) {
-          showToast("Category name is required", "red");
-          document.getElementById("cat-name").focus();
-          return;
-        }
-
-        // Show loading
-        if (btn) {
-          btn.disabled = true;
-          btn.textContent = "Saving...";
-        }
-
-        try {
-          const response = await fetch("/categories", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              name: name,
-              hsn_code: hsn || null,
-            }),
-          });
-
-          const data = await response.json();
-
-          if (response.ok) {
-            showToast("Category saved successfully!", "green");
-            // Store the new category id for subsequent updates
-            window._categoryId = data.id;
-          } else {
-            showToast(data.error || "Could not save category", "red");
-          }
-        } catch (err) {
-          // showToast("Network error. Please try again.", "red");
-          console.error("Save error:", err);
-          // Check if session expired
-          fetch("/auth/status")
-            .then((r) => r.json())
-            .then((data) => {
-              if (!data.loggedIn) {
-                showToast("Session expired. Redirecting to login...", "amber");
-                setTimeout(() => (window.location.href = "/auth.html"), 1500);
-              } else {
-                showToast("Network error. Please try again.", "red");
-              }
-            });
-        } finally {
-          if (btn) {
-            btn.disabled = false;
-            btn.textContent = "Save Category";
-          }
-        }
-      }
-    </script>
+    <script src="/js/app.js"></script>
+    <script src="/js/pages/categories.js"></script>
   </body>
 </html>
