@@ -1,0 +1,303 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Sign In — StockEasy</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=DM+Mono:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/css/design-system.css" />
+    <link rel="stylesheet" href=/css/app.css" />
+  </head>
+  <body>
+    <div class="login-wrap">
+      <!-- ===== LEFT — BRAND PANEL ===== -->
+      <div class="login-left">
+        <div class="brand-logo">
+          <div class="brand-icon">🏪</div>
+          <div>
+            <div class="brand-name">StockEasy</div>
+            <div class="brand-tagline">Smart Business App</div>
+          </div>
+        </div>
+
+        <div class="left-headline">
+          <h1>Run your shop.<br /><span>Not spreadsheets.</span></h1>
+          <p>
+            Everything a merchant needs — billing, stock, GST, payments, and
+            reports — in one place that actually makes sense.
+          </p>
+
+          <ul class="feature-list">
+            <li>
+              <span class="feature-check">✓</span>
+              GST invoicing with auto CGST / SGST split
+            </li>
+            <li>
+              <span class="feature-check">✓</span>
+              Set-based purchase entry — stock splits by size
+            </li>
+            <li>
+              <span class="feature-check">✓</span>
+              POS billing — scan barcode, tap, done
+            </li>
+            <li>
+              <span class="feature-check">✓</span>
+              Outstanding dues with WhatsApp reminders
+            </li>
+            <li>
+              <span class="feature-check">✓</span>
+              GSTR-1 & GSTR-3B ready export
+            </li>
+          </ul>
+        </div>
+
+        <div class="left-footer">
+          <div class="trust-dot"></div>
+          <div class="trust-text">
+            Trusted by 1,200+ merchants across Tamil Nadu & Kerala
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== RIGHT — LOGIN FORM ===== -->
+      <div class="login-right">
+        <div class="form-head">
+          <div class="form-head-eyebrow">Welcome back</div>
+          <div class="form-head-title">Sign in to your shop</div>
+          <div class="form-head-sub">
+            Enter your credentials to access the dashboard
+          </div>
+        </div>
+
+        <!-- Error banner — shown on wrong credentials -->
+        <div class="error-banner" id="error-banner">
+          <span class="error-icon">⚠️</span>
+          <span id="error-text"
+            >Invalid username or password. Please try again.</span
+          >
+        </div>
+
+        <form
+          class="login-form"
+          id="login-form"
+          onsubmit="handleLogin(event)"
+          novalidate
+        >
+          <!-- Username -->
+          <div class="field">
+            <label class="field-label" for="username">Username</label>
+            <div class="field-input-wrap">
+              <input
+                class="field-input"
+                type="text"
+                id="username"
+                name="username"
+                placeholder="Enter your username"
+                autocomplete="username"
+                autocapitalize="none"
+                spellcheck="false"
+                required
+              />
+            </div>
+          </div>
+
+          <!-- Password -->
+          <div class="field">
+            <label class="field-label" for="password">Password</label>
+            <div class="field-input-wrap">
+              <input
+                class="field-input has-toggle"
+                type="password"
+                id="password"
+                name="password"
+                placeholder="Enter your password"
+                autocomplete="current-password"
+                required
+              />
+              <button
+                type="button"
+                class="field-toggle"
+                id="pw-toggle"
+                onclick="togglePassword()"
+                title="Show / hide password"
+              >
+                👁️
+              </button>
+            </div>
+          </div>
+
+          <!-- Remember me + Forgot password -->
+          <div class="form-meta">
+            <div class="remember-wrap" onclick="toggleRemember()">
+              <div class="remember-check" id="remember-check"></div>
+              <span class="remember-label">Remember me</span>
+            </div>
+            <a
+              href="#"
+              class="forgot-link"
+              onclick="
+                showError('Contact your administrator to reset your password.');
+                return false;
+              "
+              >Forgot password?</a
+            >
+          </div>
+
+          <!-- Submit -->
+          <button type="submit" class="login-btn" id="login-btn">
+            <span class="btn-text">Sign In</span>
+            <span class="btn-arrow">→</span>
+            <div class="btn-spinner"></div>
+          </button>
+        </form>
+
+        <div class="form-footer">
+          <div class="form-footer-text">
+            Having trouble? Contact your system administrator<br />or reach us
+            at
+            <a href="mailto:support@stockeasy.in">support@stockeasy.in</a>
+          </div>
+          <div class="version-tag"><span>●</span> StockEasy v1.0 · 2026</div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      /* ---- PASSWORD TOGGLE ---- */
+      function togglePassword() {
+        var inp = document.getElementById("password");
+        var btn = document.getElementById("pw-toggle");
+        var show = inp.type === "password";
+        inp.type = show ? "text" : "password";
+        btn.textContent = show ? "🙈" : "👁️";
+        inp.focus();
+      }
+
+      /* ---- REMEMBER ME ---- */
+      var remembered = false;
+      function toggleRemember() {
+        remembered = !remembered;
+        var chk = document.getElementById("remember-check");
+        chk.classList.toggle("checked", remembered);
+        chk.textContent = remembered ? "✓" : "";
+      }
+
+      /* ---- FORM SUBMIT ---- */
+      function handleLogin(e) {
+        e.preventDefault();
+
+        var username = document.getElementById("username").value.trim();
+        var password = document.getElementById("password").value;
+        var btn = document.getElementById("login-btn");
+        var errBanner = document.getElementById("error-banner");
+        var errText = document.getElementById("error-text");
+
+        /* clear previous errors */
+        errBanner.classList.remove("visible");
+        document.getElementById("username").classList.remove("error");
+        document.getElementById("password").classList.remove("error");
+
+        /* basic client-side validation */
+        if (!username) {
+          document.getElementById("username").classList.add("error");
+          showError("Username is required.");
+          document.getElementById("username").focus();
+          return;
+        }
+        if (!password) {
+          document.getElementById("password").classList.add("error");
+          showError("Password is required.");
+          document.getElementById("password").focus();
+          return;
+        }
+
+        /* show loading state */
+        btn.classList.add("loading");
+        btn.disabled = true;
+
+        /* ---- In production: replace this block with a real fetch POST ----
+  fetch('/api/login', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ username, password, remember: remembered })
+  })
+  .then(r => r.json())
+  .then(data => {
+    if (data.success) {
+      window.location.href = 'dashboard';
+    } else {
+      btn.classList.remove('loading');
+      btn.disabled = false;
+      showError(data.message || 'Invalid username or password.');
+      document.getElementById('password').value = '';
+      document.getElementById('password').focus();
+    }
+  })
+  .catch(() => {
+    btn.classList.remove('loading');
+    btn.disabled = false;
+    showError('Network error. Please try again.');
+  });
+  ---- end production block ---- */
+
+        /* DEMO: simulate login for mockup purposes */
+        setTimeout(function () {
+          btn.classList.remove("loading");
+          btn.disabled = false;
+
+          if (username === "admin" && password === "password") {
+            /* success — redirect */
+            btn.textContent = "✓ Signed in!";
+            btn.style.background = "linear-gradient(135deg,#16a34a,#166534)";
+            setTimeout(function () {
+              alert(
+                "✅ Login successful!\n\nIn production this redirects to the dashboard.",
+              );
+            }, 400);
+          } else {
+            /* failure */
+            showError("Invalid username or password. Try: admin / password");
+            document.getElementById("username").classList.add("error");
+            document.getElementById("password").classList.add("error");
+            document.getElementById("password").value = "";
+            document.getElementById("password").focus();
+
+            /* shake the form */
+            var form = document.getElementById("login-form");
+            form.style.animation = "shake .4s ease";
+            setTimeout(function () {
+              form.style.animation = "";
+            }, 400);
+          }
+        }, 900);
+      }
+
+      function showError(msg) {
+        var banner = document.getElementById("error-banner");
+        document.getElementById("error-text").textContent = msg;
+        banner.classList.add("visible");
+        /* scroll into view if needed */
+        banner.scrollIntoView({ behavior: "smooth", block: "nearest" });
+      }
+
+      /* shake animation */
+      var style = document.createElement("style");
+      style.textContent =
+        "@keyframes shake{0%,100%{transform:translateX(0)}20%,60%{transform:translateX(-6px)}40%,80%{transform:translateX(6px)}}";
+      document.head.appendChild(style);
+
+      /* pre-fill username if remembered — in production read from cookie/localStorage */
+      (function () {
+        var saved = localStorage.getItem("se_remembered_user");
+        if (saved) {
+          document.getElementById("username").value = saved;
+          toggleRemember();
+          document.getElementById("password").focus();
+        }
+      })();
+    </script>
+  </body>
+</html>
