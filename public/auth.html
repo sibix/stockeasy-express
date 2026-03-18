@@ -9,7 +9,74 @@
       rel="stylesheet"
     />
     <link rel="stylesheet" href="/css/design-system.css" />
-    <link rel="stylesheet" href=/css/app.css" />
+    <link rel="stylesheet" href="/css/app.css" />
+    <style>
+      /* ── Recent users ───────────────────────────────────── */
+      .recent-users {
+        margin-bottom: 20px;
+      }
+      .recent-label {
+        font-size: 12px;
+        font-weight: 600;
+        color: #6b7280;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        margin-bottom: 8px;
+      }
+      .recent-list {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+      .recent-chip {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 12px;
+        background: #f3f4f6;
+        border: 1px solid #e5e7eb;
+        border-radius: 99px;
+        cursor: pointer;
+        font-size: 13px;
+        font-weight: 500;
+        color: #374151;
+        transition: all 0.15s ease;
+        user-select: none;
+      }
+      .recent-chip:hover {
+        background: #e0e7ff;
+        border-color: #6366f1;
+        color: #4338ca;
+      }
+      .recent-chip:active {
+        transform: scale(0.97);
+      }
+      .recent-avatar {
+        width: 22px;
+        height: 22px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #6366f1, #8b5cf6);
+        color: white;
+        font-size: 11px;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+      }
+      .recent-remove {
+        margin-left: 2px;
+        color: #9ca3af;
+        font-size: 14px;
+        line-height: 1;
+        padding: 0 2px;
+        border-radius: 50%;
+      }
+      .recent-remove:hover {
+        color: #ef4444;
+        background: #fee2e2;
+      }
+    </style>
   </head>
   <body>
     <div class="login-wrap">
@@ -32,24 +99,23 @@
 
           <ul class="feature-list">
             <li>
-              <span class="feature-check">✓</span>
-              GST invoicing with auto CGST / SGST split
+              <span class="feature-check">✓</span> GST invoicing with auto CGST
+              / SGST split
             </li>
             <li>
-              <span class="feature-check">✓</span>
-              Set-based purchase entry — stock splits by size
+              <span class="feature-check">✓</span> Set-based purchase entry —
+              stock splits by size
             </li>
             <li>
-              <span class="feature-check">✓</span>
-              POS billing — scan barcode, tap, done
+              <span class="feature-check">✓</span> POS billing — scan barcode,
+              tap, done
             </li>
             <li>
-              <span class="feature-check">✓</span>
-              Outstanding dues with WhatsApp reminders
+              <span class="feature-check">✓</span> Outstanding dues with
+              WhatsApp reminders
             </li>
             <li>
-              <span class="feature-check">✓</span>
-              GSTR-1 & GSTR-3B ready export
+              <span class="feature-check">✓</span> GSTR-1 & GSTR-3B ready export
             </li>
           </ul>
         </div>
@@ -72,7 +138,13 @@
           </div>
         </div>
 
-        <!-- Error banner — shown on wrong credentials -->
+        <!-- Recent users -->
+        <div class="recent-users" id="recent-users-wrap" style="display: none">
+          <div class="recent-label">Quick switch</div>
+          <div class="recent-list" id="recent-list"></div>
+        </div>
+
+        <!-- Error banner -->
         <div class="error-banner" id="error-banner">
           <span class="error-icon">⚠️</span>
           <span id="error-text"
@@ -135,6 +207,7 @@
               <div class="remember-check" id="remember-check"></div>
               <span class="remember-label">Remember me</span>
             </div>
+
             <a
               href="#"
               class="forgot-link"
@@ -166,7 +239,95 @@
     </div>
 
     <script>
-      /* ---- PASSWORD TOGGLE ---- */
+      /* ================================================================
+         RECENT USERS — stored in localStorage, max 3
+         Each entry: { username, initial, lastLogin }
+      ================================================================ */
+
+      var RECENT_KEY = "se_recent_users";
+      var MAX_RECENT = 3;
+
+      function getRecentUsers() {
+        try {
+          return JSON.parse(localStorage.getItem(RECENT_KEY)) || [];
+        } catch (e) {
+          return [];
+        }
+      }
+
+      function saveRecentUser(username) {
+        var list = getRecentUsers();
+
+        // Remove if already exists — will re-add at front
+        list = list.filter(function (u) {
+          return u.username !== username;
+        });
+
+        // Add to front
+        list.unshift({
+          username: username,
+          initial: username.charAt(0).toUpperCase(),
+          lastLogin: new Date().toISOString(),
+        });
+
+        // Keep only max 3
+        list = list.slice(0, MAX_RECENT);
+
+        localStorage.setItem(RECENT_KEY, JSON.stringify(list));
+      }
+
+      function removeRecentUser(username, e) {
+        e.stopPropagation(); // prevent chip click
+        var list = getRecentUsers().filter(function (u) {
+          return u.username !== username;
+        });
+        localStorage.setItem(RECENT_KEY, JSON.stringify(list));
+        renderRecentUsers();
+      }
+
+      function selectRecentUser(username) {
+        document.getElementById("username").value = username;
+        document.getElementById("password").value = "";
+        document.getElementById("password").focus();
+        hideError();
+      }
+
+      function renderRecentUsers() {
+        var list = getRecentUsers();
+        var wrap = document.getElementById("recent-users-wrap");
+        var container = document.getElementById("recent-list");
+
+        if (list.length === 0) {
+          wrap.style.display = "none";
+          return;
+        }
+
+        wrap.style.display = "block";
+        container.innerHTML = "";
+
+        list.forEach(function (user) {
+          var chip = document.createElement("div");
+          chip.className = "recent-chip";
+          chip.onclick = function () {
+            selectRecentUser(user.username);
+          };
+          chip.innerHTML =
+            '<div class="recent-avatar">' +
+            user.initial +
+            "</div>" +
+            "<span>" +
+            user.username +
+            "</span>" +
+            '<span class="recent-remove" onclick="removeRecentUser(\'' +
+            user.username +
+            '\', event)" title="Remove">×</span>';
+          container.appendChild(chip);
+        });
+      }
+
+      /* ================================================================
+         PASSWORD TOGGLE
+      ================================================================ */
       function togglePassword() {
         var inp = document.getElementById("password");
         var btn = document.getElementById("pw-toggle");
@@ -176,7 +337,9 @@
         inp.focus();
       }
 
-      /* ---- REMEMBER ME ---- */
+      /* ================================================================
+         REMEMBER ME
+      ================================================================ */
       var remembered = false;
       function toggleRemember() {
         remembered = !remembered;
@@ -185,22 +348,42 @@
         chk.textContent = remembered ? "✓" : "";
       }
 
-      /* ---- FORM SUBMIT ---- */
-      function handleLogin(e) {
+      /* ================================================================
+         ERROR HELPERS
+      ================================================================ */
+      function showError(msg) {
+        var banner = document.getElementById("error-banner");
+        document.getElementById("error-text").textContent = msg;
+        banner.classList.add("visible");
+        banner.scrollIntoView({ behavior: "smooth", block: "nearest" });
+      }
+
+      function hideError() {
+        document.getElementById("error-banner").classList.remove("visible");
+      }
+
+      /* shake animation */
+      var style = document.createElement("style");
+      style.textContent =
+        "@keyframes shake{0%,100%{transform:translateX(0)}20%,60%{transform:translateX(-6px)}40%,80%{transform:translateX(6px)}}";
+      document.head.appendChild(style);
+
+      /* ================================================================
+         FORM SUBMIT — wired to /auth/login
+      ================================================================ */
+      async function handleLogin(e) {
         e.preventDefault();
 
         var username = document.getElementById("username").value.trim();
         var password = document.getElementById("password").value;
         var btn = document.getElementById("login-btn");
-        var errBanner = document.getElementById("error-banner");
-        var errText = document.getElementById("error-text");
 
-        /* clear previous errors */
-        errBanner.classList.remove("visible");
+        /* clear errors */
+        hideError();
         document.getElementById("username").classList.remove("error");
         document.getElementById("password").classList.remove("error");
 
-        /* basic client-side validation */
+        /* client validation */
         if (!username) {
           document.getElementById("username").classList.add("error");
           showError("Username is required.");
@@ -214,87 +397,70 @@
           return;
         }
 
-        /* show loading state */
+        /* loading state */
         btn.classList.add("loading");
         btn.disabled = true;
 
-        /* ---- In production: replace this block with a real fetch POST ----
-  fetch('/api/login', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ username, password, remember: remembered })
-  })
-  .then(r => r.json())
-  .then(data => {
-    if (data.success) {
-      window.location.href = 'dashboard';
-    } else {
-      btn.classList.remove('loading');
-      btn.disabled = false;
-      showError(data.message || 'Invalid username or password.');
-      document.getElementById('password').value = '';
-      document.getElementById('password').focus();
-    }
-  })
-  .catch(() => {
-    btn.classList.remove('loading');
-    btn.disabled = false;
-    showError('Network error. Please try again.');
-  });
-  ---- end production block ---- */
+        try {
+          const response = await fetch("/auth/login", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ username, password }),
+          });
 
-        /* DEMO: simulate login for mockup purposes */
-        setTimeout(function () {
-          btn.classList.remove("loading");
-          btn.disabled = false;
+          const data = await response.json();
 
-          if (username === "admin" && password === "password") {
-            /* success — redirect */
-            btn.textContent = "✓ Signed in!";
+          if (response.ok) {
+            /* ── Success ── */
+
+            // Save to recent users list
+            saveRecentUser(username);
+
+            // Show success on button
+            btn.classList.remove("loading");
+            btn.querySelector(".btn-text").textContent = "✓ Signed in!";
             btn.style.background = "linear-gradient(135deg,#16a34a,#166534)";
+
+            // Redirect to dashboard
             setTimeout(function () {
-              alert(
-                "✅ Login successful!\n\nIn production this redirects to the dashboard.",
-              );
-            }, 400);
+              window.location.href = "/dashboard.html";
+            }, 600);
           } else {
-            /* failure */
-            showError("Invalid username or password. Try: admin / password");
+            /* ── Failure ── */
+            btn.classList.remove("loading");
+            btn.disabled = false;
+
+            showError(data.error || "Invalid username or password.");
             document.getElementById("username").classList.add("error");
             document.getElementById("password").classList.add("error");
             document.getElementById("password").value = "";
             document.getElementById("password").focus();
 
-            /* shake the form */
+            // Shake form
             var form = document.getElementById("login-form");
             form.style.animation = "shake .4s ease";
             setTimeout(function () {
               form.style.animation = "";
             }, 400);
           }
-        }, 900);
+        } catch (err) {
+          btn.classList.remove("loading");
+          btn.disabled = false;
+          showError("Network error. Please check your connection.");
+        }
       }
 
-      function showError(msg) {
-        var banner = document.getElementById("error-banner");
-        document.getElementById("error-text").textContent = msg;
-        banner.classList.add("visible");
-        /* scroll into view if needed */
-        banner.scrollIntoView({ behavior: "smooth", block: "nearest" });
-      }
-
-      /* shake animation */
-      var style = document.createElement("style");
-      style.textContent =
-        "@keyframes shake{0%,100%{transform:translateX(0)}20%,60%{transform:translateX(-6px)}40%,80%{transform:translateX(6px)}}";
-      document.head.appendChild(style);
-
-      /* pre-fill username if remembered — in production read from cookie/localStorage */
+      /* ================================================================
+         ON PAGE LOAD
+      ================================================================ */
       (function () {
-        var saved = localStorage.getItem("se_remembered_user");
-        if (saved) {
-          document.getElementById("username").value = saved;
-          toggleRemember();
+        // Render recent users
+        renderRecentUsers();
+
+        // Pre-fill if only one recent user
+        var recent = getRecentUsers();
+        if (recent.length === 1) {
+          document.getElementById("username").value = recent[0].username;
           document.getElementById("password").focus();
         }
       })();

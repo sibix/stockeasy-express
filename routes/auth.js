@@ -14,12 +14,15 @@ router.post("/register", async (req, res) => {
       return res.status(400).json({ error: "All fields are required" });
     }
 
-    const [existing] = await db.execute("SELECT id FROM auth WHERE email = ?", [
-      email,
-    ]);
+    const [existing] = await db.execute(
+      "SELECT id FROM auth WHERE username = ? OR email = ?",
+      [username, email],
+    );
 
     if (existing.length > 0) {
-      return res.status(400).json({ error: "Email already registered" });
+      return res
+        .status(400)
+        .json({ error: "Username or email already exists" });
     }
 
     const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
@@ -36,28 +39,30 @@ router.post("/register", async (req, res) => {
   }
 });
 
-// ── Login ──────────────────────────────────────────────────
+// ── Login — by username ────────────────────────────────────
 router.post("/login", async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const { username, password } = req.body;
 
-    if (!email || !password) {
-      return res.status(400).json({ error: "Email and password are required" });
+    if (!username || !password) {
+      return res
+        .status(400)
+        .json({ error: "Username and password are required" });
     }
 
-    const [users] = await db.execute("SELECT * FROM auth WHERE email = ?", [
-      email,
+    const [users] = await db.execute("SELECT * FROM auth WHERE username = ?", [
+      username,
     ]);
 
     if (users.length === 0) {
-      return res.status(401).json({ error: "Invalid email or password" });
+      return res.status(401).json({ error: "Invalid username or password" });
     }
 
     const user = users[0];
     const match = await bcrypt.compare(password, user.password);
 
     if (!match) {
-      return res.status(401).json({ error: "Invalid email or password" });
+      return res.status(401).json({ error: "Invalid username or password" });
     }
 
     req.session.userId = user.id;
