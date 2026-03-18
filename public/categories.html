@@ -1,0 +1,1060 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Product Category — StockEasy</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=DM+Mono:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/css/core.css" />
+    <link rel="stylesheet" href="/css/pages/categories.css" />
+  </head>
+  <body>
+    <div class="se-shell">
+      <!-- SIDEBAR — design system se-sidebar / se-sb-* -->
+      <div class="se-sidebar" id="sidebar">
+        <div class="se-sb-logo">
+          <div class="se-sb-logo-icon">🏪</div>
+          <div>
+            <div class="se-sb-logo-name">StockEasy</div>
+            <div class="se-sb-logo-tagline">Smart Business App</div>
+          </div>
+        </div>
+        <button class="se-sb-toggle" onclick="toggleSidebar()">◀</button>
+        <nav class="se-sb-nav">
+          <div class="se-sb-section">Main</div>
+          <a href="#" class="se-sb-item"
+            ><span class="se-sb-item-icon">🏠</span
+            ><span class="se-sb-item-label">Dashboard</span></a
+          >
+          <a href="#" class="se-sb-item"
+            ><span class="se-sb-item-icon">🛒</span
+            ><span class="se-sb-item-label">Quick Billing (POS)</span></a
+          >
+          <div class="se-sb-section">Buy & Sell</div>
+          <a href="#" class="se-sb-item"
+            ><span class="se-sb-item-icon">🧾</span
+            ><span class="se-sb-item-label">Sales & Invoices</span></a
+          >
+          <a href="#" class="se-sb-item"
+            ><span class="se-sb-item-icon">📦</span
+            ><span class="se-sb-item-label">Purchases</span></a
+          >
+          <a href="#" class="se-sb-item"
+            ><span class="se-sb-item-icon">↩️</span
+            ><span class="se-sb-item-label">Returns</span
+            ><span class="se-sb-item-badge">3</span></a
+          >
+          <div class="se-sb-section">Money</div>
+          <a href="#" class="se-sb-item"
+            ><span class="se-sb-item-icon">💳</span
+            ><span class="se-sb-item-label">Payments</span></a
+          >
+          <a href="#" class="se-sb-item"
+            ><span class="se-sb-item-icon">⏳</span
+            ><span class="se-sb-item-label">Due & Outstanding</span
+            ><span class="se-sb-item-badge">5</span></a
+          >
+          <a href="#" class="se-sb-item"
+            ><span class="se-sb-item-icon">💸</span
+            ><span class="se-sb-item-label">Expenses</span></a
+          >
+          <div class="se-sb-section">Inventory</div>
+          <a href="#" class="se-sb-item"
+            ><span class="se-sb-item-icon">📊</span
+            ><span class="se-sb-item-label">Stock</span></a
+          >
+          <a href="#" class="se-sb-item active"
+            ><span class="se-sb-item-icon">🏷️</span
+            ><span class="se-sb-item-label">Items & Catalogue</span></a
+          >
+          <a href="#" class="se-sb-item"
+            ><span class="se-sb-item-icon">👥</span
+            ><span class="se-sb-item-label">Parties</span></a
+          >
+          <div class="se-sb-section">Reports</div>
+          <a href="#" class="se-sb-item"
+            ><span class="se-sb-item-icon">📈</span
+            ><span class="se-sb-item-label">Reports</span></a
+          >
+          <a href="#" class="se-sb-item"
+            ><span class="se-sb-item-icon">🏛️</span
+            ><span class="se-sb-item-label">GST Filing</span></a
+          >
+          <div class="se-sb-section">Setup</div>
+          <a href="#" class="se-sb-item"
+            ><span class="se-sb-item-icon">⚙️</span
+            ><span class="se-sb-item-label">Settings</span></a
+          >
+        </nav>
+        <div class="se-sb-bottom">
+          <div class="se-sb-user">
+            <div class="se-sb-avatar">RK</div>
+            <div class="se-sb-user-info">
+              <div class="se-sb-user-name">Rajan Kumar</div>
+              <div class="se-sb-user-role">Owner · Main Shop</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- MAIN -->
+      <div class="se-main">
+        <!-- TOPBAR — design system se-topbar / se-topbar-* -->
+        <div class="se-topbar">
+          <div>
+            <div class="se-topbar-title">Items & Catalogue</div>
+            <div class="se-topbar-breadcrumb">
+              Inventory › Categories › New Category
+            </div>
+          </div>
+          <div class="se-topbar-spacer"></div>
+          <div class="se-topbar-search">
+            <span>🔍</span><span>Search everything...</span>
+            <span
+              style="
+                margin-left: auto;
+                font-size: var(--text-xs);
+                background: var(--slate-200);
+                padding: 1px 6px;
+                border-radius: var(--radius-sm);
+                color: var(--slate-500);
+              "
+              >⌘K</span
+            >
+          </div>
+          <button class="se-topbar-icon-btn">
+            🔔<span class="se-notif-dot"></span>
+          </button>
+          <button class="se-topbar-icon-btn">❓</button>
+        </div>
+
+        <!-- MODULE TABS -->
+        <div class="module-tabs">
+          <a href="#" class="mtab">Catalogue</a>
+          <a href="#" class="mtab active">Categories</a>
+          <a href="#" class="mtab">Price Lists</a>
+          <a href="#" class="mtab">Set Definitions</a>
+        </div>
+
+        <!-- PAGE CONTENT -->
+        <div class="se-page-content">
+          <!-- Page header -->
+          <div class="page-header">
+            <div>
+              <div class="page-header-title">Product Category</div>
+              <div class="page-header-sub">
+                Define how products in this category behave — GST, variants,
+                pricing, stock rules.
+              </div>
+            </div>
+            <div class="flex gap-3">
+              <button
+                class="btn btn-outline"
+                onclick="showToast('Changes discarded', 'amber')"
+              >
+                Discard
+              </button>
+              <button class="btn btn-primary" onclick="saveCategory()">
+                Save Category
+              </button>
+            </div>
+          </div>
+
+          <!-- CARD 1 — Basic Info & GST -->
+          <div class="card card-padded mb-4">
+            <div class="section-title">Basic Information</div>
+            <div class="form-row mb-4">
+              <div class="form-col" style="max-width: 380px">
+                <div class="form-group">
+                  <label class="form-label">Category Name *</label>
+                  <input
+                    class="form-input"
+                    type="text"
+                    placeholder="e.g. Churidars, Kurtis, Sarees"
+                  />
+                  <span class="form-hint"
+                    >Appears on item cards and reports</span
+                  >
+                </div>
+              </div>
+              <div class="form-col" style="max-width: 200px">
+                <div class="form-group">
+                  <label class="form-label">HSN Code</label>
+                  <input
+                    class="form-input"
+                    type="text"
+                    placeholder="e.g. 6204"
+                    maxlength="8"
+                  />
+                  <span class="form-hint"
+                    >Harmonised System of Nomenclature</span
+                  >
+                </div>
+              </div>
+            </div>
+
+            <div class="divider"></div>
+
+            <div class="section-title mt-4" style="margin-top: var(--space-4)">
+              GST Configuration
+            </div>
+            <div class="form-group mb-4">
+              <label class="form-label">GST Mode</label>
+              <div class="seg-control mt-2" style="margin-top: var(--space-2)">
+                <button
+                  class="seg-btn active"
+                  id="gst-standard"
+                  onclick="setGST('standard')"
+                >
+                  Standard GST
+                </button>
+                <button
+                  class="seg-btn"
+                  id="gst-variable"
+                  onclick="setGST('variable')"
+                >
+                  Variable GST
+                </button>
+                <button
+                  class="seg-btn"
+                  id="gst-exempt"
+                  onclick="setGST('exempt')"
+                >
+                  Exempt / 0%
+                </button>
+              </div>
+              <span class="form-hint mt-2" style="margin-top: var(--space-2)"
+                >Variable GST applies different rates based on selling price —
+                e.g. garments ≤ ₹1,000 → 5%, above → 12%</span
+              >
+            </div>
+
+            <div id="block-standard">
+              <div class="form-group" style="max-width: 180px">
+                <label class="form-label">GST Rate</label>
+                <select class="form-input form-select">
+                  <option>0%</option>
+                  <option selected>5%</option>
+                  <option>12%</option>
+                  <option>18%</option>
+                  <option>28%</option>
+                </select>
+              </div>
+            </div>
+
+            <div id="block-variable" style="display: none">
+              <div class="variable-gst-panel">
+                <div class="section-title">Variable GST Rules</div>
+                <div class="form-row">
+                  <div class="form-col">
+                    <div class="form-group">
+                      <label class="form-label">Lower GST Rate</label>
+                      <select class="form-input form-select">
+                        <option>0%</option>
+                        <option selected>5%</option>
+                        <option>12%</option>
+                      </select>
+                      <span class="form-hint">When price ≤ threshold</span>
+                    </div>
+                  </div>
+                  <div class="form-col">
+                    <div class="form-group">
+                      <label class="form-label">Higher GST Rate</label>
+                      <select class="form-input form-select">
+                        <option>5%</option>
+                        <option selected>12%</option>
+                        <option>18%</option>
+                      </select>
+                      <span class="form-hint">When price &gt; threshold</span>
+                    </div>
+                  </div>
+                  <div class="form-col">
+                    <div class="form-group">
+                      <label class="form-label">Threshold Amount</label>
+                      <div class="prefix-input-wrap">
+                        <span class="prefix-symbol">₹</span>
+                        <input
+                          class="form-input"
+                          type="number"
+                          placeholder="1000"
+                        />
+                      </div>
+                      <span class="form-hint">e.g. ₹1,000 for garments</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div id="block-exempt" style="display: none">
+              <div class="info-panel">
+                ✅ All items in this category will be billed at 0% GST and
+                excluded from GSTR filings.
+              </div>
+            </div>
+          </div>
+
+          <!-- CARD 2 — Packaging (Premium) -->
+          <div class="card card-padded mb-4">
+            <div class="section-title">Packaging</div>
+
+            <div class="form-group mb-4">
+              <label
+                class="form-label"
+                style="display: flex; align-items: center; gap: var(--gap-sm)"
+              >
+                Buying Package <span class="premium-badge">⭐ Premium</span>
+              </label>
+              <div class="field-locked">
+                <select class="form-input form-select">
+                  <option>Full Set (S, M, L, XL, XXL)</option>
+                  <option>Half Set (M, L, XL)</option>
+                  <option>Dozen (12 pcs)</option>
+                  <option>Custom</option>
+                </select>
+                <div class="field-locked-overlay"></div>
+              </div>
+              <span class="form-hint"
+                >How stock arrives from suppliers — set sizes, ratio packs,
+                dozen lots</span
+              >
+            </div>
+
+            <div class="form-group">
+              <label
+                class="form-label"
+                style="display: flex; align-items: center; gap: var(--gap-sm)"
+              >
+                Sellable Packages <span class="premium-badge">⭐ Premium</span>
+              </label>
+              <div class="field-locked">
+                <select class="form-input form-select">
+                  <option>Single piece</option>
+                  <option>Half dozen (6 pcs)</option>
+                  <option>Full dozen (12 pcs)</option>
+                  <option>Custom</option>
+                </select>
+                <div class="field-locked-overlay"></div>
+              </div>
+              <span class="form-hint"
+                >How this item is sold — single, pack of 6, dozen, case
+                lot</span
+              >
+            </div>
+          </div>
+
+          <!-- CARD 3 — Variant Configuration -->
+          <div class="card card-padded mb-4">
+            <div
+              style="
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                margin-bottom: var(--space-4);
+              "
+            >
+              <div class="section-title" style="margin-bottom: 0">
+                Variant Configuration
+              </div>
+              <span class="text-muted"
+                >Select axes that create separate stock entries</span
+              >
+            </div>
+            <div class="variant-chips">
+              <label class="variant-chip active"
+                ><input
+                  type="checkbox"
+                  checked
+                  onchange="toggleVariant(this)"
+                />
+                Size</label
+              >
+              <label class="variant-chip active"
+                ><input
+                  type="checkbox"
+                  checked
+                  onchange="toggleVariant(this)"
+                />
+                Color</label
+              >
+              <label class="variant-chip active"
+                ><input
+                  type="checkbox"
+                  checked
+                  onchange="toggleVariant(this)"
+                />
+                Design / Code</label
+              >
+              <label class="variant-chip"
+                ><input type="checkbox" onchange="toggleVariant(this)" />
+                Brand</label
+              >
+              <label class="variant-chip"
+                ><input type="checkbox" onchange="toggleVariant(this)" /> Pack
+                Size</label
+              >
+              <label class="variant-chip"
+                ><input type="checkbox" onchange="toggleVariant(this)" />
+                Material</label
+              >
+              <label class="variant-chip"
+                ><input type="checkbox" onchange="toggleVariant(this)" /> Grade
+                / Spec</label
+              >
+              <label class="variant-chip"
+                ><input type="checkbox" onchange="toggleVariant(this)" />
+                Gender</label
+              >
+            </div>
+            <span class="form-hint mt-2" style="margin-top: var(--space-2)"
+              >Each combination creates a separate variant with its own stock.
+              e.g. Churidar · Red · M is one variant.</span
+            >
+          </div>
+
+          <!-- CARD 4 — Margin Settings -->
+          <div class="card card-padded mb-4">
+            <div class="section-title">Margin Settings</div>
+
+            <div class="form-group mb-4">
+              <div
+                style="
+                  display: flex;
+                  align-items: center;
+                  justify-content: space-between;
+                  margin-bottom: var(--space-3);
+                "
+              >
+                <label class="form-label" style="margin-bottom: 0"
+                  >Minimum Margin</label
+                >
+                <div class="seg-control" id="margin-toggle">
+                  <button
+                    class="seg-btn active"
+                    onclick="setMarginMode('percent')"
+                  >
+                    % Percent
+                  </button>
+                  <button class="seg-btn" onclick="setMarginMode('amount')">
+                    ₹ Amount
+                  </button>
+                </div>
+              </div>
+              <div class="margin-input-wrap">
+                <input
+                  class="form-input"
+                  type="number"
+                  id="margin-input"
+                  placeholder="0"
+                  min="0"
+                />
+                <span class="margin-suffix" id="margin-suffix">%</span>
+              </div>
+              <span class="form-hint mt-2" style="margin-top: var(--space-2)"
+                >Selling below this margin triggers an underprice warning at
+                checkout</span
+              >
+            </div>
+
+            <div class="form-group">
+              <label
+                class="form-label"
+                style="display: flex; align-items: center; gap: var(--gap-sm)"
+              >
+                Suggested Margin <span class="premium-badge">⭐ Premium</span>
+              </label>
+              <div class="field-locked" style="max-width: 200px">
+                <div class="margin-input-wrap">
+                  <input class="form-input" type="number" placeholder="20" />
+                  <span class="margin-suffix">%</span>
+                </div>
+                <div class="field-locked-overlay"></div>
+              </div>
+              <span class="form-hint mt-2" style="margin-top: var(--space-2)"
+                >Auto-suggests selling price when adding new items in this
+                category</span
+              >
+            </div>
+          </div>
+
+          <!-- CARD 5 — Pricing Behaviour (Toggles) -->
+          <div class="card card-padded mb-4">
+            <div class="section-title">Pricing Behaviour</div>
+            <div class="toggle-row">
+              <div class="toggle-info">
+                <div class="toggle-label">Dynamic Price Item</div>
+                <div class="toggle-desc">
+                  Price changes per sale — typical for fresh produce,
+                  vegetables, metals. Disabling fixes the price from the item
+                  master.
+                </div>
+              </div>
+              <label class="toggle-switch"
+                ><input
+                  type="checkbox"
+                  onchange="onToggle(this, 'Dynamic price')" /><span
+                  class="toggle-track"
+                ></span
+              ></label>
+            </div>
+            <div class="toggle-row">
+              <div class="toggle-info">
+                <div class="toggle-label">Allow Price Edit at Checkout</div>
+                <div class="toggle-desc">
+                  Billing staff can manually override the selling price at POS.
+                  Turn off to enforce the price list strictly.
+                </div>
+              </div>
+              <label class="toggle-switch"
+                ><input
+                  type="checkbox"
+                  checked
+                  onchange="onToggle(this, 'Price edit at checkout')" /><span
+                  class="toggle-track"
+                ></span
+              ></label>
+            </div>
+            <div class="toggle-row">
+              <div class="toggle-info">
+                <div class="toggle-label">Underprice Selling Safety</div>
+                <div class="toggle-desc">
+                  Warns or blocks a sale when the entered price falls below the
+                  minimum margin set above. Prevents accidental below-cost
+                  selling.
+                </div>
+              </div>
+              <label class="toggle-switch"
+                ><input
+                  type="checkbox"
+                  checked
+                  onchange="onToggle(this, 'Underprice safety')" /><span
+                  class="toggle-track"
+                ></span
+              ></label>
+            </div>
+          </div>
+
+          <!-- CARD 6 — Units of Measurement -->
+          <div class="card card-padded mb-4">
+            <div class="section-title">Units of Measurement</div>
+            <div class="form-group mb-4">
+              <label class="form-label">Allowed Units for Purchase</label>
+              <span class="form-hint" style="margin-bottom: var(--gap-sm)"
+                >Units in which you buy from suppliers</span
+              >
+              <div class="unit-picker">
+                <div class="unit-pill selected" onclick="toggleUnit(this)">
+                  Pcs
+                </div>
+                <div class="unit-pill selected" onclick="toggleUnit(this)">
+                  Dozen
+                </div>
+                <div class="unit-pill selected" onclick="toggleUnit(this)">
+                  Set
+                </div>
+                <div class="unit-pill" onclick="toggleUnit(this)">Box</div>
+                <div class="unit-pill" onclick="toggleUnit(this)">Kg</div>
+                <div class="unit-pill" onclick="toggleUnit(this)">g</div>
+                <div class="unit-pill" onclick="toggleUnit(this)">Litre</div>
+                <div class="unit-pill" onclick="toggleUnit(this)">ml</div>
+                <div class="unit-pill" onclick="toggleUnit(this)">Metre</div>
+                <div class="unit-pill" onclick="toggleUnit(this)">Pair</div>
+                <div class="unit-pill" onclick="toggleUnit(this)">Crate</div>
+                <div class="unit-pill" onclick="toggleUnit(this)">Roll</div>
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Allowed Units for Selling</label>
+              <span class="form-hint" style="margin-bottom: var(--gap-sm)"
+                >Units in which you sell to customers</span
+              >
+              <div class="unit-picker">
+                <div class="unit-pill selected" onclick="toggleUnit(this)">
+                  Pcs
+                </div>
+                <div class="unit-pill" onclick="toggleUnit(this)">Dozen</div>
+                <div class="unit-pill" onclick="toggleUnit(this)">Set</div>
+                <div class="unit-pill" onclick="toggleUnit(this)">Box</div>
+                <div class="unit-pill" onclick="toggleUnit(this)">Kg</div>
+                <div class="unit-pill" onclick="toggleUnit(this)">g</div>
+                <div class="unit-pill" onclick="toggleUnit(this)">Litre</div>
+                <div class="unit-pill" onclick="toggleUnit(this)">ml</div>
+                <div class="unit-pill" onclick="toggleUnit(this)">Metre</div>
+                <div class="unit-pill" onclick="toggleUnit(this)">Pair</div>
+                <div class="unit-pill" onclick="toggleUnit(this)">Crate</div>
+                <div class="unit-pill" onclick="toggleUnit(this)">Roll</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- CARD 7 — Product Attributes -->
+          <div class="card card-padded mb-4">
+            <div
+              style="
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                margin-bottom: var(--space-1);
+              "
+            >
+              <div class="section-title" style="margin-bottom: 0">
+                Product Attributes
+              </div>
+              <span class="text-muted">Press Enter or comma to add values</span>
+            </div>
+            <span
+              class="form-hint"
+              style="display: block; margin-bottom: var(--space-4)"
+              >Descriptive fields shown on item cards. Different from variants —
+              attributes do not split stock.</span
+            >
+            <div class="attr-list" id="attr-list">
+              <div class="attr-row" id="attr-0">
+                <div class="attr-num">1</div>
+                <div class="attr-fields">
+                  <div class="form-group" style="max-width: 260px">
+                    <label class="form-label">Attribute Name</label>
+                    <input
+                      class="form-input"
+                      type="text"
+                      value="Fabric Type"
+                      placeholder="e.g. Material, Season"
+                    />
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">Attribute Values</label>
+                    <div class="chip-input-wrap" onclick="focusLast(this)">
+                      <span class="value-chip"
+                        >Cotton<span
+                          class="value-chip-x"
+                          onclick="removeChip(this)"
+                          >×</span
+                        ></span
+                      >
+                      <span class="value-chip"
+                        >Polyester<span
+                          class="value-chip-x"
+                          onclick="removeChip(this)"
+                          >×</span
+                        ></span
+                      >
+                      <span class="value-chip"
+                        >Silk<span
+                          class="value-chip-x"
+                          onclick="removeChip(this)"
+                          >×</span
+                        ></span
+                      >
+                      <span class="value-chip"
+                        >Chiffon<span
+                          class="value-chip-x"
+                          onclick="removeChip(this)"
+                          >×</span
+                        ></span
+                      >
+                      <input
+                        class="chip-text-input"
+                        type="text"
+                        placeholder="Type and press Enter…"
+                        onkeydown="chipKeydown(event, this)"
+                      />
+                    </div>
+                    <span class="form-hint"
+                      >Values selectable when adding items in this
+                      category</span
+                    >
+                  </div>
+                </div>
+                <button class="attr-del-btn" onclick="deleteAttr('attr-0')">
+                  ×
+                </button>
+              </div>
+              <div class="attr-row" id="attr-1">
+                <div class="attr-num">2</div>
+                <div class="attr-fields">
+                  <div class="form-group" style="max-width: 260px">
+                    <label class="form-label">Attribute Name</label>
+                    <input
+                      class="form-input"
+                      type="text"
+                      value="Occasion"
+                      placeholder="e.g. Season, Occasion"
+                    />
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">Attribute Values</label>
+                    <div class="chip-input-wrap" onclick="focusLast(this)">
+                      <span class="value-chip"
+                        >Casual<span
+                          class="value-chip-x"
+                          onclick="removeChip(this)"
+                          >×</span
+                        ></span
+                      >
+                      <span class="value-chip"
+                        >Festive<span
+                          class="value-chip-x"
+                          onclick="removeChip(this)"
+                          >×</span
+                        ></span
+                      >
+                      <span class="value-chip"
+                        >Formal<span
+                          class="value-chip-x"
+                          onclick="removeChip(this)"
+                          >×</span
+                        ></span
+                      >
+                      <input
+                        class="chip-text-input"
+                        type="text"
+                        placeholder="Type and press Enter…"
+                        onkeydown="chipKeydown(event, this)"
+                      />
+                    </div>
+                  </div>
+                </div>
+                <button class="attr-del-btn" onclick="deleteAttr('attr-1')">
+                  ×
+                </button>
+              </div>
+            </div>
+            <button class="add-attr-btn" onclick="addAttribute()">
+              + Add Attribute
+            </button>
+          </div>
+
+          <!-- CARD 8 — Product Tags -->
+          <div class="card card-padded mb-4">
+            <div class="section-title">Product Tags</div>
+            <div class="form-group">
+              <label class="form-label">Tags</label>
+              <div
+                class="tag-input-wrap"
+                onclick="document.getElementById('tag-input').focus()"
+              >
+                <span class="tag-chip"
+                  >ethnic<span class="tag-chip-x" onclick="removeTag(this)"
+                    >×</span
+                  ></span
+                >
+                <span class="tag-chip"
+                  >women<span class="tag-chip-x" onclick="removeTag(this)"
+                    >×</span
+                  ></span
+                >
+                <span class="tag-chip"
+                  >summer<span class="tag-chip-x" onclick="removeTag(this)"
+                    >×</span
+                  ></span
+                >
+                <input
+                  class="tag-text-input"
+                  id="tag-input"
+                  type="text"
+                  placeholder="Add tags, press Enter…"
+                  onkeydown="tagKeydown(event, this)"
+                />
+              </div>
+              <span class="form-hint mt-2" style="margin-top: var(--space-2)"
+                >Tags help with search and filtering. Press Enter or comma to
+                add.</span
+              >
+            </div>
+          </div>
+
+          <!-- CARD 9 — Stock & Serial Tracking -->
+          <div class="card card-padded mb-4">
+            <div class="section-title">Stock & Tracking</div>
+            <div class="toggle-row">
+              <div class="toggle-info">
+                <div class="toggle-label">Serial Number Tracking</div>
+                <div class="toggle-desc">
+                  Assign a unique serial number to each unit. Required for
+                  electronics, machinery, high-value items. Adds a serial field
+                  to every purchase and sale entry.
+                </div>
+              </div>
+              <label class="toggle-switch"
+                ><input
+                  type="checkbox"
+                  onchange="onToggle(this, 'Serial number tracking')" /><span
+                  class="toggle-track"
+                ></span
+              ></label>
+            </div>
+            <div
+              style="
+                margin-top: var(--space-4);
+                padding-top: var(--space-4);
+                border-top: 1px solid var(--slate-100);
+              "
+            >
+              <div class="form-group">
+                <label class="form-label">Minimum Stock Alert Level</label>
+                <div
+                  style="
+                    display: flex;
+                    align-items: center;
+                    gap: var(--space-3);
+                    margin-top: var(--gap-sm);
+                    flex-wrap: wrap;
+                  "
+                >
+                  <div style="position: relative; max-width: 160px">
+                    <input
+                      class="form-input"
+                      type="number"
+                      placeholder="0"
+                      min="0"
+                      value="5"
+                      style="padding-right: var(--space-8)"
+                    />
+                    <span
+                      style="
+                        position: absolute;
+                        right: var(--space-3);
+                        top: 50%;
+                        transform: translateY(-50%);
+                        font-size: var(--text-xs);
+                        font-weight: var(--weight-semibold);
+                        color: var(--slate-400);
+                        pointer-events: none;
+                      "
+                      >pcs</span
+                    >
+                  </div>
+                  <span class="form-hint" style="margin-top: 0"
+                    >Alert fires when any variant drops to or below this
+                    number</span
+                  >
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- CLONE -->
+          <div class="clone-card" style="margin-bottom: var(--space-12)">
+            <div class="clone-icon">📋</div>
+            <div style="flex: 1">
+              <div
+                style="
+                  font-size: var(--text-base);
+                  font-weight: var(--weight-bold);
+                  color: var(--green-800);
+                  margin-bottom: var(--space-1);
+                "
+              >
+                Clone this Category
+              </div>
+              <div style="font-size: var(--text-sm); color: var(--green-700)">
+                Create an exact copy with all settings intact. Useful for
+                similar categories like Kurtis from Churidars.
+              </div>
+            </div>
+            <button
+              class="btn btn-outline"
+              onclick="
+                showToast('Category cloned — edit the copy and save', 'green')
+              "
+              style="flex-shrink: 0"
+            >
+              📋 Clone Category
+            </button>
+          </div>
+        </div>
+        <!-- end se-page-content -->
+
+        <!-- STICKY SAVE FOOTER -->
+        <div class="save-footer">
+          <span class="text-muted">Changes apply to this category only</span>
+          <button
+            class="btn btn-outline"
+            onclick="showToast('Changes discarded', 'amber')"
+          >
+            Discard
+          </button>
+          <button class="btn btn-primary" onclick="saveCategory()">
+            Save Category
+          </button>
+        </div>
+      </div>
+      <!-- end se-main -->
+    </div>
+    <!-- end se-shell -->
+
+    <!-- TOAST — design system .toast .toast-green -->
+    <div id="toast" class="toast toast-green" style="display: none">
+      <span id="toast-icon" style="font-size: var(--text-xl)">✅</span>
+      <span id="toast-msg"></span>
+    </div>
+
+    <script>
+      var collapsed = false;
+      function toggleSidebar() {
+        collapsed = !collapsed;
+        document
+          .getElementById("sidebar")
+          .classList.toggle("collapsed", collapsed);
+      }
+
+      var toastTimer;
+      function showToast(msg, type) {
+        type = type || "green";
+        var icons = { green: "✅", amber: "⚠️", red: "❌" };
+        var borders = {
+          green: "var(--green-500)",
+          amber: "var(--color-warning)",
+          red: "var(--color-danger)",
+        };
+        var el = document.getElementById("toast");
+        document.getElementById("toast-icon").textContent = icons[type];
+        document.getElementById("toast-msg").textContent = msg;
+        el.style.borderLeftColor = borders[type];
+        el.style.display = "flex";
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(function () {
+          el.style.display = "none";
+        }, 3000);
+      }
+
+      function setGST(mode) {
+        ["standard", "variable", "exempt"].forEach(function (m) {
+          document
+            .getElementById("gst-" + m)
+            .classList.toggle("active", m === mode);
+          document.getElementById("block-" + m).style.display =
+            m === mode ? "block" : "none";
+        });
+      }
+
+      function toggleVariant(cb) {
+        cb.closest(".variant-chip").classList.toggle("active", cb.checked);
+      }
+
+      function setMarginMode(mode) {
+        document
+          .querySelectorAll("#margin-toggle .seg-btn")
+          .forEach(function (btn) {
+            btn.classList.toggle(
+              "active",
+              btn.textContent.toLowerCase().includes(mode),
+            );
+          });
+        document.getElementById("margin-suffix").textContent =
+          mode === "percent" ? "%" : "₹";
+      }
+
+      function toggleUnit(el) {
+        el.classList.toggle("selected");
+      }
+
+      function onToggle(cb, label) {
+        showToast(
+          label + (cb.checked ? " enabled" : " disabled"),
+          cb.checked ? "green" : "amber",
+        );
+      }
+
+      var attrCount = 2;
+      function addAttribute() {
+        var id = "attr-" + attrCount++;
+        var div = document.createElement("div");
+        div.className = "attr-row";
+        div.id = id;
+        div.innerHTML =
+          '<div class="attr-num">' +
+          attrCount +
+          "</div>" +
+          '<div class="attr-fields">' +
+          '<div class="form-group" style="max-width:260px"><label class="form-label">Attribute Name</label>' +
+          '<input class="form-input" type="text" placeholder="e.g. Season, Pattern, Length"></div>' +
+          '<div class="form-group"><label class="form-label">Attribute Values</label>' +
+          '<div class="chip-input-wrap" onclick="focusLast(this)">' +
+          '<input class="chip-text-input" type="text" placeholder="Type and press Enter…" onkeydown="chipKeydown(event,this)"></div>' +
+          '<span class="form-hint">Press Enter or comma to add a value</span></div>' +
+          "</div>" +
+          '<button class="attr-del-btn" onclick="deleteAttr(\'' +
+          id +
+          "')\">×</button>";
+        document.getElementById("attr-list").appendChild(div);
+        div.querySelector(".form-input").focus();
+        renumberAttrs();
+      }
+
+      function deleteAttr(id) {
+        var el = document.getElementById(id);
+        if (!el) return;
+        el.style.transition = "opacity .18s, transform .18s";
+        el.style.opacity = "0";
+        el.style.transform = "translateX(8px)";
+        setTimeout(function () {
+          el.remove();
+          renumberAttrs();
+        }, 200);
+      }
+
+      function renumberAttrs() {
+        document.querySelectorAll(".attr-row").forEach(function (row, i) {
+          row.querySelector(".attr-num").textContent = i + 1;
+        });
+      }
+
+      function focusLast(wrap) {
+        wrap.querySelector(".chip-text-input").focus();
+      }
+
+      function chipKeydown(e, input) {
+        if (e.key === "Enter" || e.key === ",") {
+          e.preventDefault();
+          var val = input.value.replace(/,/g, "").trim();
+          if (!val) return;
+          var chip = document.createElement("span");
+          chip.className = "value-chip";
+          chip.innerHTML =
+            val +
+            '<span class="value-chip-x" onclick="removeChip(this)">×</span>';
+          input.parentNode.insertBefore(chip, input);
+          input.value = "";
+        }
+        if (e.key === "Backspace" && !input.value) {
+          var chips = input.parentNode.querySelectorAll(".value-chip");
+          if (chips.length) chips[chips.length - 1].remove();
+        }
+      }
+
+      function removeChip(x) {
+        x.parentElement.remove();
+      }
+
+      function tagKeydown(e, input) {
+        if (e.key === "Enter" || e.key === ",") {
+          e.preventDefault();
+          var val = input.value.replace(/,/g, "").trim().toLowerCase();
+          if (!val) return;
+          var chip = document.createElement("span");
+          chip.className = "tag-chip";
+          chip.innerHTML =
+            val + '<span class="tag-chip-x" onclick="removeTag(this)">×</span>';
+          input.parentNode.insertBefore(chip, input);
+          input.value = "";
+        }
+        if (e.key === "Backspace" && !input.value) {
+          var chips = input.parentNode.querySelectorAll(".tag-chip");
+          if (chips.length) chips[chips.length - 1].remove();
+        }
+      }
+
+      function removeTag(x) {
+        x.parentElement.remove();
+      }
+
+      function saveCategory() {
+        showToast("Category saved successfully!", "green");
+      }
+    </script>
+  </body>
+</html>
