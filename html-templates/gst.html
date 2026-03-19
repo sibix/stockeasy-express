@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GST StockEasy — Smart Business App</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=DM+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+<div class="shell">
+  <!-- SIDEBAR -->
+  <div class="sidebar" id="sidebar">
+    <div class="sb-logo">
+      <div class="sb-logo-icon">🏪</div>
+      <div>
+        <div class="sb-logo-text">StockEasy</div>
+        <div class="sb-logo-sub">Smart Business App</div>
+      </div>
+    </div>
+    <div class="sb-toggle" onclick="toggleSidebar()">◀</div>
+
+    <div class="sb-nav">
+      <div class="sb-section">Main</div>
+      <div class="sb-item active" onclick="showPage('dashboard',this)">
+        <span class="sb-item-icon">🏠</span>
+        <span class="sb-item-label">Dashboard</span>
+      </div>
+      <div class="sb-item" onclick="showPage('pos',this)">
+        <span class="sb-item-icon">🛒</span>
+        <span class="sb-item-label">Quick Billing (POS)</span>
+      </div>
+
+      <div class="sb-section">Buy & Sell</div>
+      <div class="sb-item" onclick="showPage('sales',this)">
+        <span class="sb-item-icon">🧾</span>
+        <span class="sb-item-label">Sales & Invoices</span>
+      </div>
+      <div class="sb-item" onclick="showPage('purchase',this)">
+        <span class="sb-item-icon">📦</span>
+        <span class="sb-item-label">Purchases</span>
+      </div>
+      <div class="sb-item" onclick="showPage('returns',this)">
+        <span class="sb-item-icon">↩️</span>
+        <span class="sb-item-label">Returns</span>
+        <span class="sb-item-badge">3</span>
+      </div>
+
+      <div class="sb-section">Money</div>
+      <div class="sb-item" onclick="showPage('payments',this)">
+        <span class="sb-item-icon">💳</span>
+        <span class="sb-item-label">Payments</span>
+      </div>
+      <div class="sb-item" onclick="showPage('outstanding',this)">
+        <span class="sb-item-icon">⏳</span>
+        <span class="sb-item-label">Due & Outstanding</span>
+        <span class="sb-item-badge">5</span>
+      </div>
+      <div class="sb-item" onclick="showPage('expenses',this)">
+        <span class="sb-item-icon">💸</span>
+        <span class="sb-item-label">Expenses</span>
+      </div>
+
+      <div class="sb-section">Inventory</div>
+      <div class="sb-item" onclick="showPage('stock',this)">
+        <span class="sb-item-icon">📊</span>
+        <span class="sb-item-label">Stock</span>
+      </div>
+      <div class="sb-item" onclick="showPage('items',this)">
+        <span class="sb-item-icon">🏷️</span>
+        <span class="sb-item-label">Items & Catalogue</span>
+      </div>
+      <div class="sb-item" onclick="showPage('parties',this)">
+        <span class="sb-item-icon">👥</span>
+        <span class="sb-item-label">Parties</span>
+      </div>
+
+      <div class="sb-section">Reports</div>
+      <div class="sb-item" onclick="showPage('reports',this)">
+        <span class="sb-item-icon">📈</span>
+        <span class="sb-item-label">Reports</span>
+      </div>
+      <div class="sb-item" onclick="showPage('gst',this)">
+        <span class="sb-item-icon">🏛️</span>
+        <span class="sb-item-label">GST Filing</span>
+      </div>
+
+      <div class="sb-section">Setup</div>
+      <div class="sb-item" onclick="showPage('settings',this)">
+        <span class="sb-item-icon">⚙️</span>
+        <span class="sb-item-label">Settings</span>
+      </div>
+    </div>
+
+    <div class="sb-bottom">
+      <div class="sb-user">
+        <div class="sb-avatar">RK</div>
+        <div class="sb-user-info">
+          <div class="sb-user-name">Rajan Kumar</div>
+          <div class="sb-user-role">Owner · Main Shop</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MAIN -->
+  <div class="main">
+    <!-- TOPBAR -->
+    <div class="topbar" id="topbar">
+      <div>
+        <div class="tb-page-title" id="page-title">GST Filing</div>
+        <div class="tb-breadcrumb" id="page-breadcrumb">Reports</div>
+      </div>
+      <div class="tb-spacer"></div>
+      <div class="tb-search" onclick="showToast('🔍 Search anything — items, bills, parties...')">
+        <span>🔍</span><span>Search everything...</span><span style="margin-left:auto;font-size:11px;background:var(--slate200);padding:1px 6px;border-radius:4px;color:var(--slate500)">⌘K</span>
+      </div>
+      <button class="tb-icon-btn" onclick="showToast('🔔 3 new notifications')">
+        🔔<span class="tb-notif-dot"></span>
+      </button>
+      <button class="tb-icon-btn" onclick="showToast('❓ Help & shortcuts')">❓</button>
+      <div id="topbar-actions"></div>
+    </div>
+
+    <!-- MODULE TAB BAR — populated by showPage() for pages that have sub-views -->
+    <div class="module-tabs" id="module-tabs"></div>
+
+    <!-- PAGES -->
+    <div style="flex:1;overflow:hidden;position:relative">
+
+     <!-- PAGE GOES HERE-->
+      <!-- GST -->
+      <div class="page" id="page-gst">
+        <div class="page-content">
+          <div class="sec-header mb-16">
+            <div><div class="sec-title">GST Filing</div><div class="text-muted">Mar 2026 · GSTIN: 33ABCDE1234F1Z5</div></div>
+            <div class="sec-actions">
+              <span class="badge badge-amber" style="font-size:12px;padding:6px 14px">Filing due: 20 Apr 2026</span>
+            </div>
+          </div>
+          <div class="grid-2 mb-16">
+            <div class="card card-pad" style="cursor:pointer;border-left:4px solid var(--g500)" onclick="showToast('📊 GSTR-1 — Sales return summary')">
+              <div style="font-size:24px;margin-bottom:8px">📤</div>
+              <div style="font-weight:700;font-size:15px">GSTR-1 Summary</div>
+              <div class="text-muted">Outward supplies (Sales)</div>
+              <div style="margin-top:10px;display:flex;gap:16px">
+                <div><div style="font-size:18px;font-weight:700;color:var(--g600)">₹4,82,500</div><div class="text-muted">Taxable value</div></div>
+                <div><div style="font-size:18px;font-weight:700;color:var(--g600)">₹24,125</div><div class="text-muted">Tax collected</div></div>
+              </div>
+              <div style="margin-top:12px"><button class="btn btn-primary">View & Export</button></div>
+            </div>
+            <div class="card card-pad" style="cursor:pointer;border-left:4px solid var(--blue)" onclick="showToast('📊 GSTR-3B — Summary return')">
+              <div style="font-size:24px;margin-bottom:8px">📋</div>
+              <div style="font-weight:700;font-size:15px">GSTR-3B Summary</div>
+              <div class="text-muted">Net tax liability</div>
+              <div style="margin-top:10px;display:flex;gap:16px">
+                <div><div style="font-size:18px;font-weight:700;color:var(--blue)">₹24,125</div><div class="text-muted">Output tax</div></div>
+                <div><div style="font-size:18px;font-weight:700;color:var(--g600)">₹9,210</div><div class="text-muted">Input credit</div></div>
+              </div>
+              <div style="margin-top:12px"><button class="btn btn-outline">View Details</button></div>
+            </div>
+          </div>
+          <div class="card card-pad">
+            <div class="sec-title" style="margin-bottom:12px">HSN-wise Tax Summary</div>
+            <div class="tbl-wrap">
+              <table>
+                <tr><th>HSN Code</th><th>Description</th><th>GST Rate</th><th>Taxable Amount</th><th>CGST</th><th>SGST</th><th>Total Tax</th></tr>
+                <tr><td class="td-mono">6204</td><td>Churidars / Sets</td><td>5%</td><td class="td-mono">₹1,42,000</td><td class="td-mono">₹3,550</td><td class="td-mono">₹3,550</td><td class="td-mono td-bold">₹7,100</td></tr>
+                <tr><td class="td-mono">6211</td><td>Kurtis / Tops</td><td>5%</td><td class="td-mono">₹84,500</td><td class="td-mono">₹2,112</td><td class="td-mono">₹2,112</td><td class="td-mono td-bold">₹4,225</td></tr>
+                <tr><td class="td-mono">5407</td><td>Sarees</td><td>5%</td><td class="td-mono">₹62,000</td><td class="td-mono">₹1,550</td><td class="td-mono">₹1,550</td><td class="td-mono td-bold">₹3,100</td></tr>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+     
+    </div><!-- end pages -->
+  </div><!-- end main -->
+</div><!-- end shell -->
+
+
+
+</body>
+</html>

@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Items & Catalogue StockEasy — Smart Business App</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=DM+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+<div class="shell">
+  <!-- SIDEBAR -->
+  <div class="sidebar" id="sidebar">
+    <div class="sb-logo">
+      <div class="sb-logo-icon">🏪</div>
+      <div>
+        <div class="sb-logo-text">StockEasy</div>
+        <div class="sb-logo-sub">Smart Business App</div>
+      </div>
+    </div>
+    <div class="sb-toggle" onclick="toggleSidebar()">◀</div>
+
+    <div class="sb-nav">
+      <div class="sb-section">Main</div>
+      <div class="sb-item active" onclick="showPage('dashboard',this)">
+        <span class="sb-item-icon">🏠</span>
+        <span class="sb-item-label">Dashboard</span>
+      </div>
+      <div class="sb-item" onclick="showPage('pos',this)">
+        <span class="sb-item-icon">🛒</span>
+        <span class="sb-item-label">Quick Billing (POS)</span>
+      </div>
+
+      <div class="sb-section">Buy & Sell</div>
+      <div class="sb-item" onclick="showPage('sales',this)">
+        <span class="sb-item-icon">🧾</span>
+        <span class="sb-item-label">Sales & Invoices</span>
+      </div>
+      <div class="sb-item" onclick="showPage('purchase',this)">
+        <span class="sb-item-icon">📦</span>
+        <span class="sb-item-label">Purchases</span>
+      </div>
+      <div class="sb-item" onclick="showPage('returns',this)">
+        <span class="sb-item-icon">↩️</span>
+        <span class="sb-item-label">Returns</span>
+        <span class="sb-item-badge">3</span>
+      </div>
+
+      <div class="sb-section">Money</div>
+      <div class="sb-item" onclick="showPage('payments',this)">
+        <span class="sb-item-icon">💳</span>
+        <span class="sb-item-label">Payments</span>
+      </div>
+      <div class="sb-item" onclick="showPage('outstanding',this)">
+        <span class="sb-item-icon">⏳</span>
+        <span class="sb-item-label">Due & Outstanding</span>
+        <span class="sb-item-badge">5</span>
+      </div>
+      <div class="sb-item" onclick="showPage('expenses',this)">
+        <span class="sb-item-icon">💸</span>
+        <span class="sb-item-label">Expenses</span>
+      </div>
+
+      <div class="sb-section">Inventory</div>
+      <div class="sb-item" onclick="showPage('stock',this)">
+        <span class="sb-item-icon">📊</span>
+        <span class="sb-item-label">Stock</span>
+      </div>
+      <div class="sb-item" onclick="showPage('items',this)">
+        <span class="sb-item-icon">🏷️</span>
+        <span class="sb-item-label">Items & Catalogue</span>
+      </div>
+      <div class="sb-item" onclick="showPage('parties',this)">
+        <span class="sb-item-icon">👥</span>
+        <span class="sb-item-label">Parties</span>
+      </div>
+
+      <div class="sb-section">Reports</div>
+      <div class="sb-item" onclick="showPage('reports',this)">
+        <span class="sb-item-icon">📈</span>
+        <span class="sb-item-label">Reports</span>
+      </div>
+      <div class="sb-item" onclick="showPage('gst',this)">
+        <span class="sb-item-icon">🏛️</span>
+        <span class="sb-item-label">GST Filing</span>
+      </div>
+
+      <div class="sb-section">Setup</div>
+      <div class="sb-item" onclick="showPage('settings',this)">
+        <span class="sb-item-icon">⚙️</span>
+        <span class="sb-item-label">Settings</span>
+      </div>
+    </div>
+
+    <div class="sb-bottom">
+      <div class="sb-user">
+        <div class="sb-avatar">RK</div>
+        <div class="sb-user-info">
+          <div class="sb-user-name">Rajan Kumar</div>
+          <div class="sb-user-role">Owner · Main Shop</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MAIN -->
+  <div class="main">
+    <!-- TOPBAR -->
+    <div class="topbar" id="topbar">
+      <div>
+        <div class="tb-page-title" id="page-title">Items & Catalogue</div>
+        <div class="tb-breadcrumb" id="page-breadcrumb">Inventory</div>
+      </div>
+      <div class="tb-spacer"></div>
+      <div class="tb-search" onclick="showToast('🔍 Search anything — items, bills, parties...')">
+        <span>🔍</span><span>Search everything...</span><span style="margin-left:auto;font-size:11px;background:var(--slate200);padding:1px 6px;border-radius:4px;color:var(--slate500)">⌘K</span>
+      </div>
+      <button class="tb-icon-btn" onclick="showToast('🔔 3 new notifications')">
+        🔔<span class="tb-notif-dot"></span>
+      </button>
+      <button class="tb-icon-btn" onclick="showToast('❓ Help & shortcuts')">❓</button>
+      <div id="topbar-actions"></div>
+    </div>
+
+    <!-- MODULE TAB BAR — populated by showPage() for pages that have sub-views -->
+    <div class="module-tabs" id="module-tabs"></div>
+
+    <!-- PAGES -->
+    <div style="flex:1;overflow:hidden;position:relative">
+
+     <!-- PAGE GOES HERE-->
+      <!-- ITEMS CATALOGUE -->
+      <div class="page" id="page-items">
+        <div class="page-content">
+          <div class="sec-header mb-16">
+            <div><div class="sec-title">Items & Catalogue</div><div class="text-muted">All your products with variants</div></div>
+            <div class="sec-actions">
+              <button class="btn btn-outline" onclick="showToast('📥 Import from Excel')">📥 Import</button>
+              <button class="btn btn-primary" onclick="showModal('add-item')">+ Add Item</button>
+            </div>
+          </div>
+          <div class="filter-bar">
+            <div class="filter-chip active">All</div>
+            <div class="filter-chip">Churidars</div>
+            <div class="filter-chip">Kurtis</div>
+            <div class="filter-chip">Sarees</div>
+            <div class="filter-chip">Leggings</div>
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px">
+            <div class="card card-pad" style="cursor:pointer" onclick="showModal('edit-item')">
+              <div style="font-size:32px;margin-bottom:8px">👗</div>
+              <div style="font-weight:700;font-size:14px">Churidar DES-01</div>
+              <div class="text-muted">HSN: 6204 · GST: 5%</div>
+              <div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap">
+                <span class="badge badge-blue">S M L XL XXL</span>
+                <span class="badge badge-slate">5 colors</span>
+              </div>
+              <div style="margin-top:8px;display:flex;justify-content:space-between;align-items:center">
+                <span style="font-size:13px;font-weight:700;color:var(--g600)">₹380–₹450</span>
+                <span class="badge badge-green">In Stock</span>
+              </div>
+            </div>
+            <div class="card card-pad" style="cursor:pointer" onclick="showModal('edit-item')">
+              <div style="font-size:32px;margin-bottom:8px">👘</div>
+              <div style="font-weight:700;font-size:14px">Kurti DES-05</div>
+              <div class="text-muted">HSN: 6211 · GST: 5%</div>
+              <div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap">
+                <span class="badge badge-blue">S M L XL</span>
+                <span class="badge badge-slate">3 colors</span>
+              </div>
+              <div style="margin-top:8px;display:flex;justify-content:space-between;align-items:center">
+                <span style="font-size:13px;font-weight:700;color:var(--g600)">₹320–₹380</span>
+                <span class="badge badge-amber">Low Stock</span>
+              </div>
+            </div>
+            <div class="card card-pad" style="cursor:pointer" onclick="showModal('edit-item')">
+              <div style="font-size:32px;margin-bottom:8px">🥻</div>
+              <div style="font-weight:700;font-size:14px">Saree Plain</div>
+              <div class="text-muted">HSN: 5407 · GST: 5%</div>
+              <div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap">
+                <span class="badge badge-blue">Free Size</span>
+                <span class="badge badge-slate">8 colors</span>
+              </div>
+              <div style="margin-top:8px;display:flex;justify-content:space-between;align-items:center">
+                <span style="font-size:13px;font-weight:700;color:var(--g600)">₹750–₹950</span>
+                <span class="badge badge-green">In Stock</span>
+              </div>
+            </div>
+            <div class="card card-pad" style="cursor:pointer;border:2px dashed var(--slate200);box-shadow:none;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:8px;min-height:160px" onclick="showModal('add-item')">
+              <div style="font-size:32px;color:var(--slate300)">➕</div>
+              <div style="font-size:13px;font-weight:600;color:var(--slate400)">Add New Item</div>
+            </div>
+          </div>
+        </div>
+      </div>
+     
+    </div><!-- end pages -->
+  </div><!-- end main -->
+</div><!-- end shell -->
+
+
+
+</body>
+</html>

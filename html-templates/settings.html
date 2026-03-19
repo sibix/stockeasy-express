@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>StockEasy — Smart Business App</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=DM+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+<div class="shell">
+  <!-- SIDEBAR -->
+  <div class="sidebar" id="sidebar">
+    <div class="sb-logo">
+      <div class="sb-logo-icon">🏪</div>
+      <div>
+        <div class="sb-logo-text">StockEasy</div>
+        <div class="sb-logo-sub">Smart Business App</div>
+      </div>
+    </div>
+    <div class="sb-toggle" onclick="toggleSidebar()">◀</div>
+
+    <div class="sb-nav">
+      <div class="sb-section">Main</div>
+      <div class="sb-item active" onclick="showPage('dashboard',this)">
+        <span class="sb-item-icon">🏠</span>
+        <span class="sb-item-label">Dashboard</span>
+      </div>
+      <div class="sb-item" onclick="showPage('pos',this)">
+        <span class="sb-item-icon">🛒</span>
+        <span class="sb-item-label">Quick Billing (POS)</span>
+      </div>
+
+      <div class="sb-section">Buy & Sell</div>
+      <div class="sb-item" onclick="showPage('sales',this)">
+        <span class="sb-item-icon">🧾</span>
+        <span class="sb-item-label">Sales & Invoices</span>
+      </div>
+      <div class="sb-item" onclick="showPage('purchase',this)">
+        <span class="sb-item-icon">📦</span>
+        <span class="sb-item-label">Purchases</span>
+      </div>
+      <div class="sb-item" onclick="showPage('returns',this)">
+        <span class="sb-item-icon">↩️</span>
+        <span class="sb-item-label">Returns</span>
+        <span class="sb-item-badge">3</span>
+      </div>
+
+      <div class="sb-section">Money</div>
+      <div class="sb-item" onclick="showPage('payments',this)">
+        <span class="sb-item-icon">💳</span>
+        <span class="sb-item-label">Payments</span>
+      </div>
+      <div class="sb-item" onclick="showPage('outstanding',this)">
+        <span class="sb-item-icon">⏳</span>
+        <span class="sb-item-label">Due & Outstanding</span>
+        <span class="sb-item-badge">5</span>
+      </div>
+      <div class="sb-item" onclick="showPage('expenses',this)">
+        <span class="sb-item-icon">💸</span>
+        <span class="sb-item-label">Expenses</span>
+      </div>
+
+      <div class="sb-section">Inventory</div>
+      <div class="sb-item" onclick="showPage('stock',this)">
+        <span class="sb-item-icon">📊</span>
+        <span class="sb-item-label">Stock</span>
+      </div>
+      <div class="sb-item" onclick="showPage('items',this)">
+        <span class="sb-item-icon">🏷️</span>
+        <span class="sb-item-label">Items & Catalogue</span>
+      </div>
+      <div class="sb-item" onclick="showPage('parties',this)">
+        <span class="sb-item-icon">👥</span>
+        <span class="sb-item-label">Parties</span>
+      </div>
+
+      <div class="sb-section">Reports</div>
+      <div class="sb-item" onclick="showPage('reports',this)">
+        <span class="sb-item-icon">📈</span>
+        <span class="sb-item-label">Reports</span>
+      </div>
+      <div class="sb-item" onclick="showPage('gst',this)">
+        <span class="sb-item-icon">🏛️</span>
+        <span class="sb-item-label">GST Filing</span>
+      </div>
+
+      <div class="sb-section">Setup</div>
+      <div class="sb-item" onclick="showPage('settings',this)">
+        <span class="sb-item-icon">⚙️</span>
+        <span class="sb-item-label">Settings</span>
+      </div>
+    </div>
+
+    <div class="sb-bottom">
+      <div class="sb-user">
+        <div class="sb-avatar">RK</div>
+        <div class="sb-user-info">
+          <div class="sb-user-name">Rajan Kumar</div>
+          <div class="sb-user-role">Owner · Main Shop</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MAIN -->
+  <div class="main">
+    <!-- TOPBAR -->
+    <div class="topbar" id="topbar">
+      <div>
+        <div class="tb-page-title" id="page-title">Settings</div>
+        <div class="tb-breadcrumb" id="page-breadcrumb">Setup</div>
+      </div>
+      <div class="tb-spacer"></div>
+      <div class="tb-search" onclick="showToast('🔍 Search anything — items, bills, parties...')">
+        <span>🔍</span><span>Search everything...</span><span style="margin-left:auto;font-size:11px;background:var(--slate200);padding:1px 6px;border-radius:4px;color:var(--slate500)">⌘K</span>
+      </div>
+      <button class="tb-icon-btn" onclick="showToast('🔔 3 new notifications')">
+        🔔<span class="tb-notif-dot"></span>
+      </button>
+      <button class="tb-icon-btn" onclick="showToast('❓ Help & shortcuts')">❓</button>
+      <div id="topbar-actions"></div>
+    </div>
+
+    <!-- MODULE TAB BAR — populated by showPage() for pages that have sub-views -->
+    <div class="module-tabs" id="module-tabs"></div>
+
+    <!-- PAGES -->
+    <div style="flex:1;overflow:hidden;position:relative">
+
+     <!-- PAGE GOES HERE-->
+      <!-- SETTINGS -->
+      <div class="page" id="page-settings">
+        <div class="page-content">
+          <div class="sec-header mb-16">
+            <div class="sec-title">Settings</div>
+          </div>
+          <div class="grid-2">
+            <div style="display:flex;flex-direction:column;gap:14px">
+              <div class="card card-pad" style="cursor:pointer" onclick="showToast('🏪 Business profile settings')">
+                <div style="font-size:22px;margin-bottom:8px">🏪</div>
+                <div style="font-weight:700">Business Profile</div>
+                <div class="text-muted">Name, GSTIN, address, logo</div>
+              </div>
+              <div class="card card-pad" style="cursor:pointer" onclick="showToast('👥 User & roles management')">
+                <div style="font-size:22px;margin-bottom:8px">👥</div>
+                <div style="font-weight:700">Users & Roles</div>
+                <div class="text-muted">Add staff, set permissions</div>
+              </div>
+              <div class="card card-pad" style="cursor:pointer" onclick="showToast('🖨️ Bill format settings')">
+                <div style="font-size:22px;margin-bottom:8px">🖨️</div>
+                <div style="font-weight:700">Bill & Print Format</div>
+                <div class="text-muted">Thermal, A4, WhatsApp</div>
+              </div>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:14px">
+              <div class="card card-pad" style="cursor:pointer" onclick="showToast('📦 Set definitions & templates')">
+                <div style="font-size:22px;margin-bottom:8px">📦</div>
+                <div style="font-weight:700">Set Definitions</div>
+                <div class="text-muted">Manage pack templates</div>
+              </div>
+              <div class="card card-pad" style="cursor:pointer" onclick="showToast('💰 Price lists & discounts')">
+                <div style="font-size:22px;margin-bottom:8px">💰</div>
+                <div style="font-weight:700">Price Lists</div>
+                <div class="text-muted">Retail, wholesale, schemes</div>
+              </div>
+              <div class="card card-pad" style="cursor:pointer" onclick="showToast('🏦 Financial year & backup')">
+                <div style="font-size:22px;margin-bottom:8px">📅</div>
+                <div style="font-weight:700">Financial Year</div>
+                <div class="text-muted">Year closing & data backup</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+     
+    </div><!-- end pages -->
+  </div><!-- end main -->
+</div><!-- end shell -->
+
+
+
+</body>
+</html>

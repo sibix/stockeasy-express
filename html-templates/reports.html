@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Reports & Analytics StockEasy — Smart Business App</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=DM+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+<div class="shell">
+  <!-- SIDEBAR -->
+  <div class="sidebar" id="sidebar">
+    <div class="sb-logo">
+      <div class="sb-logo-icon">🏪</div>
+      <div>
+        <div class="sb-logo-text">StockEasy</div>
+        <div class="sb-logo-sub">Smart Business App</div>
+      </div>
+    </div>
+    <div class="sb-toggle" onclick="toggleSidebar()">◀</div>
+
+    <div class="sb-nav">
+      <div class="sb-section">Main</div>
+      <div class="sb-item active" onclick="showPage('dashboard',this)">
+        <span class="sb-item-icon">🏠</span>
+        <span class="sb-item-label">Dashboard</span>
+      </div>
+      <div class="sb-item" onclick="showPage('pos',this)">
+        <span class="sb-item-icon">🛒</span>
+        <span class="sb-item-label">Quick Billing (POS)</span>
+      </div>
+
+      <div class="sb-section">Buy & Sell</div>
+      <div class="sb-item" onclick="showPage('sales',this)">
+        <span class="sb-item-icon">🧾</span>
+        <span class="sb-item-label">Sales & Invoices</span>
+      </div>
+      <div class="sb-item" onclick="showPage('purchase',this)">
+        <span class="sb-item-icon">📦</span>
+        <span class="sb-item-label">Purchases</span>
+      </div>
+      <div class="sb-item" onclick="showPage('returns',this)">
+        <span class="sb-item-icon">↩️</span>
+        <span class="sb-item-label">Returns</span>
+        <span class="sb-item-badge">3</span>
+      </div>
+
+      <div class="sb-section">Money</div>
+      <div class="sb-item" onclick="showPage('payments',this)">
+        <span class="sb-item-icon">💳</span>
+        <span class="sb-item-label">Payments</span>
+      </div>
+      <div class="sb-item" onclick="showPage('outstanding',this)">
+        <span class="sb-item-icon">⏳</span>
+        <span class="sb-item-label">Due & Outstanding</span>
+        <span class="sb-item-badge">5</span>
+      </div>
+      <div class="sb-item" onclick="showPage('expenses',this)">
+        <span class="sb-item-icon">💸</span>
+        <span class="sb-item-label">Expenses</span>
+      </div>
+
+      <div class="sb-section">Inventory</div>
+      <div class="sb-item" onclick="showPage('stock',this)">
+        <span class="sb-item-icon">📊</span>
+        <span class="sb-item-label">Stock</span>
+      </div>
+      <div class="sb-item" onclick="showPage('items',this)">
+        <span class="sb-item-icon">🏷️</span>
+        <span class="sb-item-label">Items & Catalogue</span>
+      </div>
+      <div class="sb-item" onclick="showPage('parties',this)">
+        <span class="sb-item-icon">👥</span>
+        <span class="sb-item-label">Parties</span>
+      </div>
+
+      <div class="sb-section">Reports</div>
+      <div class="sb-item" onclick="showPage('reports',this)">
+        <span class="sb-item-icon">📈</span>
+        <span class="sb-item-label">Reports</span>
+      </div>
+      <div class="sb-item" onclick="showPage('gst',this)">
+        <span class="sb-item-icon">🏛️</span>
+        <span class="sb-item-label">GST Filing</span>
+      </div>
+
+      <div class="sb-section">Setup</div>
+      <div class="sb-item" onclick="showPage('settings',this)">
+        <span class="sb-item-icon">⚙️</span>
+        <span class="sb-item-label">Settings</span>
+      </div>
+    </div>
+
+    <div class="sb-bottom">
+      <div class="sb-user">
+        <div class="sb-avatar">RK</div>
+        <div class="sb-user-info">
+          <div class="sb-user-name">Rajan Kumar</div>
+          <div class="sb-user-role">Owner · Main Shop</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MAIN -->
+  <div class="main">
+    <!-- TOPBAR -->
+    <div class="topbar" id="topbar">
+      <div>
+        <div class="tb-page-title" id="page-title">Reports & Analytics</div>
+        <div class="tb-breadcrumb" id="page-breadcrumb">Reports</div>
+      </div>
+      <div class="tb-spacer"></div>
+      <div class="tb-search" onclick="showToast('🔍 Search anything — items, bills, parties...')">
+        <span>🔍</span><span>Search everything...</span><span style="margin-left:auto;font-size:11px;background:var(--slate200);padding:1px 6px;border-radius:4px;color:var(--slate500)">⌘K</span>
+      </div>
+      <button class="tb-icon-btn" onclick="showToast('🔔 3 new notifications')">
+        🔔<span class="tb-notif-dot"></span>
+      </button>
+      <button class="tb-icon-btn" onclick="showToast('❓ Help & shortcuts')">❓</button>
+      <div id="topbar-actions"></div>
+    </div>
+
+    <!-- MODULE TAB BAR — populated by showPage() for pages that have sub-views -->
+    <div class="module-tabs" id="module-tabs"></div>
+
+    <!-- PAGES -->
+    <div style="flex:1;overflow:hidden;position:relative">
+
+     <!-- PAGE GOES HERE-->
+      <!-- REPORTS PAGE -->
+      <div class="page" id="page-reports">
+        <div class="page-content">
+          <div class="sec-header mb-16">
+            <div><div class="sec-title">Reports & Analytics</div><div class="text-muted">Your business at a glance</div></div>
+            <div class="sec-actions">
+              <select class="form-input form-select" style="width:auto">
+                <option>This Month</option><option>Last Month</option><option>This Year</option><option>Custom Range</option>
+              </select>
+            </div>
+          </div>
+          <div class="action-grid mb-16">
+            <div class="action-tile" onclick="showToast('📊 Day Book report loading...')"><div class="action-tile-icon">📅</div><div class="action-tile-label">Day Book</div><div class="action-tile-sub">All of today</div></div>
+            <div class="action-tile" onclick="showToast('💵 Cash Book loading...')"><div class="action-tile-icon">💵</div><div class="action-tile-label">Cash Book</div><div class="action-tile-sub">Cash in & out</div></div>
+            <div class="action-tile" onclick="showToast('🧾 Sales Register loading...')"><div class="action-tile-icon">🧾</div><div class="action-tile-label">Sales Report</div><div class="action-tile-sub">Bills & revenue</div></div>
+            <div class="action-tile" onclick="showToast('📦 Purchase Register loading...')"><div class="action-tile-icon">📦</div><div class="action-tile-label">Purchase Report</div><div class="action-tile-sub">What you bought</div></div>
+            <div class="action-tile" onclick="showToast('📈 Profit & Loss loading...')"><div class="action-tile-icon">📈</div><div class="action-tile-label">Profit & Loss</div><div class="action-tile-sub">Gross margin</div></div>
+            <div class="action-tile" onclick="showToast('⏳ Outstanding Report loading...')"><div class="action-tile-icon">⏳</div><div class="action-tile-label">Who Owes What</div><div class="action-tile-sub">Party-wise dues</div></div>
+            <div class="action-tile" onclick="showToast('🏆 Top sellers loading...')"><div class="action-tile-icon">🏆</div><div class="action-tile-label">Best Sellers</div><div class="action-tile-sub">Fast-moving items</div></div>
+            <div class="action-tile" onclick="showToast('📊 Stock Value report loading...')"><div class="action-tile-icon">🏷️</div><div class="action-tile-label">Stock Value</div><div class="action-tile-sub">What you hold</div></div>
+            <div class="action-tile" onclick="showToast('💸 Expense Summary loading...')"><div class="action-tile-icon">💸</div><div class="action-tile-label">Expenses</div><div class="action-tile-sub">Monthly costs</div></div>
+          </div>
+          <div class="card card-pad">
+            <div class="sec-title mb-16">📊 Sales This Month — By Category</div>
+            <div style="display:flex;flex-direction:column;gap:10px">
+              <div><div class="flex items-center gap-8" style="margin-bottom:4px"><span style="font-size:13px;font-weight:500;flex:1">Churidars</span><span class="td-mono" style="font-size:13px;font-weight:700;color:var(--g600)">₹1,42,000</span><span class="text-muted">42%</span></div><div class="progress"><div class="progress-bar" style="width:72%"></div></div></div>
+              <div><div class="flex items-center gap-8" style="margin-bottom:4px"><span style="font-size:13px;font-weight:500;flex:1">Kurtis</span><span class="td-mono" style="font-size:13px;font-weight:700;color:var(--g600)">₹84,500</span><span class="text-muted">25%</span></div><div class="progress"><div class="progress-bar" style="width:45%"></div></div></div>
+              <div><div class="flex items-center gap-8" style="margin-bottom:4px"><span style="font-size:13px;font-weight:500;flex:1">Sarees</span><span class="td-mono" style="font-size:13px;font-weight:700;color:var(--g600)">₹62,000</span><span class="text-muted">18%</span></div><div class="progress"><div class="progress-bar amber" style="width:34%"></div></div></div>
+              <div><div class="flex items-center gap-8" style="margin-bottom:4px"><span style="font-size:13px;font-weight:500;flex:1">Others</span><span class="td-mono" style="font-size:13px;font-weight:700;color:var(--g600)">₹50,000</span><span class="text-muted">15%</span></div><div class="progress"><div class="progress-bar" style="width:22%;background:var(--slate300)"></div></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+     
+    </div><!-- end pages -->
+  </div><!-- end main -->
+</div><!-- end shell -->
+
+
+
+</body>
+</html>

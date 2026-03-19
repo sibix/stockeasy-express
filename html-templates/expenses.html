@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>StockEasy — Smart Business App</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=DM+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+<div class="shell">
+  <!-- SIDEBAR -->
+  <div class="sidebar" id="sidebar">
+    <div class="sb-logo">
+      <div class="sb-logo-icon">🏪</div>
+      <div>
+        <div class="sb-logo-text">StockEasy</div>
+        <div class="sb-logo-sub">Smart Business App</div>
+      </div>
+    </div>
+    <div class="sb-toggle" onclick="toggleSidebar()">◀</div>
+
+    <div class="sb-nav">
+      <div class="sb-section">Main</div>
+      <div class="sb-item active" onclick="showPage('dashboard',this)">
+        <span class="sb-item-icon">🏠</span>
+        <span class="sb-item-label">Dashboard</span>
+      </div>
+      <div class="sb-item" onclick="showPage('pos',this)">
+        <span class="sb-item-icon">🛒</span>
+        <span class="sb-item-label">Quick Billing (POS)</span>
+      </div>
+
+      <div class="sb-section">Buy & Sell</div>
+      <div class="sb-item" onclick="showPage('sales',this)">
+        <span class="sb-item-icon">🧾</span>
+        <span class="sb-item-label">Sales & Invoices</span>
+      </div>
+      <div class="sb-item" onclick="showPage('purchase',this)">
+        <span class="sb-item-icon">📦</span>
+        <span class="sb-item-label">Purchases</span>
+      </div>
+      <div class="sb-item" onclick="showPage('returns',this)">
+        <span class="sb-item-icon">↩️</span>
+        <span class="sb-item-label">Returns</span>
+        <span class="sb-item-badge">3</span>
+      </div>
+
+      <div class="sb-section">Money</div>
+      <div class="sb-item" onclick="showPage('payments',this)">
+        <span class="sb-item-icon">💳</span>
+        <span class="sb-item-label">Payments</span>
+      </div>
+      <div class="sb-item" onclick="showPage('outstanding',this)">
+        <span class="sb-item-icon">⏳</span>
+        <span class="sb-item-label">Due & Outstanding</span>
+        <span class="sb-item-badge">5</span>
+      </div>
+      <div class="sb-item" onclick="showPage('expenses',this)">
+        <span class="sb-item-icon">💸</span>
+        <span class="sb-item-label">Expenses</span>
+      </div>
+
+      <div class="sb-section">Inventory</div>
+      <div class="sb-item" onclick="showPage('stock',this)">
+        <span class="sb-item-icon">📊</span>
+        <span class="sb-item-label">Stock</span>
+      </div>
+      <div class="sb-item" onclick="showPage('items',this)">
+        <span class="sb-item-icon">🏷️</span>
+        <span class="sb-item-label">Items & Catalogue</span>
+      </div>
+      <div class="sb-item" onclick="showPage('parties',this)">
+        <span class="sb-item-icon">👥</span>
+        <span class="sb-item-label">Parties</span>
+      </div>
+
+      <div class="sb-section">Reports</div>
+      <div class="sb-item" onclick="showPage('reports',this)">
+        <span class="sb-item-icon">📈</span>
+        <span class="sb-item-label">Reports</span>
+      </div>
+      <div class="sb-item" onclick="showPage('gst',this)">
+        <span class="sb-item-icon">🏛️</span>
+        <span class="sb-item-label">GST Filing</span>
+      </div>
+
+      <div class="sb-section">Setup</div>
+      <div class="sb-item" onclick="showPage('settings',this)">
+        <span class="sb-item-icon">⚙️</span>
+        <span class="sb-item-label">Settings</span>
+      </div>
+    </div>
+
+    <div class="sb-bottom">
+      <div class="sb-user">
+        <div class="sb-avatar">RK</div>
+        <div class="sb-user-info">
+          <div class="sb-user-name">Rajan Kumar</div>
+          <div class="sb-user-role">Owner · Main Shop</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MAIN -->
+  <div class="main">
+    <!-- TOPBAR -->
+    <div class="topbar" id="topbar">
+      <div>
+        <div class="tb-page-title" id="page-title">Expenses</div>
+        <div class="tb-breadcrumb" id="page-breadcrumb">Money</div>
+      </div>
+      <div class="tb-spacer"></div>
+      <div class="tb-search" onclick="showToast('🔍 Search anything — items, bills, parties...')">
+        <span>🔍</span><span>Search everything...</span><span style="margin-left:auto;font-size:11px;background:var(--slate200);padding:1px 6px;border-radius:4px;color:var(--slate500)">⌘K</span>
+      </div>
+      <button class="tb-icon-btn" onclick="showToast('🔔 3 new notifications')">
+        🔔<span class="tb-notif-dot"></span>
+      </button>
+      <button class="tb-icon-btn" onclick="showToast('❓ Help & shortcuts')">❓</button>
+      <div id="topbar-actions"></div>
+    </div>
+
+    <!-- MODULE TAB BAR — populated by showPage() for pages that have sub-views -->
+    <div class="module-tabs" id="module-tabs"></div>
+
+    <!-- PAGES -->
+    <div style="flex:1;overflow:hidden;position:relative">
+
+     <!-- EXPENSES -->
+      <div class="page" id="page-expenses">
+        <div class="page-content">
+          <div class="quick-stats">
+            <div class="qs-item"><div class="qs-val" style="color:var(--red)">₹8,450</div><div class="qs-lbl">This Month</div></div>
+            <div class="qs-item"><div class="qs-val">₹1,200</div><div class="qs-lbl">Today</div></div>
+            <div class="qs-item"><div class="qs-val">₹3,000</div><div class="qs-lbl">Rent</div></div>
+            <div class="qs-item"><div class="qs-val">₹2,800</div><div class="qs-lbl">Staff</div></div>
+          </div>
+          <div class="sec-header">
+            <div class="sec-title">Daily Expenses</div>
+            <button class="btn btn-primary" onclick="showModal('add-expense')">+ Add Expense</button>
+          </div>
+          <div class="card card-pad mb-16">
+            <div class="sec-title" style="margin-bottom:12px">By Category</div>
+            <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px">
+              <div style="text-align:center;padding:12px;background:var(--redbg);border-radius:var(--radius2);cursor:pointer"><div style="font-size:24px">🏠</div><div style="font-size:12px;font-weight:600;color:#991b1b;margin-top:4px">Rent</div><div style="font-size:14px;font-weight:700;color:#991b1b">₹3,000</div></div>
+              <div style="text-align:center;padding:12px;background:var(--amberbg);border-radius:var(--radius2);cursor:pointer"><div style="font-size:24px">👷</div><div style="font-size:12px;font-weight:600;color:#92400e;margin-top:4px">Staff</div><div style="font-size:14px;font-weight:700;color:#92400e">₹2,800</div></div>
+              <div style="text-align:center;padding:12px;background:var(--bluebg);border-radius:var(--radius2);cursor:pointer"><div style="font-size:24px">⚡</div><div style="font-size:12px;font-weight:600;color:#1e40af;margin-top:4px">Electricity</div><div style="font-size:14px;font-weight:700;color:#1e40af">₹850</div></div>
+              <div style="text-align:center;padding:12px;background:var(--purplebg);border-radius:var(--radius2);cursor:pointer"><div style="font-size:24px">🚚</div><div style="font-size:12px;font-weight:600;color:#5b21b6;margin-top:4px">Transport</div><div style="font-size:14px;font-weight:700;color:#5b21b6">₹600</div></div>
+              <div style="text-align:center;padding:12px;background:var(--g50);border-radius:var(--radius2);cursor:pointer"><div style="font-size:24px">🛒</div><div style="font-size:12px;font-weight:600;color:var(--g700);margin-top:4px">Others</div><div style="font-size:14px;font-weight:700;color:var(--g700)">₹1,200</div></div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="tbl-wrap">
+              <table>
+                <tr><th>Date</th><th>Category</th><th>Description</th><th>Amount</th><th>Mode</th></tr>
+                <tr><td>15 Mar</td><td>🚚 Transport</td><td>Auto for delivery</td><td class="td-mono">₹120</td><td>Cash</td></tr>
+                <tr><td>15 Mar</td><td>🛒 Others</td><td>Packing material</td><td class="td-mono">₹350</td><td>Cash</td></tr>
+                <tr><td>14 Mar</td><td>⚡ Electricity</td><td>March EB bill</td><td class="td-mono">₹850</td><td>UPI</td></tr>
+                <tr><td>14 Mar</td><td>👷 Staff</td><td>Weekly wages</td><td class="td-mono">₹2,800</td><td>Cash</td></tr>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+     
+    </div><!-- end pages -->
+  </div><!-- end main -->
+</div><!-- end shell -->
+
+
+
+</body>
+</html>

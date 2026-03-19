@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>StockEasy — Smart Business App</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=DM+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+<div class="shell">
+  <!-- SIDEBAR -->
+  <div class="sidebar" id="sidebar">
+    <div class="sb-logo">
+      <div class="sb-logo-icon">🏪</div>
+      <div>
+        <div class="sb-logo-text">StockEasy</div>
+        <div class="sb-logo-sub">Smart Business App</div>
+      </div>
+    </div>
+    <div class="sb-toggle" onclick="toggleSidebar()">◀</div>
+
+    <div class="sb-nav">
+      <div class="sb-section">Main</div>
+      <div class="sb-item active" onclick="showPage('dashboard',this)">
+        <span class="sb-item-icon">🏠</span>
+        <span class="sb-item-label">Dashboard</span>
+      </div>
+      <div class="sb-item" onclick="showPage('pos',this)">
+        <span class="sb-item-icon">🛒</span>
+        <span class="sb-item-label">Quick Billing (POS)</span>
+      </div>
+
+      <div class="sb-section">Buy & Sell</div>
+      <div class="sb-item" onclick="showPage('sales',this)">
+        <span class="sb-item-icon">🧾</span>
+        <span class="sb-item-label">Sales & Invoices</span>
+      </div>
+      <div class="sb-item" onclick="showPage('purchase',this)">
+        <span class="sb-item-icon">📦</span>
+        <span class="sb-item-label">Purchases</span>
+      </div>
+      <div class="sb-item" onclick="showPage('returns',this)">
+        <span class="sb-item-icon">↩️</span>
+        <span class="sb-item-label">Returns</span>
+        <span class="sb-item-badge">3</span>
+      </div>
+
+      <div class="sb-section">Money</div>
+      <div class="sb-item" onclick="showPage('payments',this)">
+        <span class="sb-item-icon">💳</span>
+        <span class="sb-item-label">Payments</span>
+      </div>
+      <div class="sb-item" onclick="showPage('outstanding',this)">
+        <span class="sb-item-icon">⏳</span>
+        <span class="sb-item-label">Due & Outstanding</span>
+        <span class="sb-item-badge">5</span>
+      </div>
+      <div class="sb-item" onclick="showPage('expenses',this)">
+        <span class="sb-item-icon">💸</span>
+        <span class="sb-item-label">Expenses</span>
+      </div>
+
+      <div class="sb-section">Inventory</div>
+      <div class="sb-item" onclick="showPage('stock',this)">
+        <span class="sb-item-icon">📊</span>
+        <span class="sb-item-label">Stock</span>
+      </div>
+      <div class="sb-item" onclick="showPage('items',this)">
+        <span class="sb-item-icon">🏷️</span>
+        <span class="sb-item-label">Items & Catalogue</span>
+      </div>
+      <div class="sb-item" onclick="showPage('parties',this)">
+        <span class="sb-item-icon">👥</span>
+        <span class="sb-item-label">Parties</span>
+      </div>
+
+      <div class="sb-section">Reports</div>
+      <div class="sb-item" onclick="showPage('reports',this)">
+        <span class="sb-item-icon">📈</span>
+        <span class="sb-item-label">Reports</span>
+      </div>
+      <div class="sb-item" onclick="showPage('gst',this)">
+        <span class="sb-item-icon">🏛️</span>
+        <span class="sb-item-label">GST Filing</span>
+      </div>
+
+      <div class="sb-section">Setup</div>
+      <div class="sb-item" onclick="showPage('settings',this)">
+        <span class="sb-item-icon">⚙️</span>
+        <span class="sb-item-label">Settings</span>
+      </div>
+    </div>
+
+    <div class="sb-bottom">
+      <div class="sb-user">
+        <div class="sb-avatar">RK</div>
+        <div class="sb-user-info">
+          <div class="sb-user-name">Rajan Kumar</div>
+          <div class="sb-user-role">Owner · Main Shop</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MAIN -->
+  <div class="main">
+    <!-- TOPBAR -->
+    <div class="topbar" id="topbar">
+      <div>
+        <div class="tb-page-title" id="page-title">Dashboard</div>
+        <div class="tb-breadcrumb" id="page-breadcrumb">Today, 15 Mar 2026</div>
+      </div>
+      <div class="tb-spacer"></div>
+      <div class="tb-search" onclick="showToast('🔍 Search anything — items, bills, parties...')">
+        <span>🔍</span><span>Search everything...</span><span style="margin-left:auto;font-size:11px;background:var(--slate200);padding:1px 6px;border-radius:4px;color:var(--slate500)">⌘K</span>
+      </div>
+      <button class="tb-icon-btn" onclick="showToast('🔔 3 new notifications')">
+        🔔<span class="tb-notif-dot"></span>
+      </button>
+      <button class="tb-icon-btn" onclick="showToast('❓ Help & shortcuts')">❓</button>
+      <div id="topbar-actions"></div>
+    </div>
+
+    <!-- MODULE TAB BAR — populated by showPage() for pages that have sub-views -->
+    <div class="module-tabs" id="module-tabs"></div>
+
+    <!-- PAGES -->
+    <div style="flex:1;overflow:hidden;position:relative">
+
+      <!-- DASHBOARD -->
+      <div class="page" id="page-dashboard">
+        <div class="page-content">
+          <!-- Quick stats -->
+          <div class="quick-stats">
+            <div class="qs-item"><div class="qs-val" style="color:var(--g600)">₹48,250</div><div class="qs-lbl">Today's Sales</div></div>
+            <div class="qs-item"><div class="qs-val" style="color:var(--blue)">₹12,800</div><div class="qs-lbl">Today's Purchase</div></div>
+            <div class="qs-item"><div class="qs-val" style="color:var(--amber)">₹1,24,500</div><div class="qs-lbl">Total Outstanding</div></div>
+            <div class="qs-item"><div class="qs-val">247</div><div class="qs-lbl">Items in Stock</div></div>
+            <div class="qs-item"><div class="qs-val" style="color:var(--red)">8</div><div class="qs-lbl">Low Stock Alerts</div></div>
+          </div>
+
+          <!-- Action tiles -->
+          <div class="sec-header">
+            <div class="sec-title">What do you want to do?</div>
+          </div>
+          <div class="action-grid mb-16">
+            <div class="action-tile featured" onclick="showPage('pos',document.querySelector('[onclick*=pos]'))">
+              <div class="action-tile-icon">🛒</div>
+              <div class="action-tile-label">Quick Billing</div>
+              <div class="action-tile-sub">POS mode</div>
+            </div>
+            <div class="action-tile" onclick="showModal('new-invoice')">
+              <div class="action-tile-icon">🧾</div>
+              <div class="action-tile-label">New Invoice</div>
+              <div class="action-tile-sub">GST bill</div>
+            </div>
+            <div class="action-tile" onclick="showModal('new-purchase')">
+              <div class="action-tile-icon">📦</div>
+              <div class="action-tile-label">Record Purchase</div>
+              <div class="action-tile-sub">Add stock</div>
+            </div>
+            <div class="action-tile" onclick="showModal('receive-payment')">
+              <div class="action-tile-icon">💰</div>
+              <div class="action-tile-label">Receive Money</div>
+              <div class="action-tile-sub">From customer</div>
+            </div>
+            <div class="action-tile" onclick="showModal('pay-supplier')">
+              <div class="action-tile-icon">🤝</div>
+              <div class="action-tile-label">Pay Supplier</div>
+              <div class="action-tile-sub">Clear dues</div>
+            </div>
+            <div class="action-tile" onclick="showPage('stock',document.querySelector('[onclick*=stock]'))">
+              <div class="action-tile-icon">📊</div>
+              <div class="action-tile-label">Check Stock</div>
+              <div class="action-tile-sub">View inventory</div>
+            </div>
+            <div class="action-tile" onclick="showModal('add-expense')">
+              <div class="action-tile-icon">💸</div>
+              <div class="action-tile-label">Add Expense</div>
+              <div class="action-tile-sub">Daily costs</div>
+            </div>
+            <div class="action-tile" onclick="showModal('add-item')">
+              <div class="action-tile-icon">➕</div>
+              <div class="action-tile-label">Add New Item</div>
+              <div class="action-tile-sub">Catalogue</div>
+            </div>
+          </div>
+
+          <div class="grid-2">
+            <!-- Recent bills -->
+            <div class="card card-pad">
+              <div class="sec-header">
+                <div class="sec-title">Recent Bills</div>
+                <button class="btn btn-ghost" style="font-size:12px" onclick="showPage('sales',document.querySelector('[onclick*=sales]'))">View all →</button>
+              </div>
+              <div class="tbl-wrap">
+                <table>
+                  <tr><th>Bill #</th><th>Customer</th><th>Amount</th><th>Status</th></tr>
+                  <tr onclick="showModal('view-invoice')" style="cursor:pointer">
+                    <td class="td-bold td-mono">INV-0142</td><td>Priya Stores</td><td class="td-mono">₹4,250</td><td><span class="badge badge-green">Paid</span></td>
+                  </tr>
+                  <tr onclick="showModal('view-invoice')" style="cursor:pointer">
+                    <td class="td-bold td-mono">INV-0141</td><td>Mohan Traders</td><td class="td-mono">₹11,800</td><td><span class="badge badge-amber">Pending</span></td>
+                  </tr>
+                  <tr onclick="showModal('view-invoice')" style="cursor:pointer">
+                    <td class="td-bold td-mono">INV-0140</td><td>Walk-in</td><td class="td-mono">₹620</td><td><span class="badge badge-green">Paid</span></td>
+                  </tr>
+                  <tr onclick="showModal('view-invoice')" style="cursor:pointer">
+                    <td class="td-bold td-mono">INV-0139</td><td>Kavitha Fashion</td><td class="td-mono">₹8,400</td><td><span class="badge badge-red">Overdue</span></td>
+                  </tr>
+                </table>
+              </div>
+            </div>
+
+            <!-- Activity + alerts -->
+            <div style="display:flex;flex-direction:column;gap:14px">
+              <div class="card card-pad">
+                <div class="sec-header" style="margin-bottom:10px">
+                  <div class="sec-title">⚠️ Low Stock Alerts</div>
+                  <button class="btn btn-ghost" style="font-size:12px" onclick="showPage('stock',document.querySelector('[onclick*=stock]'))">View all →</button>
+                </div>
+                <div class="activity-item">
+                  <div class="activity-dot" style="background:var(--red)"></div>
+                  <div class="activity-content">
+                    <div class="activity-title">Churidar — Red, Size M</div>
+                    <div class="activity-meta">2 pcs left · Reorder: 10 pcs</div>
+                    <div class="progress"><div class="progress-bar red" style="width:15%"></div></div>
+                  </div>
+                </div>
+                <div class="activity-item">
+                  <div class="activity-dot" style="background:var(--amber)"></div>
+                  <div class="activity-content">
+                    <div class="activity-title">Kurti DES-05 — Blue, XL</div>
+                    <div class="activity-meta">4 pcs left · Reorder: 12 pcs</div>
+                    <div class="progress"><div class="progress-bar amber" style="width:30%"></div></div>
+                  </div>
+                </div>
+                <div class="activity-item">
+                  <div class="activity-dot" style="background:var(--amber)"></div>
+                  <div class="activity-content">
+                    <div class="activity-title">Leggings — Black, Free</div>
+                    <div class="activity-meta">3 pcs left · Reorder: 24 pcs</div>
+                    <div class="progress"><div class="progress-bar amber" style="width:12%"></div></div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="card card-pad">
+                <div class="sec-title mb-16" style="margin-bottom:10px">📅 Today's Activity</div>
+                <div class="activity-item">
+                  <div class="activity-dot" style="background:var(--g500)"></div>
+                  <div class="activity-content">
+                    <div class="activity-title">Payment received from Priya Stores</div>
+                    <div class="activity-meta">₹4,250 · UPI · 2 mins ago</div>
+                  </div>
+                </div>
+                <div class="activity-item">
+                  <div class="activity-dot" style="background:var(--blue)"></div>
+                  <div class="activity-content">
+                    <div class="activity-title">Purchase bill from Ravi Textiles</div>
+                    <div class="activity-meta">₹12,800 · 50 pcs · 1 hr ago</div>
+                  </div>
+                </div>
+                <div class="activity-item">
+                  <div class="activity-dot" style="background:var(--g500)"></div>
+                  <div class="activity-content">
+                    <div class="activity-title">Invoice INV-0142 created</div>
+                    <div class="activity-meta">Walk-in · ₹620 · Cash · 2 hrs ago</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+     
+    </div><!-- end pages -->
+  </div><!-- end main -->
+</div><!-- end shell -->
+
+
+
+</body>
+</html>

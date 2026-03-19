@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Stock StockEasy — Smart Business App</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=DM+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+<div class="shell">
+  <!-- SIDEBAR -->
+  <div class="sidebar" id="sidebar">
+    <div class="sb-logo">
+      <div class="sb-logo-icon">🏪</div>
+      <div>
+        <div class="sb-logo-text">StockEasy</div>
+        <div class="sb-logo-sub">Smart Business App</div>
+      </div>
+    </div>
+    <div class="sb-toggle" onclick="toggleSidebar()">◀</div>
+
+    <div class="sb-nav">
+      <div class="sb-section">Main</div>
+      <div class="sb-item active" onclick="showPage('dashboard',this)">
+        <span class="sb-item-icon">🏠</span>
+        <span class="sb-item-label">Dashboard</span>
+      </div>
+      <div class="sb-item" onclick="showPage('pos',this)">
+        <span class="sb-item-icon">🛒</span>
+        <span class="sb-item-label">Quick Billing (POS)</span>
+      </div>
+
+      <div class="sb-section">Buy & Sell</div>
+      <div class="sb-item" onclick="showPage('sales',this)">
+        <span class="sb-item-icon">🧾</span>
+        <span class="sb-item-label">Sales & Invoices</span>
+      </div>
+      <div class="sb-item" onclick="showPage('purchase',this)">
+        <span class="sb-item-icon">📦</span>
+        <span class="sb-item-label">Purchases</span>
+      </div>
+      <div class="sb-item" onclick="showPage('returns',this)">
+        <span class="sb-item-icon">↩️</span>
+        <span class="sb-item-label">Returns</span>
+        <span class="sb-item-badge">3</span>
+      </div>
+
+      <div class="sb-section">Money</div>
+      <div class="sb-item" onclick="showPage('payments',this)">
+        <span class="sb-item-icon">💳</span>
+        <span class="sb-item-label">Payments</span>
+      </div>
+      <div class="sb-item" onclick="showPage('outstanding',this)">
+        <span class="sb-item-icon">⏳</span>
+        <span class="sb-item-label">Due & Outstanding</span>
+        <span class="sb-item-badge">5</span>
+      </div>
+      <div class="sb-item" onclick="showPage('expenses',this)">
+        <span class="sb-item-icon">💸</span>
+        <span class="sb-item-label">Expenses</span>
+      </div>
+
+      <div class="sb-section">Inventory</div>
+      <div class="sb-item" onclick="showPage('stock',this)">
+        <span class="sb-item-icon">📊</span>
+        <span class="sb-item-label">Stock</span>
+      </div>
+      <div class="sb-item" onclick="showPage('items',this)">
+        <span class="sb-item-icon">🏷️</span>
+        <span class="sb-item-label">Items & Catalogue</span>
+      </div>
+      <div class="sb-item" onclick="showPage('parties',this)">
+        <span class="sb-item-icon">👥</span>
+        <span class="sb-item-label">Parties</span>
+      </div>
+
+      <div class="sb-section">Reports</div>
+      <div class="sb-item" onclick="showPage('reports',this)">
+        <span class="sb-item-icon">📈</span>
+        <span class="sb-item-label">Reports</span>
+      </div>
+      <div class="sb-item" onclick="showPage('gst',this)">
+        <span class="sb-item-icon">🏛️</span>
+        <span class="sb-item-label">GST Filing</span>
+      </div>
+
+      <div class="sb-section">Setup</div>
+      <div class="sb-item" onclick="showPage('settings',this)">
+        <span class="sb-item-icon">⚙️</span>
+        <span class="sb-item-label">Settings</span>
+      </div>
+    </div>
+
+    <div class="sb-bottom">
+      <div class="sb-user">
+        <div class="sb-avatar">RK</div>
+        <div class="sb-user-info">
+          <div class="sb-user-name">Rajan Kumar</div>
+          <div class="sb-user-role">Owner · Main Shop</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MAIN -->
+  <div class="main">
+    <!-- TOPBAR -->
+    <div class="topbar" id="topbar">
+      <div>
+        <div class="tb-page-title" id="page-title">Stock</div>
+        <div class="tb-breadcrumb" id="page-breadcrumb">Inventory</div>
+      </div>
+      <div class="tb-spacer"></div>
+      <div class="tb-search" onclick="showToast('🔍 Search anything — items, bills, parties...')">
+        <span>🔍</span><span>Search everything...</span><span style="margin-left:auto;font-size:11px;background:var(--slate200);padding:1px 6px;border-radius:4px;color:var(--slate500)">⌘K</span>
+      </div>
+      <button class="tb-icon-btn" onclick="showToast('🔔 3 new notifications')">
+        🔔<span class="tb-notif-dot"></span>
+      </button>
+      <button class="tb-icon-btn" onclick="showToast('❓ Help & shortcuts')">❓</button>
+      <div id="topbar-actions"></div>
+    </div>
+
+    <!-- MODULE TAB BAR — populated by showPage() for pages that have sub-views -->
+    <div class="module-tabs" id="module-tabs"></div>
+
+    <!-- PAGES -->
+    <div style="flex:1;overflow:hidden;position:relative">
+
+      <!-- STOCK PAGE -->
+      <div class="page" id="page-stock">
+        <div class="page-content">
+          <div class="quick-stats">
+            <div class="qs-item"><div class="qs-val">247</div><div class="qs-lbl">Total Variants</div></div>
+            <div class="qs-item"><div class="qs-val">1,842</div><div class="qs-lbl">Total Pieces</div></div>
+            <div class="qs-item"><div class="qs-val" style="color:var(--amber)">8</div><div class="qs-lbl">Low Stock</div></div>
+            <div class="qs-item"><div class="qs-val" style="color:var(--red)">3</div><div class="qs-lbl">Out of Stock</div></div>
+            <div class="qs-item"><div class="qs-val" style="color:var(--g600)">₹3.2L</div><div class="qs-lbl">Stock Value</div></div>
+          </div>
+          <div class="sec-header">
+            <div><div class="sec-title">Stock View</div><div class="text-muted">All your inventory at a glance</div></div>
+            <div class="sec-actions">
+              <div class="filter-bar" style="margin:0">
+                <div class="filter-chip active">All</div>
+                <div class="filter-chip" style="background:var(--amberbg);color:#92400e;border-color:#fde68a">⚠️ Low Stock</div>
+                <div class="filter-chip" style="background:var(--redbg);color:#991b1b;border-color:#fecaca">🔴 Out of Stock</div>
+              </div>
+              <button class="btn btn-outline" onclick="showModal('stock-adjust')">📝 Adjust</button>
+              <button class="btn btn-primary" onclick="showModal('stock-transfer')">🔄 Transfer</button>
+            </div>
+          </div>
+          <div class="card">
+            <div class="tbl-wrap">
+              <table>
+                <tr><th>Item</th><th>Design</th><th>Color</th><th>Size</th><th>Purchased</th><th>Sold</th><th>In Stock</th><th>Value</th><th>Status</th></tr>
+                <tr><td class="td-bold">Churidar</td><td>DES-01</td><td>Red</td><td><span class="badge badge-blue">M</span></td><td>50</td><td>48</td><td><b>2</b></td><td class="td-mono">₹900</td><td><span class="badge badge-red">Critical</span></td></tr>
+                <tr><td class="td-bold">Kurti</td><td>DES-05</td><td>Blue</td><td><span class="badge badge-blue">XL</span></td><td>24</td><td>20</td><td><b>4</b></td><td class="td-mono">₹1,520</td><td><span class="badge badge-amber">Low</span></td></tr>
+                <tr><td class="td-bold">Saree</td><td>Plain</td><td>Green</td><td><span class="badge badge-blue">Free</span></td><td>30</td><td>22</td><td><b>8</b></td><td class="td-mono">₹6,800</td><td><span class="badge badge-green">OK</span></td></tr>
+                <tr><td class="td-bold">Leggings</td><td>—</td><td>Black</td><td><span class="badge badge-blue">Free</span></td><td>48</td><td>45</td><td><b>3</b></td><td class="td-mono">₹360</td><td><span class="badge badge-amber">Low</span></td></tr>
+                <tr><td class="td-bold">Dupatta</td><td>—</td><td>Pink</td><td><span class="badge badge-blue">Free</span></td><td>60</td><td>40</td><td><b>20</b></td><td class="td-mono">₹3,600</td><td><span class="badge badge-green">OK</span></td></tr>
+                <tr><td class="td-bold">Salwar Set</td><td>DES-12</td><td>Pink</td><td><span class="badge badge-blue">M</span></td><td>20</td><td>11</td><td><b>9</b></td><td class="td-mono">₹4,680</td><td><span class="badge badge-green">OK</span></td></tr>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+     
+    </div><!-- end pages -->
+  </div><!-- end main -->
+</div><!-- end shell -->
+
+
+
+</body>
+</html>

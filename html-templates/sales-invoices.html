@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sales & Invoices StockEasy — Smart Business App</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=DM+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+<div class="shell">
+  <!-- SIDEBAR -->
+  <div class="sidebar" id="sidebar">
+    <div class="sb-logo">
+      <div class="sb-logo-icon">🏪</div>
+      <div>
+        <div class="sb-logo-text">StockEasy</div>
+        <div class="sb-logo-sub">Smart Business App</div>
+      </div>
+    </div>
+    <div class="sb-toggle" onclick="toggleSidebar()">◀</div>
+
+    <div class="sb-nav">
+      <div class="sb-section">Main</div>
+      <div class="sb-item active" onclick="showPage('dashboard',this)">
+        <span class="sb-item-icon">🏠</span>
+        <span class="sb-item-label">Dashboard</span>
+      </div>
+      <div class="sb-item" onclick="showPage('pos',this)">
+        <span class="sb-item-icon">🛒</span>
+        <span class="sb-item-label">Quick Billing (POS)</span>
+      </div>
+
+      <div class="sb-section">Buy & Sell</div>
+      <div class="sb-item" onclick="showPage('sales',this)">
+        <span class="sb-item-icon">🧾</span>
+        <span class="sb-item-label">Sales & Invoices</span>
+      </div>
+      <div class="sb-item" onclick="showPage('purchase',this)">
+        <span class="sb-item-icon">📦</span>
+        <span class="sb-item-label">Purchases</span>
+      </div>
+      <div class="sb-item" onclick="showPage('returns',this)">
+        <span class="sb-item-icon">↩️</span>
+        <span class="sb-item-label">Returns</span>
+        <span class="sb-item-badge">3</span>
+      </div>
+
+      <div class="sb-section">Money</div>
+      <div class="sb-item" onclick="showPage('payments',this)">
+        <span class="sb-item-icon">💳</span>
+        <span class="sb-item-label">Payments</span>
+      </div>
+      <div class="sb-item" onclick="showPage('outstanding',this)">
+        <span class="sb-item-icon">⏳</span>
+        <span class="sb-item-label">Due & Outstanding</span>
+        <span class="sb-item-badge">5</span>
+      </div>
+      <div class="sb-item" onclick="showPage('expenses',this)">
+        <span class="sb-item-icon">💸</span>
+        <span class="sb-item-label">Expenses</span>
+      </div>
+
+      <div class="sb-section">Inventory</div>
+      <div class="sb-item" onclick="showPage('stock',this)">
+        <span class="sb-item-icon">📊</span>
+        <span class="sb-item-label">Stock</span>
+      </div>
+      <div class="sb-item" onclick="showPage('items',this)">
+        <span class="sb-item-icon">🏷️</span>
+        <span class="sb-item-label">Items & Catalogue</span>
+      </div>
+      <div class="sb-item" onclick="showPage('parties',this)">
+        <span class="sb-item-icon">👥</span>
+        <span class="sb-item-label">Parties</span>
+      </div>
+
+      <div class="sb-section">Reports</div>
+      <div class="sb-item" onclick="showPage('reports',this)">
+        <span class="sb-item-icon">📈</span>
+        <span class="sb-item-label">Reports</span>
+      </div>
+      <div class="sb-item" onclick="showPage('gst',this)">
+        <span class="sb-item-icon">🏛️</span>
+        <span class="sb-item-label">GST Filing</span>
+      </div>
+
+      <div class="sb-section">Setup</div>
+      <div class="sb-item" onclick="showPage('settings',this)">
+        <span class="sb-item-icon">⚙️</span>
+        <span class="sb-item-label">Settings</span>
+      </div>
+    </div>
+
+    <div class="sb-bottom">
+      <div class="sb-user">
+        <div class="sb-avatar">RK</div>
+        <div class="sb-user-info">
+          <div class="sb-user-name">Rajan Kumar</div>
+          <div class="sb-user-role">Owner · Main Shop</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MAIN -->
+  <div class="main">
+    <!-- TOPBAR -->
+    <div class="topbar" id="topbar">
+      <div>
+        <div class="tb-page-title" id="page-title">Sales & Invoices</div>
+        <div class="tb-breadcrumb" id="page-breadcrumb">Buy & Sell</div>
+      </div>
+      <div class="tb-spacer"></div>
+      <div class="tb-search" onclick="showToast('🔍 Search anything — items, bills, parties...')">
+        <span>🔍</span><span>Search everything...</span><span style="margin-left:auto;font-size:11px;background:var(--slate200);padding:1px 6px;border-radius:4px;color:var(--slate500)">⌘K</span>
+      </div>
+      <button class="tb-icon-btn" onclick="showToast('🔔 3 new notifications')">
+        🔔<span class="tb-notif-dot"></span>
+      </button>
+      <button class="tb-icon-btn" onclick="showToast('❓ Help & shortcuts')">❓</button>
+      <div id="topbar-actions"></div>
+    </div>
+
+    <!-- MODULE TAB BAR — populated by showPage() for pages that have sub-views -->
+    <div class="module-tabs" id="module-tabs"></div>
+
+    <!-- PAGES -->
+    <div style="flex:1;overflow:hidden;position:relative">
+
+      <!-- SALES PAGE -->
+      <div class="page" id="page-sales">
+        <div class="page-content">
+          <div class="quick-stats">
+            <div class="qs-item"><div class="qs-val" style="color:var(--g600)">₹4,82,500</div><div class="qs-lbl">This Month</div></div>
+            <div class="qs-item"><div class="qs-val">142</div><div class="qs-lbl">Invoices</div></div>
+            <div class="qs-item"><div class="qs-val" style="color:var(--amber)">₹38,200</div><div class="qs-lbl">Unpaid</div></div>
+            <div class="qs-item"><div class="qs-val" style="color:var(--red)">₹11,400</div><div class="qs-lbl">Overdue</div></div>
+          </div>
+          <div class="sec-header">
+            <div>
+              <div class="sec-title">Sales & Invoices</div>
+              <div class="text-muted">All your bills in one place</div>
+            </div>
+            <div class="sec-actions">
+              <div class="filter-bar" style="margin:0">
+                <div class="filter-chip active">All</div>
+                <div class="filter-chip">Paid</div>
+                <div class="filter-chip">Unpaid</div>
+                <div class="filter-chip">Overdue</div>
+              </div>
+              <button class="btn btn-primary" onclick="showModal('new-invoice')">+ New Invoice</button>
+            </div>
+          </div>
+          <div class="card">
+            <div class="tbl-wrap">
+              <table>
+                <tr><th>Bill #</th><th>Date</th><th>Customer</th><th>Items</th><th>Amount</th><th>GST</th><th>Status</th><th>Action</th></tr>
+                <tr onclick="showModal('view-invoice')" style="cursor:pointer"><td class="td-bold td-mono">INV-0142</td><td>15 Mar</td><td>Priya Stores</td><td>5 items</td><td class="td-mono">₹4,250</td><td class="td-mono">₹203</td><td><span class="badge badge-green">Paid</span></td><td><button class="btn btn-ghost" style="padding:4px 10px;font-size:11px" onclick="event.stopPropagation();showToast('📤 Sharing on WhatsApp...')">📤 Share</button></td></tr>
+                <tr onclick="showModal('view-invoice')" style="cursor:pointer"><td class="td-bold td-mono">INV-0141</td><td>15 Mar</td><td>Mohan Traders</td><td>12 items</td><td class="td-mono">₹11,800</td><td class="td-mono">₹563</td><td><span class="badge badge-amber">Pending</span></td><td><button class="btn btn-primary" style="padding:4px 10px;font-size:11px" onclick="event.stopPropagation();showModal('receive-payment')">💰 Collect</button></td></tr>
+                <tr onclick="showModal('view-invoice')" style="cursor:pointer"><td class="td-bold td-mono">INV-0140</td><td>14 Mar</td><td>Walk-in</td><td>2 items</td><td class="td-mono">₹620</td><td class="td-mono">₹30</td><td><span class="badge badge-green">Paid</span></td><td><button class="btn btn-ghost" style="padding:4px 10px;font-size:11px" onclick="event.stopPropagation();showToast('🖨️ Printing...')">🖨️ Print</button></td></tr>
+                <tr onclick="showModal('view-invoice')" style="cursor:pointer"><td class="td-bold td-mono">INV-0139</td><td>10 Mar</td><td>Kavitha Fashion</td><td>8 items</td><td class="td-mono">₹8,400</td><td class="td-mono">₹400</td><td><span class="badge badge-red">Overdue</span></td><td><button class="btn btn-amber" style="padding:4px 10px;font-size:11px" onclick="event.stopPropagation();showToast('📲 Reminder sent on WhatsApp!')">🔔 Remind</button></td></tr>
+                <tr onclick="showModal('view-invoice')" style="cursor:pointer"><td class="td-bold td-mono">INV-0138</td><td>9 Mar</td><td>Sunita Boutique</td><td>3 items</td><td class="td-mono">₹2,100</td><td class="td-mono">₹100</td><td><span class="badge badge-green">Paid</span></td><td><button class="btn btn-ghost" style="padding:4px 10px;font-size:11px" onclick="event.stopPropagation();showToast('📤 Sharing on WhatsApp...')">📤 Share</button></td></tr>
+              </table>
+            </div>
+          </div>
+          <div style="margin-top:14px;display:flex;gap:10px;flex-wrap:wrap">
+            <div class="card card-pad" style="flex:1;min-width:200px;cursor:pointer" onclick="showToast('📋 Delivery Challans coming soon')">
+              <div style="font-size:22px;margin-bottom:6px">🚚</div>
+              <div style="font-weight:600;font-size:13px">Delivery Challans</div>
+              <div class="text-muted">Send goods before billing</div>
+            </div>
+            <div class="card card-pad" style="flex:1;min-width:200px;cursor:pointer" onclick="showToast('📋 Proforma Invoices coming soon')">
+              <div style="font-size:22px;margin-bottom:6px">📋</div>
+              <div style="font-weight:600;font-size:13px">Proforma Invoices</div>
+              <div class="text-muted">Quotation before order</div>
+            </div>
+            <div class="card card-pad" style="flex:1;min-width:200px;cursor:pointer" onclick="showPage('returns',document.querySelector('[onclick*=returns]'))">
+              <div style="font-size:22px;margin-bottom:6px">↩️</div>
+              <div style="font-weight:600;font-size:13px">Customer Returns</div>
+              <div class="text-muted">Goods returned by buyer</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      
+
+     
+    </div><!-- end pages -->
+  </div><!-- end main -->
+</div><!-- end shell -->
+
+
+
+</body>
+</html>

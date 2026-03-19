@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Due & Outstanding - StockEasy — Smart Business App</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=DM+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+<div class="shell">
+  <!-- SIDEBAR -->
+  <div class="sidebar" id="sidebar">
+    <div class="sb-logo">
+      <div class="sb-logo-icon">🏪</div>
+      <div>
+        <div class="sb-logo-text">StockEasy</div>
+        <div class="sb-logo-sub">Smart Business App</div>
+      </div>
+    </div>
+    <div class="sb-toggle" onclick="toggleSidebar()">◀</div>
+
+    <div class="sb-nav">
+      <div class="sb-section">Main</div>
+      <div class="sb-item active" onclick="showPage('dashboard',this)">
+        <span class="sb-item-icon">🏠</span>
+        <span class="sb-item-label">Dashboard</span>
+      </div>
+      <div class="sb-item" onclick="showPage('pos',this)">
+        <span class="sb-item-icon">🛒</span>
+        <span class="sb-item-label">Quick Billing (POS)</span>
+      </div>
+
+      <div class="sb-section">Buy & Sell</div>
+      <div class="sb-item" onclick="showPage('sales',this)">
+        <span class="sb-item-icon">🧾</span>
+        <span class="sb-item-label">Sales & Invoices</span>
+      </div>
+      <div class="sb-item" onclick="showPage('purchase',this)">
+        <span class="sb-item-icon">📦</span>
+        <span class="sb-item-label">Purchases</span>
+      </div>
+      <div class="sb-item" onclick="showPage('returns',this)">
+        <span class="sb-item-icon">↩️</span>
+        <span class="sb-item-label">Returns</span>
+        <span class="sb-item-badge">3</span>
+      </div>
+
+      <div class="sb-section">Money</div>
+      <div class="sb-item" onclick="showPage('payments',this)">
+        <span class="sb-item-icon">💳</span>
+        <span class="sb-item-label">Payments</span>
+      </div>
+      <div class="sb-item" onclick="showPage('outstanding',this)">
+        <span class="sb-item-icon">⏳</span>
+        <span class="sb-item-label">Due & Outstanding</span>
+        <span class="sb-item-badge">5</span>
+      </div>
+      <div class="sb-item" onclick="showPage('expenses',this)">
+        <span class="sb-item-icon">💸</span>
+        <span class="sb-item-label">Expenses</span>
+      </div>
+
+      <div class="sb-section">Inventory</div>
+      <div class="sb-item" onclick="showPage('stock',this)">
+        <span class="sb-item-icon">📊</span>
+        <span class="sb-item-label">Stock</span>
+      </div>
+      <div class="sb-item" onclick="showPage('items',this)">
+        <span class="sb-item-icon">🏷️</span>
+        <span class="sb-item-label">Items & Catalogue</span>
+      </div>
+      <div class="sb-item" onclick="showPage('parties',this)">
+        <span class="sb-item-icon">👥</span>
+        <span class="sb-item-label">Parties</span>
+      </div>
+
+      <div class="sb-section">Reports</div>
+      <div class="sb-item" onclick="showPage('reports',this)">
+        <span class="sb-item-icon">📈</span>
+        <span class="sb-item-label">Reports</span>
+      </div>
+      <div class="sb-item" onclick="showPage('gst',this)">
+        <span class="sb-item-icon">🏛️</span>
+        <span class="sb-item-label">GST Filing</span>
+      </div>
+
+      <div class="sb-section">Setup</div>
+      <div class="sb-item" onclick="showPage('settings',this)">
+        <span class="sb-item-icon">⚙️</span>
+        <span class="sb-item-label">Settings</span>
+      </div>
+    </div>
+
+    <div class="sb-bottom">
+      <div class="sb-user">
+        <div class="sb-avatar">RK</div>
+        <div class="sb-user-info">
+          <div class="sb-user-name">Rajan Kumar</div>
+          <div class="sb-user-role">Owner · Main Shop</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MAIN -->
+  <div class="main">
+    <!-- TOPBAR -->
+    <div class="topbar" id="topbar">
+      <div>
+        <div class="tb-page-title" id="page-title">Due & Outstanding</div>
+        <div class="tb-breadcrumb" id="page-breadcrumb">Money</div>
+      </div>
+      <div class="tb-spacer"></div>
+      <div class="tb-search" onclick="showToast('🔍 Search anything — items, bills, parties...')">
+        <span>🔍</span><span>Search everything...</span><span style="margin-left:auto;font-size:11px;background:var(--slate200);padding:1px 6px;border-radius:4px;color:var(--slate500)">⌘K</span>
+      </div>
+      <button class="tb-icon-btn" onclick="showToast('🔔 3 new notifications')">
+        🔔<span class="tb-notif-dot"></span>
+      </button>
+      <button class="tb-icon-btn" onclick="showToast('❓ Help & shortcuts')">❓</button>
+      <div id="topbar-actions"></div>
+    </div>
+
+    <!-- MODULE TAB BAR — populated by showPage() for pages that have sub-views -->
+    <div class="module-tabs" id="module-tabs"></div>
+
+    <!-- PAGES -->
+    <div style="flex:1;overflow:hidden;position:relative">
+
+     <!-- PAGE GOES HERE-->
+      <!-- OUTSTANDING -->
+      <div class="page" id="page-outstanding">
+        <div class="page-content">
+          <div class="quick-stats">
+            <div class="qs-item"><div class="qs-val" style="color:var(--g600)">₹1,24,500</div><div class="qs-lbl">Customers Owe You</div></div>
+            <div class="qs-item"><div class="qs-val" style="color:var(--red)">₹52,000</div><div class="qs-lbl">You Owe Suppliers</div></div>
+            <div class="qs-item"><div class="qs-val" style="color:var(--amber)">₹11,400</div><div class="qs-lbl">Overdue (&gt;30 days)</div></div>
+            <div class="qs-item"><div class="qs-val">18</div><div class="qs-lbl">Parties with Dues</div></div>
+          </div>
+          <div class="grid-2">
+            <div class="card card-pad">
+              <div class="sec-header">
+                <div class="sec-title">💰 Customers Owe You</div>
+                <button class="btn btn-primary" style="font-size:12px;padding:6px 12px" onclick="showModal('receive-payment')">+ Receive</button>
+              </div>
+              <div class="party-card"><div class="party-avatar" style="background:#6366f1">KF</div><div class="party-info"><div class="party-name">Kavitha Fashion</div><div class="party-sub">Last bill: 10 Mar · 5 days overdue</div><div class="progress"><div class="progress-bar red" style="width:100%"></div></div></div><div class="party-amt"><div class="party-amt-val text-red">₹8,400</div><div class="party-amt-lbl text-red">OVERDUE</div></div></div>
+              <div class="party-card"><div class="party-avatar" style="background:#f59e0b">MT</div><div class="party-info"><div class="party-name">Mohan Traders</div><div class="party-sub">Last bill: 15 Mar · Due in 15 days</div><div class="progress"><div class="progress-bar" style="width:60%"></div></div></div><div class="party-amt"><div class="party-amt-val">₹11,800</div><div class="party-amt-lbl">Due 30 Mar</div></div></div>
+              <div class="party-card"><div class="party-avatar" style="background:#22c55e">PS</div><div class="party-info"><div class="party-name">Priya Stores</div><div class="party-sub">Last bill: 14 Mar · Due in 7 days</div><div class="progress"><div class="progress-bar" style="width:80%"></div></div></div><div class="party-amt"><div class="party-amt-val">₹6,200</div><div class="party-amt-lbl">Due 22 Mar</div></div></div>
+              <div class="party-card"><div class="party-avatar" style="background:#8b5cf6">SB</div><div class="party-info"><div class="party-name">Sunita Boutique</div><div class="party-sub">Last bill: 12 Mar · Due in 12 days</div><div class="progress"><div class="progress-bar" style="width:70%"></div></div></div><div class="party-amt"><div class="party-amt-val">₹4,500</div><div class="party-amt-lbl">Due 27 Mar</div></div></div>
+            </div>
+            <div class="card card-pad">
+              <div class="sec-header">
+                <div class="sec-title">🏪 You Owe Suppliers</div>
+                <button class="btn btn-outline" style="font-size:12px;padding:6px 12px" onclick="showModal('pay-supplier')">+ Pay</button>
+              </div>
+              <div class="party-card"><div class="party-avatar" style="background:#ef4444">RT</div><div class="party-info"><div class="party-name">Ravi Textiles</div><div class="party-sub">Purchase: 15 Mar · Pay by 22 Mar</div><div class="progress"><div class="progress-bar amber" style="width:85%"></div></div></div><div class="party-amt"><div class="party-amt-val text-amber">₹12,800</div><div class="party-amt-lbl">Due in 7 days</div></div></div>
+              <div class="party-card"><div class="party-avatar" style="background:#0d9488">KB</div><div class="party-info"><div class="party-name">Kumar Bros</div><div class="party-sub">Purchase: 10 Mar · Pay by 25 Mar</div><div class="progress"><div class="progress-bar" style="width:55%"></div></div></div><div class="party-amt"><div class="party-amt-val">₹9,200</div><div class="party-amt-lbl">Due in 10 days</div></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+     
+    </div><!-- end pages -->
+  </div><!-- end main -->
+</div><!-- end shell -->
+
+
+
+</body>
+</html>

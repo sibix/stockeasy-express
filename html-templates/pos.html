@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>POS - StockEasy — Smart Business App</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=DM+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+<div class="shell">
+  <!-- SIDEBAR -->
+  <div class="sidebar" id="sidebar">
+    <div class="sb-logo">
+      <div class="sb-logo-icon">🏪</div>
+      <div>
+        <div class="sb-logo-text">StockEasy</div>
+        <div class="sb-logo-sub">Smart Business App</div>
+      </div>
+    </div>
+    <div class="sb-toggle" onclick="toggleSidebar()">◀</div>
+
+    <div class="sb-nav">
+      <div class="sb-section">Main</div>
+      <div class="sb-item active" onclick="showPage('dashboard',this)">
+        <span class="sb-item-icon">🏠</span>
+        <span class="sb-item-label">Dashboard</span>
+      </div>
+      <div class="sb-item" onclick="showPage('pos',this)">
+        <span class="sb-item-icon">🛒</span>
+        <span class="sb-item-label">Quick Billing (POS)</span>
+      </div>
+
+      <div class="sb-section">Buy & Sell</div>
+      <div class="sb-item" onclick="showPage('sales',this)">
+        <span class="sb-item-icon">🧾</span>
+        <span class="sb-item-label">Sales & Invoices</span>
+      </div>
+      <div class="sb-item" onclick="showPage('purchase',this)">
+        <span class="sb-item-icon">📦</span>
+        <span class="sb-item-label">Purchases</span>
+      </div>
+      <div class="sb-item" onclick="showPage('returns',this)">
+        <span class="sb-item-icon">↩️</span>
+        <span class="sb-item-label">Returns</span>
+        <span class="sb-item-badge">3</span>
+      </div>
+
+      <div class="sb-section">Money</div>
+      <div class="sb-item" onclick="showPage('payments',this)">
+        <span class="sb-item-icon">💳</span>
+        <span class="sb-item-label">Payments</span>
+      </div>
+      <div class="sb-item" onclick="showPage('outstanding',this)">
+        <span class="sb-item-icon">⏳</span>
+        <span class="sb-item-label">Due & Outstanding</span>
+        <span class="sb-item-badge">5</span>
+      </div>
+      <div class="sb-item" onclick="showPage('expenses',this)">
+        <span class="sb-item-icon">💸</span>
+        <span class="sb-item-label">Expenses</span>
+      </div>
+
+      <div class="sb-section">Inventory</div>
+      <div class="sb-item" onclick="showPage('stock',this)">
+        <span class="sb-item-icon">📊</span>
+        <span class="sb-item-label">Stock</span>
+      </div>
+      <div class="sb-item" onclick="showPage('items',this)">
+        <span class="sb-item-icon">🏷️</span>
+        <span class="sb-item-label">Items & Catalogue</span>
+      </div>
+      <div class="sb-item" onclick="showPage('parties',this)">
+        <span class="sb-item-icon">👥</span>
+        <span class="sb-item-label">Parties</span>
+      </div>
+
+      <div class="sb-section">Reports</div>
+      <div class="sb-item" onclick="showPage('reports',this)">
+        <span class="sb-item-icon">📈</span>
+        <span class="sb-item-label">Reports</span>
+      </div>
+      <div class="sb-item" onclick="showPage('gst',this)">
+        <span class="sb-item-icon">🏛️</span>
+        <span class="sb-item-label">GST Filing</span>
+      </div>
+
+      <div class="sb-section">Setup</div>
+      <div class="sb-item" onclick="showPage('settings',this)">
+        <span class="sb-item-icon">⚙️</span>
+        <span class="sb-item-label">Settings</span>
+      </div>
+    </div>
+
+    <div class="sb-bottom">
+      <div class="sb-user">
+        <div class="sb-avatar">RK</div>
+        <div class="sb-user-info">
+          <div class="sb-user-name">Rajan Kumar</div>
+          <div class="sb-user-role">Owner · Main Shop</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MAIN -->
+  <div class="main">
+    <!-- TOPBAR -->
+    <div class="topbar" id="topbar">
+      <div>
+        <div class="tb-page-title" id="page-title">Quick Billing — POS</div>
+        <div class="tb-breadcrumb" id="page-breadcrumb">Fast touch billing</div>
+      </div>
+      <div class="tb-spacer"></div>
+      <div class="tb-search" onclick="showToast('🔍 Search anything — items, bills, parties...')">
+        <span>🔍</span><span>Search everything...</span><span style="margin-left:auto;font-size:11px;background:var(--slate200);padding:1px 6px;border-radius:4px;color:var(--slate500)">⌘K</span>
+      </div>
+      <button class="tb-icon-btn" onclick="showToast('🔔 3 new notifications')">
+        🔔<span class="tb-notif-dot"></span>
+      </button>
+      <button class="tb-icon-btn" onclick="showToast('❓ Help & shortcuts')">❓</button>
+      <div id="topbar-actions"></div>
+    </div>
+
+    <!-- MODULE TAB BAR — populated by showPage() for pages that have sub-views -->
+    <div class="module-tabs" id="module-tabs"></div>
+
+    <!-- PAGES -->
+    <div style="flex:1;overflow:hidden;position:relative">
+
+    <!-- POS -->
+      <div class="page" id="page-pos" style="background:var(--slate100)">
+        <div class="pos-shell" style="flex:1;overflow:hidden">
+          <!-- Left: item browser -->
+          <div class="pos-left">
+            <div class="pos-search">
+              <input type="text" placeholder="🔍  Search items by name, barcode, or scan..." id="pos-search-input">
+            </div>
+            <div style="display:flex;gap:8px;padding:10px 12px;overflow-x:auto;flex-shrink:0;background:#fff;border-bottom:1px solid var(--slate200)">
+              <div class="filter-chip active">All</div>
+              <div class="filter-chip">Churidars</div>
+              <div class="filter-chip">Kurtis</div>
+              <div class="filter-chip">Sarees</div>
+              <div class="filter-chip">Leggings</div>
+              <div class="filter-chip">Innerwear</div>
+            </div>
+            <div class="pos-items-grid">
+              <div class="pos-item-card" onclick="addToCart('Churidar Red','₹450',450)">
+                <div class="pos-item-emoji">👗</div>
+                <div class="pos-item-name">Churidar DES-01</div>
+                <div class="pos-item-price">₹450</div>
+                <div class="pos-item-stock">Red · M · 12 pcs</div>
+              </div>
+              <div class="pos-item-card" onclick="addToCart('Kurti Blue XL','₹380',380)">
+                <div class="pos-item-emoji">👘</div>
+                <div class="pos-item-name">Kurti DES-05</div>
+                <div class="pos-item-price">₹380</div>
+                <div class="pos-item-stock">Blue · XL · 4 pcs</div>
+              </div>
+              <div class="pos-item-card" onclick="addToCart('Saree Green','₹850',850)">
+                <div class="pos-item-emoji">🥻</div>
+                <div class="pos-item-name">Saree Plain</div>
+                <div class="pos-item-price">₹850</div>
+                <div class="pos-item-stock">Green · Free · 8 pcs</div>
+              </div>
+              <div class="pos-item-card" onclick="addToCart('Leggings Black','₹120',120)">
+                <div class="pos-item-emoji">🩱</div>
+                <div class="pos-item-name">Leggings</div>
+                <div class="pos-item-price">₹120</div>
+                <div class="pos-item-stock">Black · Free · 3 pcs</div>
+              </div>
+              <div class="pos-item-card" onclick="addToCart('Dupatta Pink','₹180',180)">
+                <div class="pos-item-emoji">🧣</div>
+                <div class="pos-item-name">Dupatta</div>
+                <div class="pos-item-price">₹180</div>
+                <div class="pos-item-stock">Pink · Free · 20 pcs</div>
+              </div>
+              <div class="pos-item-card" onclick="addToCart('Kurti Yellow L','₹420',420)">
+                <div class="pos-item-emoji">👚</div>
+                <div class="pos-item-name">Kurti DES-08</div>
+                <div class="pos-item-price">₹420</div>
+                <div class="pos-item-stock">Yellow · L · 6 pcs</div>
+              </div>
+              <div class="pos-item-card" onclick="addToCart('Salwar Pink M','₹520',520)">
+                <div class="pos-item-emoji">👗</div>
+                <div class="pos-item-name">Salwar Set</div>
+                <div class="pos-item-price">₹520</div>
+                <div class="pos-item-stock">Pink · M · 9 pcs</div>
+              </div>
+              <div class="pos-item-card" onclick="addToCart('Innerwear White S','₹80',80)">
+                <div class="pos-item-emoji">👙</div>
+                <div class="pos-item-name">Innerwear</div>
+                <div class="pos-item-price">₹80</div>
+                <div class="pos-item-stock">White · S · 24 pcs</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Right: cart / bill -->
+          <div class="pos-right">
+            <div class="pos-customer" onclick="showModal('select-customer')">
+              <div class="pos-cust-icon">👤</div>
+              <div class="pos-cust-info">
+                <div class="pos-cust-name" id="pos-cust-name">Walk-in Customer</div>
+                <div class="pos-cust-sub">Tap to select customer</div>
+              </div>
+              <span style="color:var(--slate400);font-size:12px">▼</span>
+            </div>
+
+            <div class="pos-bill" id="pos-bill">
+              <div style="text-align:center;padding:40px 20px;color:var(--slate300)">
+                <div style="font-size:48px;margin-bottom:8px">🛒</div>
+                <div style="font-size:14px;font-weight:500">Add items to start billing</div>
+                <div style="font-size:12px;margin-top:4px">Tap any item on the left</div>
+              </div>
+            </div>
+
+            <div class="pos-totals" id="pos-totals" style="display:none">
+              <div class="pos-total-row"><span>Subtotal</span><span class="pos-total-amt" id="pos-subtotal">₹0</span></div>
+              <div class="pos-total-row"><span>GST (5%)</span><span class="pos-total-amt" id="pos-gst">₹0</span></div>
+              <div class="pos-total-row"><span>Discount</span><span class="pos-total-amt text-green">-₹0</span></div>
+              <div class="pos-total-row grand"><span>Total</span><span class="pos-total-amt" id="pos-total">₹0</span></div>
+            </div>
+
+            <div class="pos-actions">
+              <button class="pos-btn pos-btn-primary" onclick="showModal('checkout')">💳 &nbsp; Charge ₹<span id="pos-charge-amt">0</span></button>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+                <button class="pos-btn pos-btn-secondary" onclick="showToast('🖨️ Print bill preview')">🖨️ Print</button>
+                <button class="pos-btn pos-btn-secondary" onclick="clearCart()">🗑️ Clear</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+     
+    </div><!-- end pages -->
+  </div><!-- end main -->
+</div><!-- end shell -->
+
+
+
+</body>
+</html>
