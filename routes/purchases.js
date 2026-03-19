@@ -1,1 +1,477 @@
-const express = require('express'); const router = express.Router(); module.exports = router;
+const express          = require('express');
+const router           = express.Router();
+const db               = require('../database');
+const { requireLogin } = require('../middleware/auth');
+
+router.use(requireLogin);
+
+// ── Generate purchase number ───────────────────────────────
+async function generatePurchaseNumber() {
+  const [rows] = await db.execute(
+    'SELECT COUNT(*) AS cnt FROM purchases'
+  );
+  const count = rows[0].cnt + 1;
+  const pad   = String(count).padStart(6, '0');
+  const year  = new Date().getFullYear().toString().substr(2);
+  return `PUR-${year}-${pad}`;
+}
+
+// ── Generate variant barcode ───────────────────────────────
+function generateBarcode(prefix) {
+  const ts   = Date.now().toString(36).toUpperCase();
+  const rand = Math.random().toString(36).substr(2, 4).toUpperCase();
+  return `${prefix || 'VAR'}-${ts}-${rand}`;
+}
+
+// ── Generate SKU ───────────────────────────────────────────
+function generateSKU(itemName, attributes) {
+  const parts = [itemName.toUpperCase().replace(/\s+/g, '-').substr(0, 8)];
+  Object.values(attributes || {}).forEach(v => {
+    parts.push(String(v).toUpperCase().replace(/\s+/g, '-').substr(0, 4));
+  });
+  return parts.join('-');
+}
+
+// ══════════════════════════════════════════════════════════
+// GET — All purchases
+// ══════════════════════════════════════════════════════════
+router.get('/', async (req, res) => {
+  try {
+    const [purchases] = await db.execute(`
+      SELECT p.*,
+             s.name  AS supplier_name,
+             a.username AS created_by_name,
+             COUNT(pi.id) AS line_count
+      FROM purchases p
+      LEFT JOIN suppliers s  ON p.supplier_id  = s.id
+      LEFT JOIN auth      a  ON p.created_by   = a.id
+      LEFT JOIN purchase_items pi ON pi.purchase_id = p.id
+      WHERE p.status != 'cancelled'
+      GROUP BY p.id
+      ORDER BY p.created_at DESC
+    `);
+    res.json(purchases);
+  } catch (error) {
+    console.error('Error fetching purchases:', error);
+    res.status(500).json({ error: 'Could not fetch purchases.' });
+  }
+});
+
+// ══════════════════════════════════════════════════════════
+// GET — Single purchase with full details
+// ══════════════════════════════════════════════════════════
+router.get('/:id', async (req, res) => {
+  try {
+    const [rows] = await db.execute(`
+      SELECT p.*, s.name AS supplier_name
+      FROM purchases p
+      LEFT JOIN suppliers s ON p.supplier_id = s.id
+      WHERE p.id = ?`,
+      [req.params.id]
+    );
+    if (!rows.length) {
+      return res.status(404).json({ error: 'Purchase not found' });
+    }
+
+    const purchase = rows[0];
+
+    // Fetch line items with variant details
+    const [items] = await db.execute(`
+      SELECT pi.*,
+             i.name        AS item_name,
+             i.category_id,
+             c.name        AS category_name,
+             iv.sku,
+             iv.attributes AS variant_attributes
+      FROM purchase_items pi
+      JOIN items        i  ON pi.item_id    = i.id
+      JOIN categories   c  ON i.category_id = c.id
+      LEFT JOIN item_variants iv ON pi.variant_id = iv.id
+      WHERE pi.purchase_id = ?
+      ORDER BY pi.id ASC`,
+      [purchase.id]
+    );
+
+    purchase.items = items.map(item => {
+      try {
+        item.variant_attributes = JSON.parse(item.variant_attributes || '{}');
+      } catch(e) { item.variant_attributes = {}; }
+      return item;
+    });
+
+    res.json(purchase);
+  } catch (error) {
+    console.error('Error fetching purchase:', error);
+    res.status(500).json({ error: 'Could not fetch purchase.' });
+  }
+});
+
+// ══════════════════════════════════════════════════════════
+// POST — Save purchase bill
+// This is the most critical route — hybrid variant creation
+// ══════════════════════════════════════════════════════════
+router.post('/', async (req, res) => {
+  const connection = await db.getConnection();
+
+  try {
+    const {
+      supplier_id,
+      seller_bill_number,
+      purchase_date,
+      notes,
+      line_items    // array of line items
+    } = req.body;
+
+    // ── Validation ─────────────────────────────────────────
+    if (!supplier_id) {
+      return res.status(400).json({ error: 'Supplier is required' });
+    }
+    if (!line_items || !line_items.length) {
+      return res.status(400).json({ error: 'Add at least one line item' });
+    }
+
+    // Validate seller bill number uniqueness if provided
+    if (seller_bill_number) {
+      const [dupBill] = await db.execute(
+        `SELECT id FROM purchases
+         WHERE seller_bill_number = ? AND supplier_id = ? AND status != 'cancelled'`,
+        [seller_bill_number, supplier_id]
+      );
+      if (dupBill.length > 0) {
+        return res.status(400).json({
+          error: 'This seller bill number already exists for this supplier'
+        });
+      }
+    }
+
+    // ── Generate purchase number ────────────────────────────
+    const purchase_number = await generatePurchaseNumber();
+
+    // ── Calculate totals ────────────────────────────────────
+    let total_amount = 0;
+    let cgst_amount  = 0;
+    let sgst_amount  = 0;
+
+    // Pre-calculate totals from line items
+    for (const line of line_items) {
+      for (const variant of (line.variants || [])) {
+        const lineTotal = parseFloat(variant.quantity || 0) *
+                          parseFloat(variant.unit_price || 0);
+        total_amount += lineTotal;
+
+        // GST calculation
+        const cgstRate = parseFloat(line.cgst_rate || 0) / 100;
+        const sgstRate = parseFloat(line.sgst_rate || 0) / 100;
+        cgst_amount += lineTotal * cgstRate;
+        sgst_amount += lineTotal * sgstRate;
+      }
+    }
+
+    const net_amount = total_amount + cgst_amount + sgst_amount;
+
+    await connection.beginTransaction();
+
+    // ── 1. Insert purchase header ───────────────────────────
+    const [purchaseResult] = await connection.execute(`
+      INSERT INTO purchases (
+        purchase_number, supplier_id, seller_bill_number,
+        total_amount, cgst_amount, sgst_amount, net_amount,
+        notes, status, created_by, created_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'completed', ?, ?)`,
+      [
+        purchase_number,
+        supplier_id,
+        seller_bill_number || null,
+        total_amount.toFixed(2),
+        cgst_amount.toFixed(2),
+        sgst_amount.toFixed(2),
+        net_amount.toFixed(2),
+        notes || null,
+        req.session.userId,
+        purchase_date || new Date()
+      ]
+    );
+
+    const purchaseId    = purchaseResult.insertId;
+    let   variantsCreated = 0;
+    let   variantsUpdated = 0;
+
+    // ── 2. Process each line item ───────────────────────────
+    for (const line of line_items) {
+      const {
+        item_id,
+        item_name,
+        category_id,
+        uom_id,
+        cgst_rate,
+        sgst_rate,
+        variants   // array of { attributes, quantity, unit_price }
+      } = line;
+
+      // ── 2a. Find or create item ────────────────────────────
+      let actualItemId = item_id;
+
+      if (!actualItemId && item_name) {
+        // Quick create item if not exists
+        const [existingItem] = await connection.execute(
+          `SELECT id FROM items WHERE name = ? AND category_id = ? AND status = 'active'`,
+          [item_name.trim(), category_id]
+        );
+
+        if (existingItem.length > 0) {
+          actualItemId = existingItem[0].id;
+        } else {
+          // Create new item
+          const [newItem] = await connection.execute(`
+            INSERT INTO items (
+              category_id, name, base_uom,
+              has_variants, created_by
+            ) VALUES (?, ?, 'Pcs', 1, ?)`,
+            [category_id, item_name.trim(), req.session.userId]
+          );
+          actualItemId = newItem.insertId;
+        }
+      }
+
+      // ── 2b. Process each variant in this line ──────────────
+      for (const variant of (variants || [])) {
+        const {
+          attributes,   // { Size: 'M', Color: 'Red' }
+          quantity,
+          unit_price
+        } = variant;
+
+        const qty        = parseFloat(quantity   || 0);
+        const unitPrice  = parseFloat(unit_price || 0);
+        const totalPrice = (qty * unitPrice).toFixed(2);
+        const lineCgst   = (qty * unitPrice * (parseFloat(cgst_rate || 0) / 100)).toFixed(2);
+        const lineSgst   = (qty * unitPrice * (parseFloat(sgst_rate || 0) / 100)).toFixed(2);
+
+        if (qty <= 0) continue; // skip zero qty variants
+
+        // ── 2c. Find or create variant (HYBRID APPROACH) ──────
+        const attributesJson = JSON.stringify(attributes || {});
+
+        const [existingVariant] = await connection.execute(
+          `SELECT id, stock FROM item_variants
+           WHERE item_id = ? AND attributes = ? AND status = 'active'`,
+          [actualItemId, attributesJson]
+        );
+
+        let variantId;
+        let stockBefore;
+
+        if (existingVariant.length > 0) {
+          // ── Variant exists → update stock ──────────────────
+          variantId   = existingVariant[0].id;
+          stockBefore = parseFloat(existingVariant[0].stock);
+
+          await connection.execute(
+            'UPDATE item_variants SET stock = stock + ? WHERE id = ?',
+            [qty, variantId]
+          );
+          variantsUpdated++;
+
+        } else {
+          // ── New variant → create it ─────────────────────────
+          const sku     = generateSKU(item_name || 'ITEM', attributes);
+          const barcode = generateBarcode('VAR');
+          stockBefore   = 0;
+
+          const [newVariant] = await connection.execute(`
+            INSERT INTO item_variants
+            (item_id, sku, attributes, buy_price, stock, barcode, status)
+            VALUES (?, ?, ?, ?, ?, ?, 'active')`,
+            [actualItemId, sku, attributesJson, unitPrice, qty, barcode]
+          );
+          variantId = newVariant.insertId;
+          variantsCreated++;
+        }
+
+        // ── 2d. Record purchase line item ───────────────────
+        const convFactor = 1; // base unit for now
+        await connection.execute(`
+          INSERT INTO purchase_items (
+            purchase_id, item_id, variant_id, uom_id,
+            quantity, conversion_factor, base_qty,
+            unit_price, cgst_amount, sgst_amount, total_price
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          [
+            purchaseId,
+            actualItemId,
+            variantId,
+            uom_id || 1,
+            qty,
+            convFactor,
+            qty * convFactor,
+            unitPrice.toFixed(2),
+            lineCgst,
+            lineSgst,
+            totalPrice
+          ]
+        );
+
+        // ── 2e. Record stock ledger entry ───────────────────
+        await connection.execute(`
+          INSERT INTO stock_ledger (
+            item_id, variant_id, uom_id,
+            transaction_type, reference_id, reference_type,
+            quantity, base_qty,
+            stock_before, stock_after,
+            notes, created_by
+          ) VALUES (?, ?, ?, 'purchase', ?, 'purchase', ?, ?, ?, ?, ?, ?)`,
+          [
+            actualItemId,
+            variantId,
+            uom_id || 1,
+            purchaseId,
+            qty,
+            qty * convFactor,
+            stockBefore.toFixed(4),
+            (stockBefore + qty).toFixed(4),
+            `Purchase ${purchase_number}`,
+            req.session.userId
+          ]
+        );
+
+        // ── 2f. Update item base_stock ──────────────────────
+        await connection.execute(
+          'UPDATE items SET base_stock = base_stock + ? WHERE id = ?',
+          [qty, actualItemId]
+        );
+      }
+    }
+
+    // ── 3. Commit everything ────────────────────────────────
+    await connection.commit();
+
+    res.status(201).json({
+      message:          `Purchase ${purchase_number} saved successfully!`,
+      purchase_id:      purchaseId,
+      purchase_number,
+      variants_created: variantsCreated,
+      variants_updated: variantsUpdated,
+      total_amount:     total_amount.toFixed(2),
+      net_amount:       net_amount.toFixed(2)
+    });
+
+  } catch (error) {
+    await connection.rollback();
+    console.error('Error saving purchase:', error);
+    res.status(500).json({
+      error: 'Purchase save failed. No stock was updated. Please try again.'
+    });
+  } finally {
+    connection.release();
+  }
+});
+
+// ══════════════════════════════════════════════════════════
+// DELETE — Cancel purchase (soft)
+// ══════════════════════════════════════════════════════════
+router.delete('/:id', async (req, res) => {
+  const connection = await db.getConnection();
+  try {
+    const { id } = req.params;
+
+    const [rows] = await db.execute(
+      "SELECT * FROM purchases WHERE id = ? AND status = 'completed'",
+      [id]
+    );
+    if (!rows.length) {
+      return res.status(404).json({ error: 'Purchase not found or already cancelled' });
+    }
+
+    await connection.beginTransaction();
+
+    // Reverse stock for each line item
+    const [items] = await connection.execute(
+      'SELECT * FROM purchase_items WHERE purchase_id = ?', [id]
+    );
+
+    for (const item of items) {
+      // Get current stock
+      const [variant] = await connection.execute(
+        'SELECT stock FROM item_variants WHERE id = ?',
+        [item.variant_id]
+      );
+      if (!variant.length) continue;
+
+      const stockBefore = parseFloat(variant[0].stock);
+      const newStock    = Math.max(0, stockBefore - item.quantity);
+
+      // Reverse stock
+      await connection.execute(
+        'UPDATE item_variants SET stock = ? WHERE id = ?',
+        [newStock, item.variant_id]
+      );
+
+      // Update item base_stock
+      await connection.execute(
+        'UPDATE items SET base_stock = base_stock - ? WHERE id = ?',
+        [item.quantity, item.item_id]
+      );
+
+      // Record reversal in stock ledger
+      await connection.execute(`
+        INSERT INTO stock_ledger (
+          item_id, variant_id, uom_id,
+          transaction_type, reference_id, reference_type,
+          quantity, base_qty, stock_before, stock_after,
+          notes, created_by
+        ) VALUES (?, ?, ?, 'adjustment', ?, 'purchase', ?, ?, ?, ?, ?, ?)`,
+        [
+          item.item_id,
+          item.variant_id,
+          item.uom_id,
+          id,
+          -item.quantity,
+          -item.base_qty,
+          stockBefore.toFixed(4),
+          newStock.toFixed(4),
+          `Cancellation of purchase ${rows[0].purchase_number}`,
+          req.session.userId
+        ]
+      );
+    }
+
+    // Mark purchase as cancelled
+    await connection.execute(
+      "UPDATE purchases SET status = 'cancelled' WHERE id = ?", [id]
+    );
+
+    await connection.commit();
+    res.json({ message: 'Purchase cancelled and stock reversed successfully!' });
+
+  } catch (error) {
+    await connection.rollback();
+    console.error('Error cancelling purchase:', error);
+    res.status(500).json({ error: 'Could not cancel purchase.' });
+  } finally {
+    connection.release();
+  }
+});
+
+// ══════════════════════════════════════════════════════════
+// GET — Purchase history summary
+// ══════════════════════════════════════════════════════════
+router.get('/summary/stats', async (req, res) => {
+  try {
+    const [stats] = await db.execute(`
+      SELECT
+        COUNT(*)                          AS total_bills,
+        SUM(net_amount)                   AS total_value,
+        SUM(cgst_amount + sgst_amount)    AS total_gst,
+        COUNT(DISTINCT supplier_id)       AS unique_suppliers,
+        MAX(created_at)                   AS last_purchase
+      FROM purchases
+      WHERE status = 'completed'
+    `);
+    res.json(stats[0]);
+  } catch (error) {
+    console.error('Stats error:', error);
+    res.status(500).json({ error: 'Could not fetch stats.' });
+  }
+});
+
+module.exports = router;
