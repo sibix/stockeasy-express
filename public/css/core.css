@@ -1800,7 +1800,7 @@ textarea {
   flex: 1;
   display: flex;
   flex-direction: column;
-  overflow-y: auto;
+  overflow: hidden;
   height: 100vh;
   min-width: 0;
 }
@@ -1812,6 +1812,8 @@ textarea {
   display: flex;
   flex-direction: column;
   flex-shrink: 0;
+  height: 100vh;
+  overflow: visible;
   transition: width 0.25s ease;
   position: relative;
   z-index: var(--z-sticky);
@@ -1884,6 +1886,7 @@ textarea {
   flex: 1;
   overflow-y: auto;
   overflow-x: hidden;
+  min-height: 0;
   padding: var(--gap-sm) 0;
   scrollbar-width: none;
 }
