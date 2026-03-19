@@ -1,0 +1,215 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Settings — StockEasy</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=DM+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="/css/core.css" />
+    <link rel="stylesheet" href="/css/pages/settings.css" />
+  </head>
+  <body>
+    <div class="se-shell">
+
+      <div id="sidebar-container"></div>
+
+      <div class="se-main">
+
+        <div id="topbar-container"></div>
+
+        <!-- MODULE TABS -->
+        <div class="module-tabs">
+          <a href="#" class="mtab active" id="tab-account"  onclick="switchTab('account');  return false;">My Account</a>
+          <a href="#" class="mtab"         id="tab-users"   onclick="switchTab('users');    return false;">Users</a>
+          <a href="#" class="mtab"         id="tab-store"   onclick="switchTab('store');    return false;">Store</a>
+        </div>
+
+        <div class="se-page-content">
+
+          <!-- ══════════════════════════════════════════════
+               TAB: MY ACCOUNT
+          ══════════════════════════════════════════════ -->
+          <div id="content-account">
+
+            <div class="page-header">
+              <div>
+                <div class="page-header-title">My Account</div>
+                <div class="page-header-sub">Manage your login and password.</div>
+              </div>
+            </div>
+
+            <!-- Profile info card -->
+            <div class="card card-padded mb-4">
+              <div class="section-title">Profile</div>
+              <div class="sett-profile-row">
+                <div class="sett-avatar" id="account-avatar">?</div>
+                <div>
+                  <div class="sett-username" id="account-username">—</div>
+                  <div class="sett-role-badge" id="account-role">—</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Change password card -->
+            <div class="card card-padded mb-4">
+              <div class="section-title">Change Password</div>
+              <div class="form-row">
+                <div class="form-col" style="max-width:320px">
+                  <div class="form-group">
+                    <label class="form-label">Current Password</label>
+                    <input class="form-input" type="password" id="pw-current" placeholder="Enter current password" />
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">New Password</label>
+                    <input class="form-input" type="password" id="pw-new" placeholder="At least 6 characters" />
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">Confirm New Password</label>
+                    <input class="form-input" type="password" id="pw-confirm" placeholder="Repeat new password" />
+                  </div>
+                  <button class="btn btn-primary" onclick="changePassword()" id="btn-change-pw">Change Password</button>
+                </div>
+              </div>
+            </div>
+
+          </div>
+          <!-- end content-account -->
+
+          <!-- ══════════════════════════════════════════════
+               TAB: USERS (admin only)
+          ══════════════════════════════════════════════ -->
+          <div id="content-users" style="display:none">
+
+            <div class="page-header">
+              <div>
+                <div class="page-header-title">User Management</div>
+                <div class="page-header-sub">Manage team members and their roles.</div>
+              </div>
+              <button class="btn btn-primary" onclick="showAddUser()">+ Add User</button>
+            </div>
+
+            <!-- Add user form (hidden by default) -->
+            <div class="card card-padded mb-4" id="add-user-card" style="display:none">
+              <div class="section-title">New User</div>
+              <div class="form-row">
+                <div class="form-col" style="max-width:200px">
+                  <div class="form-group">
+                    <label class="form-label">Username *</label>
+                    <input class="form-input" type="text" id="new-username" placeholder="username" />
+                  </div>
+                </div>
+                <div class="form-col" style="max-width:240px">
+                  <div class="form-group">
+                    <label class="form-label">Email *</label>
+                    <input class="form-input" type="email" id="new-email" placeholder="user@example.com" />
+                  </div>
+                </div>
+                <div class="form-col" style="max-width:200px">
+                  <div class="form-group">
+                    <label class="form-label">Password *</label>
+                    <input class="form-input" type="password" id="new-password" placeholder="Min 6 characters" />
+                  </div>
+                </div>
+                <div class="form-col" style="max-width:160px">
+                  <div class="form-group">
+                    <label class="form-label">Role</label>
+                    <select class="form-select form-input" id="new-role">
+                      <option value="cashier">Cashier</option>
+                      <option value="manager">Manager</option>
+                      <option value="admin">Admin</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+              <div style="display:flex;gap:var(--space-2)">
+                <button class="btn btn-primary" onclick="addUser()" id="btn-add-user">Add User</button>
+                <button class="btn btn-outline" onclick="hideAddUser()">Cancel</button>
+              </div>
+            </div>
+
+            <!-- Users table -->
+            <div id="admin-only-msg" class="card card-padded" style="display:none">
+              <div style="text-align:center;color:var(--slate-400);padding:var(--space-6)">
+                User management is only available to admins.
+              </div>
+            </div>
+
+            <div class="card" style="overflow:hidden" id="users-table-card">
+              <table class="sett-table" id="users-table">
+                <thead>
+                  <tr>
+                    <th>Username</th>
+                    <th>Email</th>
+                    <th>Role</th>
+                    <th>Joined</th>
+                    <th style="text-align:right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="users-tbody">
+                  <tr><td colspan="5" style="text-align:center;padding:var(--space-6);color:var(--slate-400)">Loading...</td></tr>
+                </tbody>
+              </table>
+            </div>
+
+          </div>
+          <!-- end content-users -->
+
+          <!-- ══════════════════════════════════════════════
+               TAB: STORE
+          ══════════════════════════════════════════════ -->
+          <div id="content-store" style="display:none">
+
+            <div class="page-header">
+              <div>
+                <div class="page-header-title">Store Settings</div>
+                <div class="page-header-sub">Business information and preferences.</div>
+              </div>
+            </div>
+
+            <div class="card card-padded mb-4">
+              <div class="section-title">Business Info</div>
+              <div class="form-row">
+                <div class="form-col" style="max-width:320px">
+                  <div class="form-group">
+                    <label class="form-label">Business Name</label>
+                    <input class="form-input" type="text" id="store-name" placeholder="Your Store Name" />
+                  </div>
+                </div>
+                <div class="form-col" style="max-width:240px">
+                  <div class="form-group">
+                    <label class="form-label">GST Number</label>
+                    <input class="form-input" type="text" id="store-gst" placeholder="22AAAAA0000A1Z5" style="font-family:var(--font-mono)" />
+                  </div>
+                </div>
+                <div class="form-col" style="max-width:200px">
+                  <div class="form-group">
+                    <label class="form-label">Phone</label>
+                    <input class="form-input" type="tel" id="store-phone" placeholder="+91 98765 43210" />
+                  </div>
+                </div>
+              </div>
+              <div class="form-group" style="max-width:480px">
+                <label class="form-label">Address</label>
+                <input class="form-input" type="text" id="store-address" placeholder="Shop address..." />
+              </div>
+              <button class="btn btn-primary" onclick="saveStoreSettings()" id="btn-save-store">Save Settings</button>
+              <span class="form-hint" style="margin-left:var(--space-3)">Settings are saved in your browser (local storage).</span>
+            </div>
+
+          </div>
+          <!-- end content-store -->
+
+        </div>
+
+      </div>
+    </div>
+
+    <div id="toast" class="toast toast-green" style="display:none">
+      <span id="toast-icon" style="font-size:var(--text-xl)">✅</span>
+      <span id="toast-msg"></span>
+    </div>
+
+    <script src="/js/app.js"></script>
+    <script src="/js/pages/settings.js"></script>
+  </body>
+</html>

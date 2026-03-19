@@ -1,0 +1,201 @@
+/* ================================================================
+   reports.css — Reports page styles
+================================================================ */
+
+/* ── Filter bar ────────────────────────────────────────────── */
+.rpt-filter-bar {
+  margin-bottom: var(--space-4);
+}
+
+/* ── Placeholder ───────────────────────────────────────────── */
+.rpt-placeholder {
+  padding: var(--space-12) var(--space-4);
+  text-align: center;
+  color: var(--slate-400);
+  font-size: var(--text-base);
+}
+
+/* ── Stat bar ──────────────────────────────────────────────── */
+.rpt-stat-bar {
+  display: flex;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+  flex-wrap: wrap;
+}
+
+.rpt-stat {
+  flex: 1;
+  min-width: 120px;
+  background: var(--white);
+  border: 1px solid var(--slate-100);
+  border-radius: var(--radius-lg);
+  padding: var(--space-4);
+}
+
+.rpt-stat-label {
+  font-size: var(--text-xs);
+  color: var(--slate-500);
+  font-weight: var(--weight-semibold);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: var(--space-1);
+}
+
+.rpt-stat-val {
+  font-size: var(--text-lg);
+  font-weight: var(--weight-bold);
+  color: var(--slate-800);
+  font-family: var(--font-mono);
+}
+
+/* ── Generic report table ──────────────────────────────────── */
+.rpt-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--text-sm);
+}
+
+.rpt-table thead tr {
+  background: var(--slate-50);
+  border-bottom: 1px solid var(--slate-100);
+}
+
+.rpt-table th {
+  padding: var(--space-2) var(--space-3);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-bold);
+  color: var(--slate-500);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+
+.rpt-table td {
+  padding: var(--space-3) var(--space-3);
+  border-bottom: 1px solid var(--slate-50);
+  color: var(--slate-700);
+  vertical-align: middle;
+}
+
+.rpt-table tbody tr:last-child td { border-bottom: none; }
+.rpt-table tbody tr:hover td { background: var(--slate-50); }
+
+.rpt-mono  { font-family: var(--font-mono); }
+.rpt-bold  { font-weight: var(--weight-bold); color: var(--slate-800); }
+.rpt-empty {
+  padding: var(--space-6) var(--space-4);
+  text-align: center;
+  color: var(--slate-400);
+  font-size: var(--text-sm);
+}
+
+/* ── Two-column layout ─────────────────────────────────────── */
+.rpt-two-col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-4);
+  margin-bottom: var(--space-4);
+}
+
+@media (max-width: 900px) {
+  .rpt-two-col { grid-template-columns: 1fr; }
+}
+
+/* ── GST tiles ─────────────────────────────────────────────── */
+.rpt-gst-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+}
+
+@media (max-width: 700px) {
+  .rpt-gst-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+.rpt-gst-tile {
+  border-radius: var(--radius-lg);
+  padding: var(--space-4);
+  border: 1px solid var(--slate-100);
+  background: var(--white);
+}
+
+.rpt-gst-tile-green {
+  background: var(--green-50, #f0fdf4);
+  border-color: var(--green-200, #bbf7d0);
+}
+
+.rpt-gst-tile-label {
+  font-size: var(--text-xs);
+  color: var(--slate-500);
+  font-weight: var(--weight-semibold);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: var(--space-1);
+}
+
+.rpt-gst-tile-green .rpt-gst-tile-label {
+  color: var(--green-700, #15803d);
+}
+
+.rpt-gst-tile-val {
+  font-size: var(--text-xl);
+  font-weight: var(--weight-bold);
+  color: var(--slate-800);
+  font-family: var(--font-mono);
+}
+
+.rpt-gst-tile-green .rpt-gst-tile-val {
+  color: var(--green-800, #166534);
+}
+
+.rpt-gst-tile-sub {
+  font-size: var(--text-xs);
+  color: var(--slate-400);
+  margin-top: var(--space-1);
+}
+
+/* ── Net payable card ──────────────────────────────────────── */
+.rpt-net-card {
+  margin-bottom: var(--space-4);
+  text-align: center;
+  border: 2px solid var(--slate-100);
+}
+
+.rpt-net-payable {
+  border-color: var(--red-200, #fecaca);
+  background: var(--red-50, #fef2f2);
+}
+
+.rpt-net-credit {
+  border-color: var(--green-200, #bbf7d0);
+  background: var(--green-50, #f0fdf4);
+}
+
+.rpt-net-label {
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semibold);
+  color: var(--slate-500);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: var(--space-2);
+}
+
+.rpt-net-value {
+  font-size: 2rem;
+  font-weight: var(--weight-bold);
+  font-family: var(--font-mono);
+  color: var(--slate-800);
+  margin-bottom: var(--space-1);
+}
+
+.rpt-net-payable .rpt-net-value { color: var(--red-700, #b91c1c); }
+.rpt-net-credit  .rpt-net-value { color: var(--green-700, #15803d); }
+
+.rpt-net-sub {
+  font-size: var(--text-sm);
+  color: var(--slate-500);
+}
+
+/* ── mb-4 utility ──────────────────────────────────────────── */
+.mb-4 { margin-bottom: var(--space-4); }

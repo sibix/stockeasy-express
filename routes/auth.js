@@ -2,6 +2,8 @@ const express = require("express");
 const router = express.Router();
 const bcrypt = require("bcrypt");
 const db = require("../database");
+const { requireLogin } = require("../middleware/auth");
+const { requireRole }  = require("../middleware/roles");
 
 const SALT_ROUNDS = 10;
 
@@ -97,6 +99,74 @@ router.get("/status", (req, res) => {
     });
   } else {
     res.json({ loggedIn: false });
+  }
+});
+
+// ── List users (admin only) ─────────────────────────────────
+router.get("/users", requireLogin, requireRole("admin"), async (req, res) => {
+  try {
+    const [users] = await db.execute(
+      "SELECT id, username, email, role, created_at FROM auth ORDER BY created_at ASC"
+    );
+    res.json(users);
+  } catch (error) {
+    console.error("Get users error:", error);
+    res.status(500).json({ error: "Could not fetch users." });
+  }
+});
+
+// ── Update user role (admin only) ───────────────────────────
+router.put("/users/:id/role", requireLogin, requireRole("admin"), async (req, res) => {
+  try {
+    const { role } = req.body;
+    if (!["admin", "manager", "cashier"].includes(role)) {
+      return res.status(400).json({ error: "Invalid role." });
+    }
+    if (parseInt(req.params.id) === req.session.userId) {
+      return res.status(400).json({ error: "Cannot change your own role." });
+    }
+    await db.execute("UPDATE auth SET role = ? WHERE id = ?", [role, req.params.id]);
+    res.json({ message: "Role updated." });
+  } catch (error) {
+    console.error("Update role error:", error);
+    res.status(500).json({ error: "Could not update role." });
+  }
+});
+
+// ── Delete user (admin only) ────────────────────────────────
+router.delete("/users/:id", requireLogin, requireRole("admin"), async (req, res) => {
+  try {
+    if (parseInt(req.params.id) === req.session.userId) {
+      return res.status(400).json({ error: "Cannot delete your own account." });
+    }
+    await db.execute("DELETE FROM auth WHERE id = ?", [req.params.id]);
+    res.json({ message: "User deleted." });
+  } catch (error) {
+    console.error("Delete user error:", error);
+    res.status(500).json({ error: "Could not delete user." });
+  }
+});
+
+// ── Change own password ─────────────────────────────────────
+router.put("/password", requireLogin, async (req, res) => {
+  try {
+    const { current_password, new_password } = req.body;
+    if (!current_password || !new_password) {
+      return res.status(400).json({ error: "Both passwords are required." });
+    }
+    if (new_password.length < 6) {
+      return res.status(400).json({ error: "New password must be at least 6 characters." });
+    }
+    const [users] = await db.execute("SELECT * FROM auth WHERE id = ?", [req.session.userId]);
+    if (!users.length) return res.status(404).json({ error: "User not found." });
+    const match = await bcrypt.compare(current_password, users[0].password);
+    if (!match) return res.status(401).json({ error: "Current password is incorrect." });
+    const hashed = await bcrypt.hash(new_password, SALT_ROUNDS);
+    await db.execute("UPDATE auth SET password = ? WHERE id = ?", [hashed, req.session.userId]);
+    res.json({ message: "Password changed successfully." });
+  } catch (error) {
+    console.error("Change password error:", error);
+    res.status(500).json({ error: "Could not change password." });
   }
 });
 

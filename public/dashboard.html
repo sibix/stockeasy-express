@@ -1,6 +1,112 @@
 <!doctype html>
-<html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Dashboard — StockEasy</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=DM+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="/css/core.css" />
+    <link rel="stylesheet" href="/css/pages/dashboard.css" />
+  </head>
   <body>
-    <h1>Dashboard</h1>
+    <div class="se-shell">
+
+      <div id="sidebar-container"></div>
+
+      <div class="se-main">
+
+        <div id="topbar-container"></div>
+
+        <div class="se-page-content">
+
+          <!-- Page header -->
+          <div class="page-header">
+            <div>
+              <div class="page-header-title" id="dash-greeting">Good morning</div>
+              <div class="page-header-sub" id="dash-date"></div>
+            </div>
+          </div>
+
+          <!-- Metric tiles -->
+          <div class="metric-grid" id="metric-grid">
+            <div class="metric-tile">
+              <div class="metric-tile-label">This Month Purchases</div>
+              <div class="metric-tile-value" id="metric-purchases">—</div>
+            </div>
+            <div class="metric-tile">
+              <div class="metric-tile-label">Total Items</div>
+              <div class="metric-tile-value" id="metric-items">—</div>
+            </div>
+            <div class="metric-tile">
+              <div class="metric-tile-label">Stock Value</div>
+              <div class="metric-tile-value" id="metric-value">—</div>
+            </div>
+            <div class="metric-tile">
+              <div class="metric-tile-label">Out of Stock</div>
+              <div class="metric-tile-value metric-tile-value--alert" id="metric-oos">—</div>
+            </div>
+          </div>
+
+          <!-- Two-column row -->
+          <div class="dash-two-col">
+
+            <!-- Recent Purchases -->
+            <div class="card card-padded">
+              <div class="section-title">Recent Purchases</div>
+              <div id="recent-purchases-list"><div class="dash-empty">Loading...</div></div>
+              <a href="/purchases.html" class="dash-see-all">See all purchases →</a>
+            </div>
+
+            <!-- Low Stock Alerts -->
+            <div class="card card-padded">
+              <div class="section-title">Low Stock Alerts</div>
+              <div id="low-stock-list"><div class="dash-empty">Loading...</div></div>
+              <a href="/stock.html" class="dash-see-all">View full stock →</a>
+            </div>
+
+          </div>
+
+          <!-- Quick Actions -->
+          <div class="card card-padded" style="margin-bottom:var(--space-12)">
+            <div class="section-title">Quick Actions</div>
+            <div class="dash-actions">
+              <a href="/purchases.html" class="dash-action-card">
+                <div class="dash-action-icon">&#x1F4E6;</div>
+                <div class="dash-action-label">New Purchase</div>
+              </a>
+              <a href="/pos.html" class="dash-action-card">
+                <div class="dash-action-icon">&#x1F4B3;</div>
+                <div class="dash-action-label">New Sale</div>
+              </a>
+              <a href="/stock.html" class="dash-action-card">
+                <div class="dash-action-icon">&#x1F4CA;</div>
+                <div class="dash-action-label">View Stock</div>
+              </a>
+              <a href="/suppliers.html" class="dash-action-card">
+                <div class="dash-action-icon">&#x1F3EA;</div>
+                <div class="dash-action-label">Suppliers</div>
+              </a>
+              <a href="/categories.html" class="dash-action-card">
+                <div class="dash-action-icon">&#x1F3F7;&#xFE0F;</div>
+                <div class="dash-action-label">Categories</div>
+              </a>
+              <a href="/items.html" class="dash-action-card">
+                <div class="dash-action-icon">&#x1F4CB;</div>
+                <div class="dash-action-label">Add Item</div>
+              </a>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <div id="toast" class="toast toast-green" style="display:none">
+      <span id="toast-icon" style="font-size:var(--text-xl)">&#x2705;</span>
+      <span id="toast-msg"></span>
+    </div>
+
+    <script src="/js/app.js"></script>
+    <script src="/js/pages/dashboard.js"></script>
   </body>
 </html>

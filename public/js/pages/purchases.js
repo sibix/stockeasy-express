@@ -1,972 +1,595 @@
 /* ================================================================
-   purchases.js — Purchase Entry page logic
-   Ground rules:
-   - Event listeners bound once only
-   - Large saves chunked + single transaction on server
-   - Loading states on all saves
-   - DOM updates target containers not full rebuilds
+   purchases.js — Purchase bill entry + history (redesigned)
 ================================================================ */
 
-// ── State ──────────────────────────────────────────────────
-var _supplier     = null;   // selected supplier object
-var _lineItems    = [];     // array of line item objects
-var _categories   = [];     // all categories
-var _saveInProgress = false;
+var _supplier    = null;
+var _categories  = [];
+var _lineItems   = [];
+var _rowCounter  = 0;
+var _detailOpen  = false;
+var _editDraftId = null;
+var _supTimer    = null;
+var _eventsBound = false;
 
-// ── Line item structure ────────────────────────────────────
-function createLineItem(item, category) {
-  return {
-    id:          Date.now() + Math.random(), // local id for DOM
-    item_id:     item ? item.id   : null,
-    item_name:   item ? item.name : '',
-    category_id: category ? category.id   : null,
-    category:    category || null,
-    cgst_rate:   category ? category.cgst_rate : 0,
-    sgst_rate:   category ? category.sgst_rate : 0,
-    uom_id:      null,
-    purchase_mode: 'loose', // 'set' or 'loose'
-    set_def:     null,      // selected set definition
-    variants:    [],        // { attributes, quantity, unit_price }
-    expanded:    true
-  };
-}
-
-// ── Page init ──────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', async function() {
   await loadComponent('sidebar-container', '/components/sidebar.html');
   await loadComponent('topbar-container',  '/components/topbar.html');
   await checkSession();
   setActivePage('purchases');
-  setTopbar('Purchases', 'Buy & Sell › New Purchase');
-
+  setTopbar('Purchases', 'Buy & Sell › Purchases');
+  document.getElementById('bill-date').value = new Date().toISOString().split('T')[0];
   await loadCategories();
-  setTodayDate();
-  bindEvents();
-  renderLineItems();
+  bindGlobalEvents();
+  switchTab('new');
 });
 
-// ── Set today's date ───────────────────────────────────────
-function setTodayDate() {
-  var dateInput = document.getElementById('purchase-date');
-  if (dateInput) {
-    dateInput.value = new Date().toISOString().split('T')[0];
-  }
+// ── Tab switching ──────────────────────────────────────────
+function switchTab(tab) {
+  document.getElementById('content-history').style.display = tab === 'history' ? '' : 'none';
+  document.getElementById('content-new').style.display     = tab === 'new'     ? '' : 'none';
+  document.getElementById('tab-history').classList.toggle('active', tab === 'history');
+  document.getElementById('tab-new').classList.toggle('active', tab === 'new');
+  if (tab === 'history') loadHistory();
 }
 
 // ── Load categories ────────────────────────────────────────
 async function loadCategories() {
-  try {
-    var result = await apiFetch('/categories');
-    if (result.ok) _categories = result.data;
-  } catch(e) {
-    console.error('Could not load categories:', e);
-  }
+  var res = await apiFetch('/categories');
+  if (res.ok) _categories = res.data;
 }
 
-// ── Bind all events once ───────────────────────────────────
-var _eventsBound = false;
-function bindEvents() {
+// ── Global event bindings ──────────────────────────────────
+function bindGlobalEvents() {
   if (_eventsBound) return;
   _eventsBound = true;
-
-  // Supplier search
-  var supplierInput = document.getElementById('supplier-input');
-  if (supplierInput) {
-    supplierInput.addEventListener('input', debounce(onSupplierSearch, 300));
-    supplierInput.addEventListener('focus', function() {
-      if (this.value.length >= 1) onSupplierSearch.call(this);
-    });
-  }
-
-  // Close dropdowns on outside click
   document.addEventListener('click', function(e) {
-    if (!e.target.closest('#supplier-wrap')) {
-      closeDropdown('supplier-drop');
+    if (!e.target.closest('#sup-search-input') && !e.target.closest('#sup-drop')) {
+      document.getElementById('sup-drop').style.display = 'none';
     }
   });
 }
 
-// ── Debounce helper ────────────────────────────────────────
-function debounce(fn, delay) {
-  var timer;
-  return function() {
-    var ctx  = this;
-    var args = arguments;
-    clearTimeout(timer);
-    timer = setTimeout(function() { fn.apply(ctx, args); }, delay);
-  };
-}
-
-// ── Close dropdown ─────────────────────────────────────────
-function closeDropdown(id) {
-  var el = document.getElementById(id);
-  if (el) el.style.display = 'none';
-}
-
-// ══════════════════════════════════════════════════════════
-// SUPPLIER SECTION
-// ══════════════════════════════════════════════════════════
-async function onSupplierSearch() {
-  var q = document.getElementById('supplier-input').value.trim();
-  if (q.length < 1) { closeDropdown('supplier-drop'); return; }
-
-  try {
-    var result = await apiFetch('/suppliers/search/query?q=' + encodeURIComponent(q));
-    if (!result.ok) return;
-
-    var drop = document.getElementById('supplier-drop');
-    if (!drop) return;
-
-    if (!result.data.length) {
-      drop.innerHTML = '<div class="p-drop-item" onclick="openQuickAddSupplier()">' +
-        '<span style="color:var(--color-primary)">+ Add "' + q + '" as new supplier</span>' +
-        '</div>';
-    } else {
-      drop.innerHTML = result.data.map(function(s) {
-        return '<div class="p-drop-item" onclick="selectSupplier(' + s.id + ')">' +
-          '<div class="p-drop-name">' + s.name + '</div>' +
-          '<div class="p-drop-meta">' + (s.location || '') + (s.contact ? ' · ' + s.contact : '') + '</div>' +
-          '</div>';
-      }).join('') +
-      '<div class="p-drop-item p-drop-add" onclick="openQuickAddSupplier()">' +
-        '+ Add new supplier' +
-      '</div>';
-    }
-
-    drop.style.display = 'block';
-  } catch(e) {
-    console.error('Supplier search error:', e);
-  }
-}
-
-async function selectSupplier(id) {
-  try {
-    var result = await apiFetch('/suppliers/' + id);
-    if (!result.ok) return;
-
-    _supplier = result.data;
-    document.getElementById('supplier-input').value = _supplier.name;
-    closeDropdown('supplier-drop');
-
-    // Show supplier info
-    var info = document.getElementById('supplier-info');
-    if (info) {
-      info.innerHTML =
-        '<div class="supplier-badge">' +
-          '<span class="supplier-name">' + _supplier.name + '</span>' +
-          (_supplier.contact  ? '<span class="supplier-meta">📞 ' + _supplier.contact  + '</span>' : '') +
-          (_supplier.location ? '<span class="supplier-meta">📍 ' + _supplier.location + '</span>' : '') +
-          '<button class="supplier-clear" onclick="clearSupplier()">×</button>' +
-        '</div>';
-      info.style.display = 'block';
-    }
-
-    // Update all existing line items with supplier's set definitions
-    _lineItems.forEach(function(line, i) {
-      if (line.category_id) loadSetDefs(i);
-    });
-
-    showToast(_supplier.name + ' selected', 'green');
-  } catch(e) {
-    await handleFetchError(e);
-  }
-}
-
-function clearSupplier() {
-  _supplier = null;
-  document.getElementById('supplier-input').value = '';
-  var info = document.getElementById('supplier-info');
-  if (info) { info.innerHTML = ''; info.style.display = 'none'; }
-}
-
-// ── Quick add supplier ─────────────────────────────────────
-function openQuickAddSupplier() {
-  var name = document.getElementById('supplier-input').value.trim();
-  var modal = document.getElementById('quick-supplier-modal');
-  if (modal) {
-    document.getElementById('qs-name').value = name;
-    modal.style.display = 'flex';
-  }
-  closeDropdown('supplier-drop');
-}
-
-function closeQuickSupplier() {
-  var modal = document.getElementById('quick-supplier-modal');
-  if (modal) modal.style.display = 'none';
-}
-
-async function saveQuickSupplier() {
-  var name    = val('qs-name');
-  var contact = val('qs-contact');
-  var location = val('qs-location');
-
-  if (!name) { showToast('Supplier name is required', 'amber'); return; }
-
-  try {
-    var result = await apiFetch('/suppliers', 'POST', { name, contact, location });
-    if (result.ok) {
-      showToast('Supplier added!', 'green');
-      closeQuickSupplier();
-      await selectSupplier(result.data.id);
-    } else {
-      showToast(result.data.error || 'Could not add supplier', 'red');
-    }
-  } catch(e) {
-    await handleFetchError(e);
-  }
-}
-
-// ══════════════════════════════════════════════════════════
-// LINE ITEMS
-// ══════════════════════════════════════════════════════════
-
-// ── Add new line item ──────────────────────────────────────
-function addLineItem() {
-  _lineItems.push(createLineItem(null, null));
-  renderLineItems();
-  // Scroll to new line
-  setTimeout(function() {
-    var lines = document.querySelectorAll('.line-item-card');
-    if (lines.length) lines[lines.length - 1].scrollIntoView({ behavior: 'smooth' });
-  }, 100);
-}
-
-// ── Remove line item ───────────────────────────────────────
-function removeLineItem(localId) {
-  _lineItems = _lineItems.filter(function(l) { return l.id !== localId; });
-  renderLineItems();
-  updateBillSummary();
-}
-
-// ── Toggle expand/collapse line item ──────────────────────
-function toggleLineItem(localId) {
-  var line = _lineItems.find(function(l) { return l.id === localId; });
-  if (line) {
-    line.expanded = !line.expanded;
-    var body = document.getElementById('line-body-' + localId);
-    if (body) body.style.display = line.expanded ? 'block' : 'none';
-    var chev = document.getElementById('line-chev-' + localId);
-    if (chev) chev.textContent = line.expanded ? '▲' : '▼';
-  }
-}
-
-// ── Render all line items ──────────────────────────────────
-function renderLineItems() {
-  var container = document.getElementById('line-items-container');
-  if (!container) return;
-
-  if (!_lineItems.length) {
-    container.innerHTML = '<div class="empty-lines">' +
-      '<div style="font-size:28px;margin-bottom:8px">📦</div>' +
-      '<div style="font-weight:600;color:var(--slate-600)">No items added yet</div>' +
-      '<div style="font-size:12px;color:var(--slate-400);margin-top:4px">Click "Add Line Item" below</div>' +
-      '</div>';
+// ── Supplier search ────────────────────────────────────────
+function onSupSearch(q) {
+  clearTimeout(_supTimer);
+  var drop = document.getElementById('sup-drop');
+  if (!q.trim()) {
+    drop.style.display = 'none';
+    document.getElementById('sup-id').value = '';
+    _supplier = null;
     return;
   }
+  _supTimer = setTimeout(async function() {
+    var res = await apiFetch('/suppliers/search/query?q=' + encodeURIComponent(q));
+    if (!res.ok || !res.data.length) {
+      drop.innerHTML = '<div class="p-drop-empty">No suppliers found</div>';
+      drop.style.display = 'block';
+      return;
+    }
+    drop.innerHTML = res.data.slice(0, 8).map(function(s) {
+      return '<div class="p-drop-item" onclick=\'selectSupplier(' + JSON.stringify(s).replace(/'/g,"&#39;") + ')\'>' +
+        escH(s.name) + (s.location ? '<span class="p-drop-sub"> · ' + escH(s.location) + '</span>' : '') + '</div>';
+    }).join('');
+    drop.style.display = 'block';
+  }, 250);
+}
 
-  container.innerHTML = _lineItems.map(function(line, i) {
-    return renderLineItemCard(line, i);
+function selectSupplier(s) {
+  _supplier = s;
+  document.getElementById('sup-search-input').value = s.name;
+  document.getElementById('sup-id').value = s.id;
+  document.getElementById('sup-drop').style.display = 'none';
+  _lineItems.forEach(function(li) {
+    if (li.category_id) loadSetDefsForRow(li.row_id, li.category_id);
+  });
+}
+
+// ── Row initialisation ─────────────────────────────────────
+function initRows() {
+  var n = parseInt(document.getElementById('row-count-input').value, 10) || 1;
+  _lineItems = [];
+  _rowCounter = 0;
+  for (var i = 0; i < n; i++) addRow();
+  showSimpleView();
+}
+
+function addOneRow() { addRow(); renderSimpleTable(); checkTotalMatch(); }
+
+function addRow() {
+  _rowCounter++;
+  _lineItems.push({
+    row_id:       _rowCounter,
+    category_id:  null, category_name: '', category: null,
+    item_id:      null, item_name: '',
+    set_def:      null, set_defs: [],
+    attr2_name: '', attr2_value: '',
+    attr3_name: '', attr3_value: '',
+    qty: 0, qty_mode: 'pcs',
+    buy_price: 0, sell_price: 0, mrp: 0,
+    _sizeOverrides: null
+  });
+}
+
+function showSimpleView() {
+  document.getElementById('simple-view-card').style.display = '';
+  document.getElementById('add-row-btn').style.display = '';
+  renderSimpleTable();
+  checkTotalMatch();
+}
+
+// ── Simple table render ────────────────────────────────────
+function renderSimpleTable() {
+  var tbody = document.getElementById('simple-tbody');
+  tbody.innerHTML = _lineItems.map(function(li, idx) {
+    var rid = li.row_id;
+
+    var catOptions = '<option value="">— Category —</option>' +
+      _categories.map(function(c) {
+        return '<option value="' + c.id + '"' + (li.category_id == c.id ? ' selected' : '') + '>' + escH(c.name) + '</option>';
+      }).join('');
+
+    var setDefOptions = '<option value="">Loose / No set</option>' +
+      (li.set_defs || []).map(function(sd) {
+        return '<option value="' + sd.id + '"' + (li.set_def && li.set_def.id == sd.id ? ' selected' : '') + '>' + escH(sd.name) + '</option>';
+      }).join('');
+
+    var attr2Options = buildAttrOptions(li, 1, li.attr2_value);
+    var attr3Options = buildAttrOptions(li, 2, li.attr3_value);
+
+    return (
+      '<tr id="row-' + rid + '">' +
+        '<td class="pur-row-num">' + (idx + 1) + '</td>' +
+        '<td><select class="form-select form-input pur-cell-sel" onchange="onCatChange(' + rid + ', this.value)">' + catOptions + '</select></td>' +
+        '<td><input class="form-input pur-cell-inp" type="text" value="' + escH(li.item_name) + '" placeholder="Item name" oninput="onItemName(' + rid + ', this.value)" list="item-list-' + rid + '"><datalist id="item-list-' + rid + '"></datalist></td>' +
+        '<td><select class="form-select form-input pur-cell-sel" onchange="onSetDefChange(' + rid + ', this.value)">' + setDefOptions + '</select></td>' +
+        '<td><select class="form-select form-input pur-cell-sel" onchange="onAttr2Change(' + rid + ', this.value)">' + attr2Options + '</select></td>' +
+        '<td><select class="form-select form-input pur-cell-sel" onchange="onAttr3Change(' + rid + ', this.value)">' + attr3Options + '</select></td>' +
+        '<td>' +
+          '<div class="pur-qty-wrap">' +
+            '<input class="form-input pur-qty-inp" type="number" min="0" value="' + (li.qty || '') + '" placeholder="0" oninput="onQty(' + rid + ', this.value)">' +
+            '<div class="seg-control pur-qty-toggle">' +
+              '<button class="seg-btn' + (li.qty_mode !== 'sets' ? ' active' : '') + '" onclick="setQtyMode(' + rid + ',\'pcs\')">Pcs</button>' +
+              '<button class="seg-btn' + (li.qty_mode === 'sets' ? ' active' : '') + '" onclick="setQtyMode(' + rid + ',\'sets\')">Sets</button>' +
+            '</div>' +
+          '</div>' +
+        '</td>' +
+        '<td><input class="form-input pur-cell-inp" type="number" min="0" value="' + (li.buy_price || '') + '" placeholder="0.00" oninput="onPrice(' + rid + ',\'buy_price\',this.value)"></td>' +
+        '<td><input class="form-input pur-cell-inp" type="number" min="0" value="' + (li.sell_price || '') + '" placeholder="0.00" oninput="onPrice(' + rid + ',\'sell_price\',this.value)"></td>' +
+        '<td><input class="form-input pur-cell-inp" type="number" min="0" value="' + (li.mrp || '') + '" placeholder="0.00" oninput="onPrice(' + rid + ',\'mrp\',this.value)"></td>' +
+        '<td><button class="pur-del-btn" onclick="removeRow(' + rid + ')">×</button></td>' +
+      '</tr>'
+    );
   }).join('');
 }
 
-// ── Render single line item card ───────────────────────────
-function renderLineItemCard(line, index) {
-  var lineTotal = calcLineTotal(line);
-
-  return '<div class="line-item-card" id="line-card-' + line.id + '">' +
-
-    // Header
-    '<div class="line-header" onclick="toggleLineItem(' + line.id + ')">' +
-      '<div class="line-num">' + (index + 1) + '</div>' +
-      '<div class="line-title">' +
-        (line.item_name
-          ? '<strong>' + line.item_name + '</strong>' +
-            (line.category ? ' <span class="line-cat">(' + line.category.name + ')</span>' : '')
-          : '<span style="color:var(--slate-400)">Select item...</span>') +
-      '</div>' +
-      '<div class="line-summary">' +
-        (line.variants.length
-          ? line.variants.reduce(function(a, v) { return a + (parseFloat(v.quantity) || 0); }, 0) + ' pcs'
-          : '') +
-        (lineTotal > 0 ? ' · ' + formatINR(lineTotal) : '') +
-      '</div>' +
-      '<span id="line-chev-' + line.id + '" class="line-chev">' +
-        (line.expanded ? '▲' : '▼') +
-      '</span>' +
-      '<button class="line-remove" onclick="event.stopPropagation();removeLineItem(' + line.id + ')">×</button>' +
-    '</div>' +
-
-    // Body
-    '<div id="line-body-' + line.id + '" style="' + (line.expanded ? '' : 'display:none') + '">' +
-
-      // Item search
-      '<div class="line-section">' +
-        '<div class="form-row">' +
-          '<div class="form-col" style="max-width:320px">' +
-            '<div class="form-group">' +
-              '<label class="form-label">Item Name *</label>' +
-              '<div style="position:relative">' +
-                '<input class="form-input" type="text" ' +
-                  'id="item-search-' + line.id + '" ' +
-                  'value="' + (line.item_name || '') + '" ' +
-                  'placeholder="Search or type new item name..." ' +
-                  'oninput="onItemSearch(this,' + line.id + ')" ' +
-                  'onblur="onItemNameBlur(' + line.id + ',this.value)" />' +
-                '<div class="p-drop" id="item-drop-' + line.id + '" style="display:none"></div>' +
-              '</div>' +
-            '</div>' +
-          '</div>' +
-          '<div class="form-col" style="max-width:220px">' +
-            '<div class="form-group">' +
-              '<label class="form-label">Category *</label>' +
-              '<select class="form-input form-select" ' +
-                'id="cat-select-' + line.id + '" ' +
-                'onchange="onCategoryChange(' + line.id + ',this.value)">' +
-                '<option value="">Select category</option>' +
-                _categories.map(function(c) {
-                  return '<option value="' + c.id + '"' +
-                    (line.category_id == c.id ? ' selected' : '') + '>' +
-                    c.name + '</option>';
-                }).join('') +
-              '</select>' +
-            '</div>' +
-          '</div>' +
-          '<div class="form-col" style="max-width:180px">' +
-            '<div class="form-group">' +
-              '<label class="form-label">Purchase Mode</label>' +
-              '<div class="seg-control">' +
-                '<button class="seg-btn' + (line.purchase_mode === 'loose' ? ' active' : '') + '" ' +
-                  'onclick="setPurchaseMode(' + line.id + ',\'loose\')">Loose</button>' +
-                '<button class="seg-btn' + (line.purchase_mode === 'set' ? ' active' : '') + '" ' +
-                  'onclick="setPurchaseMode(' + line.id + ',\'set\')">Set</button>' +
-              '</div>' +
-            '</div>' +
-          '</div>' +
-          (line.purchase_mode === 'set' ? renderSetDefSelector(line) : '') +
-        '</div>' +
-      '</div>' +
-
-      // Attribute breakdown grid
-      '<div class="line-section" id="variant-grid-' + line.id + '">' +
-        renderVariantGrid(line) +
-      '</div>' +
-
-    '</div>' +
-    '</div>';
+function buildAttrOptions(li, attrIdx, selectedVal) {
+  var opts = '<option value="">—</option>';
+  if (!li.category) return opts;
+  var attrs = li.category.attributes || [];
+  if (!attrs[attrIdx]) return opts;
+  var vals = attrs[attrIdx].attribute_values || [];
+  return opts + vals.map(function(v) {
+    return '<option' + (selectedVal === v ? ' selected' : '') + '>' + escH(v) + '</option>';
+  }).join('');
 }
 
-// ── Set definition selector ────────────────────────────────
-function renderSetDefSelector(line) {
-  var sets = line._sets || [];
-  return '<div class="form-col" style="max-width:220px">' +
-    '<div class="form-group">' +
-      '<label class="form-label">Set Definition</label>' +
-      '<select class="form-input form-select" ' +
-        'id="set-select-' + line.id + '" ' +
-        'onchange="onSetDefChange(' + line.id + ',this.value)">' +
-        '<option value="">Select set type</option>' +
-        sets.map(function(s) {
-          return '<option value="' + s.id + '"' +
-            (line.set_def && line.set_def.id == s.id ? ' selected' : '') + '>' +
-            s.name + ' (' + s.total_pcs + ' pcs)' +
-            '</option>';
-        }).join('') +
-      '</select>' +
-    '</div>' +
-    '</div>';
-}
+// ── Row event handlers ─────────────────────────────────────
+async function onCatChange(rid, catId) {
+  var li = getRow(rid);
+  if (!li) return;
+  li.category_id = parseInt(catId) || null;
+  li.set_def = null; li.attr2_value = ''; li.attr3_value = '';
 
-// ── Variant entry grid ─────────────────────────────────────
-function renderVariantGrid(line) {
-  if (!line.category_id) {
-    return '<div class="info-panel">Select a category to see attribute options.</div>';
-  }
-
-  var cat = _categories.find(function(c) { return c.id == line.category_id; });
-  if (!cat) return '';
-
-  // Get attributes from category
-  var attrs = line._attributes || [];
-
-  if (!attrs.length) {
-    // Simple item — no attributes, just qty and price
-    return renderSimpleVariantRow(line);
-  }
-
-  // Find first two attributes (primary ones for grid)
-  var rowAttr = attrs[0];   // e.g. Size
-  var colAttr = attrs[1];   // e.g. Color (optional)
-
-  var rowValues = rowAttr ? (Array.isArray(rowAttr.attribute_values)
-    ? rowAttr.attribute_values
-    : JSON.parse(rowAttr.attribute_values || '[]')) : [];
-
-  var colValues = colAttr ? (Array.isArray(colAttr.attribute_values)
-    ? colAttr.attribute_values
-    : JSON.parse(colAttr.attribute_values || '[]')) : [];
-
-  if (!rowValues.length) {
-    return renderSimpleVariantRow(line);
-  }
-
-  // Build grid
-  var html = '<div class="variant-grid-wrap">' +
-    '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">' +
-      '<div class="form-label" style="margin:0">' +
-        'Quantity breakdown' +
-        (rowAttr ? ' by ' + rowAttr.attribute_name : '') +
-        (colAttr ? ' × ' + colAttr.attribute_name  : '') +
-      '</div>' +
-      '<div style="display:flex;align-items:center;gap:12px">' +
-        '<label class="form-label" style="margin:0">Buy Price ₹</label>' +
-        '<input type="number" class="form-input" style="width:110px;padding:5px 8px" ' +
-          'id="bulk-price-' + line.id + '" placeholder="0.00" min="0" step="0.01" ' +
-          'oninput="applyBulkPrice(' + line.id + ',this.value)" />' +
-        '<span class="form-hint" style="margin:0">Apply to all</span>' +
-      '</div>' +
-    '</div>';
-
-  if (colValues.length) {
-    // 2D grid — rows = Size, cols = Color
-    html += '<div style="overflow-x:auto"><table class="variant-table">' +
-      '<thead><tr>' +
-        '<th class="vt-attr">' + rowAttr.attribute_name + ' / ' + colAttr.attribute_name + '</th>' +
-        colValues.map(function(col) {
-          return '<th class="vt-col">' + col + '</th>';
-        }).join('') +
-        '<th class="vt-col">Row Total</th>' +
-      '</tr></thead><tbody>';
-
-    rowValues.forEach(function(row) {
-      html += '<tr>' +
-        '<td class="vt-attr-val">' + row + '</td>' +
-        colValues.map(function(col) {
-          var attrs = {};
-          attrs[rowAttr.attribute_name] = row;
-          attrs[colAttr.attribute_name] = col;
-          var existing = findVariant(line, attrs);
-          var setQty   = line.set_def ? getSetQty(line.set_def, row) : '';
-
-          return '<td class="vt-cell">' +
-            '<input type="number" class="vt-input" ' +
-              'id="qty-' + line.id + '-' + row + '-' + col + '" ' +
-              'placeholder="0" min="0" ' +
-              'value="' + (existing ? existing.quantity : (setQty || '')) + '" ' +
-              'oninput="updateVariantQty(' + line.id + ',' +
-                JSON.stringify(attrs) + ',+this.value,null)">' +
-            '</td>';
-        }).join('') +
-        '<td class="vt-row-total" id="row-total-' + line.id + '-' + row + '">0</td>' +
-        '</tr>';
-    });
-
-    html += '<tr class="vt-totals-row">' +
-      '<td class="vt-attr-val">Col Total</td>' +
-      colValues.map(function(col) {
-        return '<td class="vt-col-total" id="col-total-' + line.id + '-' + col + '">0</td>';
-      }).join('') +
-      '<td class="vt-grand-total" id="grand-total-' + line.id + '">0</td>' +
-      '</tr>';
-
-    html += '</tbody></table></div>';
-
-  } else {
-    // 1D list — just one attribute
-    html += '<div class="variant-1d">';
-    rowValues.forEach(function(row) {
-      var attrs = {};
-      attrs[rowAttr.attribute_name] = row;
-      var existing = findVariant(line, attrs);
-      var setQty   = line.set_def ? getSetQty(line.set_def, row) : '';
-
-      html += '<div class="variant-1d-row">' +
-        '<span class="variant-1d-label pill pb">' + row + '</span>' +
-        '<input type="number" class="form-input variant-1d-qty" ' +
-          'placeholder="0" min="0" ' +
-          'value="' + (existing ? existing.quantity : (setQty || '')) + '" ' +
-          'oninput="updateVariantQty(' + line.id + ',' +
-            JSON.stringify(attrs) + ',+this.value,null)">' +
-        '<span class="variant-1d-unit">pcs</span>' +
-        '</div>';
-    });
-    html += '</div>';
-  }
-
-  // Price per variant (shown below grid)
-  html += '<div style="margin-top:8px;font-size:12px;color:var(--slate-400)">' +
-    'Line amount: <strong id="line-amount-' + line.id + '">' + formatINR(calcLineTotal(line)) + '</strong>' +
-    '</div>';
-
-  html += '</div>';
-  return html;
-}
-
-// ── Simple variant row (no attributes) ────────────────────
-function renderSimpleVariantRow(line) {
-  var existing = line.variants[0] || {};
-  return '<div class="form-row">' +
-    '<div class="form-col" style="max-width:140px">' +
-      '<div class="form-group">' +
-        '<label class="form-label">Quantity</label>' +
-        '<input type="number" class="form-input" placeholder="0" min="0" ' +
-          'value="' + (existing.quantity || '') + '" ' +
-          'oninput="updateVariantQty(' + line.id + ',{},+this.value,null)" />' +
-      '</div>' +
-    '</div>' +
-    '<div class="form-col" style="max-width:160px">' +
-      '<div class="form-group">' +
-        '<label class="form-label">Buy Price ₹</label>' +
-        '<input type="number" class="form-input" placeholder="0.00" min="0" step="0.01" ' +
-          'value="' + (existing.unit_price || '') + '" ' +
-          'oninput="updateVariantPrice(' + line.id + ',{},+this.value)" />' +
-      '</div>' +
-    '</div>' +
-    '<div class="form-col" style="max-width:160px">' +
-      '<div class="form-group">' +
-        '<label class="form-label">Line Total</label>' +
-        '<div style="padding:8px 12px;background:var(--slate-50);border:1px solid var(--slate-200);' +
-          'border-radius:var(--radius-md);font-weight:600" id="line-amount-' + line.id + '">' +
-          formatINR(calcLineTotal(line)) +
-        '</div>' +
-      '</div>' +
-    '</div>' +
-    '</div>';
-}
-
-// ══════════════════════════════════════════════════════════
-// VARIANT UPDATE HELPERS
-// ══════════════════════════════════════════════════════════
-
-function findVariant(line, attrs) {
-  var key = JSON.stringify(attrs);
-  return line.variants.find(function(v) {
-    return JSON.stringify(v.attributes) === key;
-  });
-}
-
-function updateVariantQty(lineId, attrs, qty, price) {
-  var line = _lineItems.find(function(l) { return l.id === lineId; });
-  if (!line) return;
-
-  var key      = JSON.stringify(attrs);
-  var existing = line.variants.find(function(v) {
-    return JSON.stringify(v.attributes) === key;
-  });
-
-  if (existing) {
-    existing.quantity = qty;
-    if (price !== null) existing.unit_price = price;
-  } else {
-    line.variants.push({
-      attributes: attrs,
-      quantity:   qty,
-      unit_price: line._bulkPrice || 0
-    });
-  }
-
-  updateRowColTotals(line);
-  updateLineAmount(line);
-  updateBillSummary();
-}
-
-function updateVariantPrice(lineId, attrs, price) {
-  var line = _lineItems.find(function(l) { return l.id === lineId; });
-  if (!line) return;
-
-  var key      = JSON.stringify(attrs);
-  var existing = line.variants.find(function(v) {
-    return JSON.stringify(v.attributes) === key;
-  });
-  if (existing) existing.unit_price = price;
-  else line.variants.push({ attributes: attrs, quantity: 0, unit_price: price });
-
-  updateLineAmount(line);
-  updateBillSummary();
-}
-
-function applyBulkPrice(lineId, price) {
-  var line = _lineItems.find(function(l) { return l.id === lineId; });
-  if (!line) return;
-  line._bulkPrice = parseFloat(price) || 0;
-  line.variants.forEach(function(v) { v.unit_price = line._bulkPrice; });
-  updateLineAmount(line);
-  updateBillSummary();
-}
-
-function updateRowColTotals(line) {
-  var attrs = line._attributes || [];
-  if (attrs.length < 2) return;
-
-  var rowAttr  = attrs[0];
-  var colAttr  = attrs[1];
-  var rowValues = Array.isArray(rowAttr.attribute_values)
-    ? rowAttr.attribute_values
-    : JSON.parse(rowAttr.attribute_values || '[]');
-  var colValues = Array.isArray(colAttr.attribute_values)
-    ? colAttr.attribute_values
-    : JSON.parse(colAttr.attribute_values || '[]');
-
-  var grandTotal = 0;
-
-  rowValues.forEach(function(row) {
-    var rowTotal = 0;
-    colValues.forEach(function(col) {
-      var a = {};
-      a[rowAttr.attribute_name] = row;
-      a[colAttr.attribute_name] = col;
-      var v = findVariant(line, a);
-      rowTotal += v ? (parseFloat(v.quantity) || 0) : 0;
-    });
-    grandTotal += rowTotal;
-    var rowEl = document.getElementById('row-total-' + line.id + '-' + row);
-    if (rowEl) rowEl.textContent = rowTotal;
-  });
-
-  colValues.forEach(function(col) {
-    var colTotal = 0;
-    rowValues.forEach(function(row) {
-      var a = {};
-      a[rowAttr.attribute_name] = row;
-      a[colAttr.attribute_name] = col;
-      var v = findVariant(line, a);
-      colTotal += v ? (parseFloat(v.quantity) || 0) : 0;
-    });
-    var colEl = document.getElementById('col-total-' + line.id + '-' + col);
-    if (colEl) colEl.textContent = colTotal;
-  });
-
-  var grandEl = document.getElementById('grand-total-' + line.id);
-  if (grandEl) grandEl.textContent = grandTotal;
-}
-
-function updateLineAmount(line) {
-  var total = calcLineTotal(line);
-  var el    = document.getElementById('line-amount-' + line.id);
-  if (el) el.textContent = formatINR(total);
-}
-
-function getSetQty(setDef, size) {
-  if (!setDef || !setDef.size_ratios) return '';
-  return setDef.size_ratios[size] || '';
-}
-
-function calcLineTotal(line) {
-  return line.variants.reduce(function(total, v) {
-    return total + ((parseFloat(v.quantity) || 0) * (parseFloat(v.unit_price) || 0));
-  }, 0);
-}
-
-// ══════════════════════════════════════════════════════════
-// CATEGORY + SET CHANGE HANDLERS
-// ══════════════════════════════════════════════════════════
-async function onCategoryChange(lineId, catId) {
-  var line = _lineItems.find(function(l) { return l.id === lineId; });
-  if (!line) return;
-
-  var cat = _categories.find(function(c) { return c.id == catId; });
-  line.category_id = catId ? parseInt(catId) : null;
-  line.category    = cat   || null;
-  line.cgst_rate   = cat   ? cat.cgst_rate : 0;
-  line.sgst_rate   = cat   ? cat.sgst_rate : 0;
-  line.variants    = [];
-
-  // Load category attributes
   if (catId) {
-    try {
-      var result = await apiFetch('/categories/' + catId);
-      if (result.ok) line._attributes = result.data.attributes || [];
-    } catch(e) { line._attributes = []; }
-
-    // Load set definitions
-    await loadSetDefs(lineId);
-  }
-
-  // Re-render variant grid only
-  var grid = document.getElementById('variant-grid-' + lineId);
-  if (grid) grid.innerHTML = renderVariantGrid(line);
-
-  updateBillSummary();
-}
-
-async function loadSetDefs(lineId) {
-  var line = _lineItems.find(function(l) { return l.id === lineId; });
-  if (!line || !line.category_id) return;
-
-  var supplierId = _supplier ? _supplier.id : 0;
-
-  try {
-    var result = await apiFetch(
-      '/suppliers/' + supplierId + '/sets/' + line.category_id
-    );
-    line._sets = result.ok ? result.data : [];
-  } catch(e) {
-    line._sets = [];
-  }
-}
-
-function setPurchaseMode(lineId, mode) {
-  var line = _lineItems.find(function(l) { return l.id === lineId; });
-  if (!line) return;
-  line.purchase_mode = mode;
-  line.set_def       = null;
-
-  // Re-render line card
-  var card = document.getElementById('line-card-' + lineId);
-  if (card) card.outerHTML = renderLineItemCard(line,
-    _lineItems.findIndex(function(l) { return l.id === lineId; })
-  );
-}
-
-function onSetDefChange(lineId, setId) {
-  var line = _lineItems.find(function(l) { return l.id === lineId; });
-  if (!line) return;
-
-  var setDef = (line._sets || []).find(function(s) { return s.id == setId; });
-  line.set_def = setDef || null;
-
-  // Pre-fill quantities from set definition
-  if (setDef && setDef.size_ratios) {
-    var attrs = line._attributes || [];
-    var rowAttr = attrs[0];
-    if (!rowAttr) return;
-
-    var rowValues = Array.isArray(rowAttr.attribute_values)
-      ? rowAttr.attribute_values
-      : JSON.parse(rowAttr.attribute_values || '[]');
-
-    var colAttr   = attrs[1];
-    var colValues = colAttr ? (Array.isArray(colAttr.attribute_values)
-      ? colAttr.attribute_values
-      : JSON.parse(colAttr.attribute_values || '[]')) : [];
-
-    if (colValues.length) {
-      rowValues.forEach(function(row) {
-        colValues.forEach(function(col) {
-          var a = {};
-          a[rowAttr.attribute_name] = row;
-          a[colAttr.attribute_name] = col;
-          var setQty = getSetQty(setDef, row);
-          if (setQty) {
-            var input = document.getElementById('qty-' + lineId + '-' + row + '-' + col);
-            if (input) {
-              input.value = setQty;
-              updateVariantQty(lineId, a, parseInt(setQty), null);
-            }
-          }
-        });
-      });
+    var res = await apiFetch('/categories/' + catId);
+    if (res.ok) {
+      li.category      = res.data;
+      li.category_name = res.data.name;
+      if (!li.item_name) li.item_name = res.data.name;
     }
+    await loadSetDefsForRow(rid, catId);
+    suggestItems(rid, catId);
+  } else {
+    li.category = null; li.category_name = ''; li.set_defs = [];
+  }
+  renderSimpleTable();
+  checkTotalMatch();
+}
+
+async function loadSetDefsForRow(rid, catId) {
+  var li = getRow(rid);
+  if (!li) return;
+  var supId = document.getElementById('sup-id').value;
+  var url   = supId ? '/suppliers/' + supId + '/sets/' + catId : '/categories/' + catId;
+  var res   = await apiFetch(url);
+  if (res.ok) {
+    li.set_defs = supId
+      ? (res.data || [])
+      : ((res.data && res.data.set_definitions) ? res.data.set_definitions : []);
+  }
+  renderSimpleTable();
+}
+
+async function suggestItems(rid, catId) {
+  var res = await apiFetch('/items');
+  if (!res.ok) return;
+  var li = getRow(rid);
+  if (!li) return;
+  var dl = document.getElementById('item-list-' + rid);
+  if (dl) {
+    dl.innerHTML = (res.data || [])
+      .filter(function(it) { return it.category_id == catId; })
+      .map(function(it) { return '<option value="' + escH(it.name) + '">'; })
+      .join('');
   }
 }
 
-// ── Item search ────────────────────────────────────────────
-async function onItemSearch(input, lineId) {
-  var q    = input.value.trim();
-  var drop = document.getElementById('item-drop-' + lineId);
-  if (!drop) return;
+function onItemName(rid, v)    { var li = getRow(rid); if (li) li.item_name = v; checkTotalMatch(); }
+function onAttr2Change(rid, v) { var li = getRow(rid); if (li) li.attr2_value = v; checkTotalMatch(); }
+function onAttr3Change(rid, v) { var li = getRow(rid); if (li) li.attr3_value = v; checkTotalMatch(); }
 
-  if (q.length < 2) { drop.style.display = 'none'; return; }
+function onSetDefChange(rid, sdId) {
+  var li = getRow(rid);
+  if (!li) return;
+  li.set_def = (li.set_defs || []).find(function(s) { return s.id == sdId; }) || null;
+  li._sizeOverrides = null;
+  renderSimpleTable();
+  checkTotalMatch();
+}
 
-  try {
-    var result = await apiFetch('/items/search/query?q=' + encodeURIComponent(q));
-    if (!result.ok) return;
+function onQty(rid, v) {
+  var li = getRow(rid);
+  if (li) { li.qty = parseFloat(v) || 0; li._sizeOverrides = null; }
+  checkTotalMatch();
+}
 
-    if (!result.data.length) {
-      drop.innerHTML = '<div class="p-drop-item">' +
-        '<span style="color:var(--slate-400)">No existing items — will create "' + q + '"</span>' +
-        '</div>';
+function setQtyMode(rid, mode) {
+  var li = getRow(rid);
+  if (li) { li.qty_mode = mode; li._sizeOverrides = null; }
+  renderSimpleTable();
+  checkTotalMatch();
+}
+
+function onPrice(rid, field, v) {
+  var li = getRow(rid);
+  if (li) li[field] = parseFloat(v) || 0;
+  checkTotalMatch();
+}
+
+function removeRow(rid) {
+  _lineItems = _lineItems.filter(function(li) { return li.row_id !== rid; });
+  renderSimpleTable();
+  checkTotalMatch();
+}
+
+function getRow(rid) { return _lineItems.find(function(li) { return li.row_id === rid; }); }
+
+// ── Total calculation ──────────────────────────────────────
+function calcLineTotal(li) {
+  var qty = li.qty || 0;
+  if (li.qty_mode === 'sets' && li.set_def) qty = qty * (li.set_def.total_pcs || 1);
+  return qty * (li.buy_price || 0);
+}
+
+function calcGrandTotal() {
+  return _lineItems.reduce(function(a, li) { return a + calcLineTotal(li); }, 0);
+}
+
+function checkTotalMatch() {
+  var calc      = calcGrandTotal();
+  var entered   = parseFloat(document.getElementById('supplier-bill-total').value) || 0;
+  var matchMsg  = document.getElementById('total-match-msg');
+  var confirmBtn = document.getElementById('btn-confirm');
+
+  document.getElementById('calc-total').textContent = formatINR(calc);
+  document.getElementById('save-total-display').textContent = formatINR(calc);
+  document.getElementById('save-items-count').textContent =
+    _lineItems.filter(function(li) { return li.qty > 0; }).length + ' items';
+
+  if (entered > 0) {
+    document.getElementById('entered-total-display').textContent = ' / Entered: ' + formatINR(entered);
+    var diff = Math.abs(calc - entered);
+    if (diff < 0.01) {
+      matchMsg.textContent = '✓ Totals match';
+      matchMsg.style.color = 'var(--green-600)';
+      confirmBtn.disabled  = false;
     } else {
-      drop.innerHTML = result.data.map(function(item) {
-        return '<div class="p-drop-item" onclick="selectItem(' + lineId + ',' + item.id + ',\'' +
-          item.name.replace(/'/g, "\\'") + '\',' + item.category_id + ')">' +
-          '<div class="p-drop-name">' + item.name + '</div>' +
-          '<div class="p-drop-meta">' + (item.category_name || '') +
-            ' · ' + (item.variant_count || 0) + ' variants</div>' +
-          '</div>';
-      }).join('');
+      matchMsg.textContent = '⚠ Difference: ' + formatINR(diff) + ' — Save as Draft only';
+      matchMsg.style.color = 'var(--amber-600, #d97706)';
+      confirmBtn.disabled  = true;
     }
-    drop.style.display = 'block';
-  } catch(e) {
-    console.error('Item search error:', e);
+  } else {
+    document.getElementById('entered-total-display').textContent = '';
+    matchMsg.textContent = 'Enter supplier bill total above to enable Confirm';
+    matchMsg.style.color = 'var(--slate-400)';
+    confirmBtn.disabled  = true;
   }
 }
 
-async function selectItem(lineId, itemId, itemName, catId) {
-  var line = _lineItems.find(function(l) { return l.id === lineId; });
-  if (!line) return;
-
-  line.item_id   = itemId;
-  line.item_name = itemName;
-
-  var input = document.getElementById('item-search-' + lineId);
-  if (input) input.value = itemName;
-
-  closeDropdown('item-drop-' + lineId);
-
-  // Auto-set category
-  if (catId) {
-    var catSelect = document.getElementById('cat-select-' + lineId);
-    if (catSelect) {
-      catSelect.value = catId;
-      await onCategoryChange(lineId, catId);
-    }
-  }
+// ── Detailed view ──────────────────────────────────────────
+function toggleDetailView() {
+  _detailOpen = !_detailOpen;
+  document.getElementById('simple-view-card').style.display = _detailOpen ? 'none' : '';
+  document.getElementById('detail-view-card').style.display = _detailOpen ? '' : 'none';
+  if (_detailOpen) renderDetailView();
 }
 
-function onItemNameBlur(lineId, value) {
-  var line = _lineItems.find(function(l) { return l.id === lineId; });
-  if (line) line.item_name = value.trim();
-  setTimeout(function() { closeDropdown('item-drop-' + lineId); }, 200);
-}
-
-// ══════════════════════════════════════════════════════════
-// BILL SUMMARY
-// ══════════════════════════════════════════════════════════
-function updateBillSummary() {
-  var totalAmt = 0;
-  var cgstAmt  = 0;
-  var sgstAmt  = 0;
-  var totalPcs = 0;
-
-  _lineItems.forEach(function(line) {
-    var lineTotal = calcLineTotal(line);
-    totalAmt += lineTotal;
-    cgstAmt  += lineTotal * (parseFloat(line.cgst_rate || 0) / 100);
-    sgstAmt  += lineTotal * (parseFloat(line.sgst_rate || 0) / 100);
-    totalPcs += line.variants.reduce(function(a, v) {
-      return a + (parseFloat(v.quantity) || 0);
-    }, 0);
-  });
-
-  var netAmt = totalAmt + cgstAmt + sgstAmt;
-
-  var set = function(id, val) {
-    var el = document.getElementById(id);
-    if (el) el.textContent = val;
-  };
-
-  set('summary-total-amt',  formatINR(totalAmt));
-  set('summary-cgst',       formatINR(cgstAmt));
-  set('summary-sgst',       formatINR(sgstAmt));
-  set('summary-net-amt',    formatINR(netAmt));
-  set('summary-total-pcs',  totalPcs + ' pcs');
-  set('summary-line-count', _lineItems.length + ' lines');
-}
-
-// ══════════════════════════════════════════════════════════
-// SAVE PURCHASE BILL
-// ══════════════════════════════════════════════════════════
-async function savePurchase() {
-  if (_saveInProgress) return;
-
-  // ── Validation ─────────────────────────────────────────
-  if (!_supplier) {
-    showToast('Please select a supplier', 'amber');
-    document.getElementById('supplier-input').focus();
-    return;
-  }
-
+function renderDetailView() {
+  var body = document.getElementById('detail-view-body');
   if (!_lineItems.length) {
-    showToast('Add at least one line item', 'amber');
+    body.innerHTML = '<div style="padding:var(--space-4);color:var(--slate-400)">No items yet.</div>';
     return;
   }
+  body.innerHTML = _lineItems.map(function(li, idx) {
+    var bd = computeVariantBreakdown(li);
+    var totalPcs = bd.reduce(function(a, v) { return a + v.qty; }, 0);
+    var heading  = (idx+1) + '. ' + (li.item_name || '(unnamed)') +
+      (li.attr2_value ? ' — ' + li.attr2_value : '') +
+      (li.set_def ? ' [' + li.set_def.name + ']' : ' [Loose]') +
+      ' (' + totalPcs + ' pcs)';
 
-  // Validate each line
-  for (var i = 0; i < _lineItems.length; i++) {
-    var line = _lineItems[i];
-    if (!line.item_name) {
-      showToast('Line ' + (i + 1) + ': Item name is required', 'amber');
-      return;
-    }
-    if (!line.category_id) {
-      showToast('Line ' + (i + 1) + ': Category is required', 'amber');
-      return;
-    }
-    var hasQty = line.variants.some(function(v) {
-      return parseFloat(v.quantity) > 0;
+    var rows = bd.map(function(v) {
+      return (
+        '<tr>' +
+          '<td style="padding:var(--space-2) var(--space-3)">' + escH(String(v.size)) + '</td>' +
+          '<td style="padding:var(--space-2) var(--space-3)">' +
+            '<input class="form-input" type="number" min="0" value="' + v.qty + '" style="width:80px"' +
+            ' onchange="updateBreakdownQty(' + li.row_id + ',\'' + escH(String(v.size)) + '\',this.value)">' +
+          '</td>' +
+          '<td style="padding:var(--space-2) var(--space-3);font-family:var(--font-mono);color:var(--slate-600)">' +
+            formatINR(v.qty * (li.buy_price || 0)) +
+          '</td>' +
+        '</tr>'
+      );
+    }).join('');
+
+    return (
+      '<div class="pur-detail-group">' +
+        '<div class="pur-detail-header">' + escH(heading) + '</div>' +
+        '<table style="width:100%;border-collapse:collapse;font-size:var(--text-sm)">' +
+          '<thead><tr>' +
+            '<th style="text-align:left;padding:var(--space-2) var(--space-3);background:var(--slate-50);font-size:var(--text-xs);color:var(--slate-500)">Size</th>' +
+            '<th style="text-align:left;padding:var(--space-2) var(--space-3);background:var(--slate-50);font-size:var(--text-xs);color:var(--slate-500)">Qty</th>' +
+            '<th style="text-align:left;padding:var(--space-2) var(--space-3);background:var(--slate-50);font-size:var(--text-xs);color:var(--slate-500)">Amount</th>' +
+          '</tr></thead>' +
+          '<tbody>' + rows + '</tbody>' +
+        '</table>' +
+      '</div>'
+    );
+  }).join('');
+}
+
+function computeVariantBreakdown(li) {
+  var qty = li.qty || 0;
+
+  if (li._sizeOverrides) {
+    return Object.keys(li._sizeOverrides).map(function(sz) {
+      return { size: sz, qty: li._sizeOverrides[sz] };
     });
-    if (!hasQty) {
-      showToast('Line ' + (i + 1) + ': Enter at least one quantity', 'amber');
-      return;
+  }
+
+  if (!li.set_def) {
+    var attrs = (li.category && li.category.attributes) ? li.category.attributes : [];
+    var sizeAttr = attrs[0];
+    if (sizeAttr && sizeAttr.attribute_values && sizeAttr.attribute_values.length) {
+      var sizes = sizeAttr.attribute_values;
+      var perSize = Math.floor(qty / sizes.length) || 0;
+      return sizes.map(function(sz) { return { size: sz, qty: perSize }; });
     }
+    return [{ size: 'Unit', qty: qty }];
   }
 
-  // ── Build payload ──────────────────────────────────────
-  var payload = {
-    supplier_id:        _supplier.id,
-    seller_bill_number: val('seller-bill-number'),
-    purchase_date:      val('purchase-date'),
-    notes:              val('purchase-notes'),
-    line_items: _lineItems.map(function(line) {
-      return {
-        item_id:     line.item_id   || null,
-        item_name:   line.item_name,
-        category_id: line.category_id,
-        uom_id:      line.uom_id    || null,
-        cgst_rate:   line.cgst_rate || 0,
-        sgst_rate:   line.sgst_rate || 0,
-        variants: line.variants
-          .filter(function(v) { return parseFloat(v.quantity) > 0; })
-          .map(function(v) {
-            return {
-              attributes: v.attributes,
-              quantity:   parseFloat(v.quantity),
-              unit_price: parseFloat(v.unit_price) || 0
-            };
-          })
-      };
-    })
+  var ratios = li.set_def.size_ratios || {};
+  if (typeof ratios === 'string') { try { ratios = JSON.parse(ratios); } catch(e) { ratios = {}; } }
+  var sizes = Object.keys(ratios);
+  if (!sizes.length) return [{ size: 'Unit', qty: qty }];
+
+  if (li.qty_mode === 'sets') {
+    return sizes.map(function(sz) { return { size: sz, qty: qty * (ratios[sz] || 1) }; });
+  }
+  var totalRatio = sizes.reduce(function(a, sz) { return a + (ratios[sz] || 1); }, 0);
+  return sizes.map(function(sz) {
+    return { size: sz, qty: Math.round(qty * (ratios[sz] || 1) / totalRatio) };
+  });
+}
+
+function updateBreakdownQty(rid, size, newQty) {
+  var li = getRow(rid);
+  if (!li) return;
+  if (!li._sizeOverrides) {
+    li._sizeOverrides = {};
+    var bd = computeVariantBreakdown(li);
+    bd.forEach(function(v) { li._sizeOverrides[v.size] = v.qty; });
+  }
+  li._sizeOverrides[size] = parseInt(newQty, 10) || 0;
+}
+
+// ── Build payload ──────────────────────────────────────────
+function buildPayload(saveAs) {
+  var lineItems = [];
+  _lineItems.forEach(function(li) {
+    if (!li.qty || li.qty <= 0 || !li.item_name) return;
+
+    var bd = li._sizeOverrides
+      ? Object.keys(li._sizeOverrides).map(function(sz) { return { size: sz, qty: li._sizeOverrides[sz] }; })
+      : computeVariantBreakdown(li);
+
+    var cat       = li.category || {};
+    var catAttrs  = cat.attributes || [];
+    var a0 = catAttrs[0] ? catAttrs[0].attribute_name : 'Size';
+    var a1 = catAttrs[1] ? catAttrs[1].attribute_name : 'Colour';
+    var a2 = catAttrs[2] ? catAttrs[2].attribute_name : null;
+
+    var variants = bd.filter(function(v) { return v.qty > 0; }).map(function(v) {
+      var attrs = {};
+      attrs[a0] = v.size;
+      if (li.attr2_value) attrs[a1] = li.attr2_value;
+      if (li.attr3_value && a2) attrs[a2] = li.attr3_value;
+      return { attributes: attrs, quantity: v.qty, unit_price: li.buy_price || 0 };
+    });
+
+    if (!variants.length) return;
+    lineItems.push({
+      item_id:     li.item_id || null,
+      item_name:   li.item_name,
+      category_id: li.category_id,
+      uom_id:      1,
+      cgst_rate:   cat.cgst_rate || 0,
+      sgst_rate:   cat.sgst_rate || 0,
+      variants:    variants
+    });
+  });
+
+  return {
+    supplier_id:         document.getElementById('sup-id').value || null,
+    seller_bill_number:  document.getElementById('seller-bill-no').value.trim() || null,
+    purchase_date:       document.getElementById('bill-date').value || null,
+    notes:               document.getElementById('bill-notes').value.trim() || null,
+    supplier_bill_total: parseFloat(document.getElementById('supplier-bill-total').value) || 0,
+    save_as:             saveAs === 'draft' ? 'draft' : undefined,
+    line_items:          lineItems
   };
+}
 
-  // ── Show total count in loading message ────────────────
-  var totalVariants = payload.line_items.reduce(function(a, l) {
-    return a + l.variants.length;
-  }, 0);
+// ── Save bill ──────────────────────────────────────────────
+async function saveBill(mode) {
+  var supId = document.getElementById('sup-id').value;
+  if (!supId) { showToast('Select a supplier', 'red'); return; }
 
-  // ── Save ───────────────────────────────────────────────
-  _saveInProgress = true;
-  var saveBtn = document.getElementById('save-btn');
-  if (saveBtn) {
-    saveBtn.disabled    = true;
-    saveBtn.textContent = 'Saving ' + totalVariants + ' variants...';
-  }
+  var filled = _lineItems.filter(function(li) { return li.qty > 0 && li.item_name; });
+  if (!filled.length) { showToast('Add at least one item with quantity', 'red'); return; }
+
+  var isDraft  = mode === 'draft';
+  var draftBtn = document.getElementById('btn-save-draft');
+  var confBtn  = document.getElementById('btn-confirm');
+  var btn      = isDraft ? draftBtn : confBtn;
+  btn.disabled    = true;
+  btn.textContent = isDraft ? 'Saving draft...' : 'Confirming...';
 
   try {
-    var result = await apiFetch('/purchases', 'POST', payload);
-
+    var payload = buildPayload(isDraft ? 'draft' : 'confirm');
+    var result  = await apiFetch('/purchases', 'POST', payload);
     if (result.ok) {
-      var d = result.data;
-      showToast(
-        d.message + ' · ' + d.variants_created + ' new · ' + d.variants_updated + ' updated',
-        'green'
-      );
-
-      // Reset form
-      resetForm();
-
+      showToast(result.data.message, 'green');
+      resetBillForm();
+      setTimeout(function() { switchTab('history'); }, 800);
     } else {
-      showToast(result.data.error || 'Could not save purchase', 'red');
+      showToast(result.data.error || 'Could not save bill', 'red');
     }
-
   } catch(e) {
     await handleFetchError(e);
   } finally {
-    _saveInProgress = false;
-    if (saveBtn) {
-      saveBtn.disabled    = false;
-      saveBtn.textContent = 'Save Bill';
-    }
+    draftBtn.disabled = false; draftBtn.textContent = 'Save as Draft';
+    confBtn.textContent = 'Confirm Bill';
+    checkTotalMatch();
   }
 }
 
-// ── Reset form after save ──────────────────────────────────
-function resetForm() {
-  _supplier   = null;
-  _lineItems  = [];
-  clearSupplier();
-  document.getElementById('seller-bill-number').value = '';
-  document.getElementById('purchase-notes').value     = '';
-  setTodayDate();
-  renderLineItems();
-  updateBillSummary();
+function resetBillForm() {
+  _lineItems = []; _supplier = null; _editDraftId = null;
+  _rowCounter = 0; _detailOpen = false;
+  document.getElementById('sup-search-input').value = '';
+  document.getElementById('sup-id').value = '';
+  document.getElementById('seller-bill-no').value = '';
+  document.getElementById('bill-notes').value = '';
+  document.getElementById('supplier-bill-total').value = '';
+  document.getElementById('row-count-input').value = '';
+  document.getElementById('bill-date').value = new Date().toISOString().split('T')[0];
+  document.getElementById('simple-view-card').style.display = 'none';
+  document.getElementById('detail-view-card').style.display = 'none';
+  document.getElementById('add-row-btn').style.display = 'none';
+  document.getElementById('bill-form-title').textContent = 'New Purchase Bill';
+  checkTotalMatch();
+}
+
+// ── History tab ────────────────────────────────────────────
+async function loadHistory() {
+  var [listRes, statsRes] = await Promise.all([
+    apiFetch('/purchases'),
+    apiFetch('/purchases/summary/stats')
+  ]);
+
+  if (statsRes.ok) {
+    var s = statsRes.data;
+    document.getElementById('stat-bills').textContent     = s.total_bills     || 0;
+    document.getElementById('stat-value').textContent     = formatINR(s.total_value || 0);
+    document.getElementById('stat-gst').textContent       = formatINR(s.total_gst   || 0);
+    document.getElementById('stat-suppliers').textContent = s.unique_suppliers || 0;
+  }
+
+  if (!listRes.ok) return;
+  var tbody = document.getElementById('history-tbody');
+
+  if (!listRes.data.length) {
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:var(--space-8);color:var(--slate-400)">No purchases yet.</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = listRes.data.map(function(p) {
+    var date   = new Date(p.created_at).toLocaleDateString('en-IN', { day:'numeric', month:'short', year:'numeric' });
+    var status = p.status || 'completed';
+    var badge  = status === 'draft'
+      ? '<span class="pur-badge pur-badge-draft">Draft</span>'
+      : status === 'cancelled'
+      ? '<span class="pur-badge pur-badge-cancelled">Cancelled</span>'
+      : '<span class="pur-badge pur-badge-confirmed">Confirmed</span>';
+
+    var actions = '';
+    if (status === 'draft') {
+      actions = '<button class="btn btn-sm" onclick="confirmDraft(' + p.id + ')">Confirm</button> ' +
+                '<button class="btn btn-sm btn-danger" onclick="deleteDraft(' + p.id + ')">Delete</button>';
+    } else if (status === 'completed') {
+      actions = '<button class="btn btn-sm btn-outline" onclick="viewPurchase(' + p.id + ')">View</button> ' +
+                '<button class="btn btn-sm btn-danger" onclick="cancelPurchase(' + p.id + ',\'' + escH(p.purchase_number) + '\')">Cancel</button>';
+    }
+
+    return (
+      '<tr>' +
+        '<td style="font-family:var(--font-mono);font-size:var(--text-xs)">' + escH(p.purchase_number || '') + '</td>' +
+        '<td>' + escH(p.supplier_name || '—') + '</td>' +
+        '<td>' + date + '</td>' +
+        '<td>' + (p.line_count || 0) + '</td>' +
+        '<td style="font-family:var(--font-mono)">' + formatINR(p.net_amount || 0) + '</td>' +
+        '<td>' + badge + '</td>' +
+        '<td style="text-align:right">' + actions + '</td>' +
+      '</tr>'
+    );
+  }).join('');
+}
+
+async function confirmDraft(id) {
+  if (!confirm('Confirm this draft? Stock will be updated.')) return;
+  var res = await apiFetch('/purchases/' + id + '/confirm', 'PUT', {});
+  if (res.ok) { showToast(res.data.message, 'green'); loadHistory(); }
+  else showToast(res.data.error || 'Could not confirm', 'red');
+}
+
+async function deleteDraft(id) {
+  if (!confirm('Delete this draft?')) return;
+  var res = await apiFetch('/purchases/' + id, 'DELETE');
+  if (res.ok) { showToast('Draft deleted', 'green'); loadHistory(); }
+  else showToast(res.data.error || 'Could not delete', 'red');
+}
+
+async function cancelPurchase(id, num) {
+  if (!confirm('Cancel purchase ' + num + '? Stock will be reversed.')) return;
+  var res = await apiFetch('/purchases/' + id, 'DELETE');
+  if (res.ok) { showToast(res.data.message, 'green'); loadHistory(); }
+  else showToast(res.data.error || 'Could not cancel', 'red');
+}
+
+async function viewPurchase(id) {
+  var res = await apiFetch('/purchases/' + id);
+  if (!res.ok) { showToast('Could not load purchase', 'red'); return; }
+  var p = res.data;
+  var lines = (p.items || []).map(function(it) {
+    var attrs = Object.entries(it.variant_attributes || {}).map(function(kv) { return kv[0]+': '+kv[1]; }).join(', ');
+    return escH(it.item_name) + ' (' + escH(attrs) + ') × ' + it.quantity + ' @ ' + formatINR(it.unit_price) + ' = ' + formatINR(it.total_price);
+  }).join('\n');
+  alert(p.purchase_number + ' — ' + p.supplier_name + '\n\n' + lines + '\n\nNet: ' + formatINR(p.net_amount));
+}
+
+// ── HTML escape ────────────────────────────────────────────
+function escH(s) {
+  return (s||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 }

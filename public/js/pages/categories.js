@@ -13,7 +13,7 @@ document.addEventListener('DOMContentLoaded', async function() {
   await loadComponent('topbar-container',  '/components/topbar.html');
   await loadComponent('template-library-container', '/components/template-library.html');
   await checkSession();
-  setActivePage('items');
+  setActivePage('categories');
   setTopbar('Items & Catalogue', 'Inventory › Categories › New Category');
   renderSetDefs();
 });
@@ -348,7 +348,29 @@ function buildPayload() {
     allow_price_edit:      checked('toggle-price-edit'),
     underprice_safety:     checked('toggle-underprice'),
     serial_number_enabled: checked('toggle-serial'),
-    min_stock_alert:       parseFloat(val('min-stock-input')) || 0
+    min_stock_alert:       parseFloat(val('min-stock-input')) || 0,
+
+    set_definitions: _setDefs.map(function(s) {
+      var ratios = {};
+      var totalPcs = 0;
+      if (s.ratioMap) {
+        ratios = s.ratioMap;
+        totalPcs = Object.keys(s.ratioMap).reduce(function(a, k) {
+          return a + (parseInt(s.ratioMap[k]) || 0);
+        }, 0);
+      } else if (s.sizes && s.sizes.length) {
+        var ppc = s.ppc || 1;
+        s.sizes.forEach(function(sz) { ratios[sz] = ppc; });
+        totalPcs = s.sizes.length * ppc;
+      }
+      return {
+        name:        s.name,
+        set_type:    s.ratioMap ? 'ratio' : 'uniform',
+        size_ratios: ratios,
+        total_pcs:   totalPcs,
+        is_default:  s.is_default || 0
+      };
+    })
   };
 }
 

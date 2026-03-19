@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Suppliers — StockEasy</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=DM+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="/css/core.css" />
+    <link rel="stylesheet" href="/css/pages/categories.css" />
+    <link rel="stylesheet" href="/css/pages/suppliers.css" />
+  </head>
+  <body>
+    <div class="se-shell">
+
+      <div id="sidebar-container"></div>
+
+      <div class="se-main">
+
+        <div id="topbar-container"></div>
+
+        <!-- MODULE TABS -->
+        <div class="module-tabs">
+          <a href="#" class="mtab active" id="tab-list" onclick="switchTab('list'); return false;">All Suppliers</a>
+          <a href="#" class="mtab"         id="tab-form" onclick="switchTab('form'); return false;">Add Supplier</a>
+        </div>
+
+        <div class="se-page-content">
+
+          <!-- ══════════════════════════════════════════
+               TAB: ALL SUPPLIERS
+          ══════════════════════════════════════════ -->
+          <div id="content-list">
+
+            <div class="page-header">
+              <div>
+                <div class="page-header-title">Suppliers</div>
+                <div class="page-header-sub">Manage your suppliers and their packaging set definitions.</div>
+              </div>
+              <button class="btn btn-primary" onclick="startNew()">+ Add Supplier</button>
+            </div>
+
+            <!-- Search -->
+            <div style="margin-bottom:var(--space-4)">
+              <input class="form-input" type="text" id="supplier-search"
+                placeholder="Search suppliers..." style="max-width:320px"
+                oninput="filterSuppliers(this.value)" />
+            </div>
+
+            <!-- Table -->
+            <div class="card" style="overflow:hidden">
+              <table class="sup-table" id="suppliers-table">
+                <thead>
+                  <tr>
+                    <th>Supplier Name</th>
+                    <th>Contact</th>
+                    <th>Location</th>
+                    <th>Purchases</th>
+                    <th style="text-align:right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="suppliers-tbody">
+                  <tr><td colspan="5" style="text-align:center;padding:var(--space-6);color:var(--slate-400)">Loading...</td></tr>
+                </tbody>
+              </table>
+            </div>
+
+          </div>
+          <!-- end content-list -->
+
+          <!-- ══════════════════════════════════════════
+               TAB: ADD / EDIT SUPPLIER
+          ══════════════════════════════════════════ -->
+          <div id="content-form" style="display:none">
+
+            <div class="page-header">
+              <div>
+                <div class="page-header-title" id="form-title">Add Supplier</div>
+                <div class="page-header-sub">Basic info and set definitions for this supplier.</div>
+              </div>
+              <div class="flex gap-3">
+                <button class="btn btn-outline" onclick="switchTab('list')">Cancel</button>
+              </div>
+            </div>
+
+            <!-- Basic Info -->
+            <div class="card card-padded mb-4">
+              <div class="section-title">Basic Information</div>
+              <div class="form-row mb-4">
+                <div class="form-col" style="max-width:340px">
+                  <div class="form-group">
+                    <label class="form-label">Supplier Name *</label>
+                    <input class="form-input" type="text" id="sup-name"
+                      placeholder="e.g. ABC Textiles" />
+                  </div>
+                </div>
+                <div class="form-col" style="max-width:240px">
+                  <div class="form-group">
+                    <label class="form-label">Phone / WhatsApp</label>
+                    <input class="form-input" type="text" id="sup-contact"
+                      placeholder="9876543210" />
+                  </div>
+                </div>
+                <div class="form-col" style="max-width:240px">
+                  <div class="form-group">
+                    <label class="form-label">City / Location</label>
+                    <input class="form-input" type="text" id="sup-location"
+                      placeholder="e.g. Surat" />
+                  </div>
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Notes</label>
+                <input class="form-input" type="text" id="sup-notes"
+                  placeholder="Payment terms, pickup schedule, etc." />
+              </div>
+            </div>
+
+            <!-- Set Definitions -->
+            <div class="card card-padded mb-4">
+              <div class="section-title">Set Definitions</div>
+              <span class="form-hint" style="display:block;margin-bottom:var(--space-4)">
+                Define how this supplier packages their products — Full Set, Half Set, Ratio packs.
+                Each set definition is linked to a category.
+              </span>
+
+              <!-- Category picker for new set -->
+              <div class="form-row" style="align-items:flex-end;margin-bottom:var(--space-4)">
+                <div class="form-col" style="max-width:280px">
+                  <div class="form-group" style="margin-bottom:0">
+                    <label class="form-label">Category</label>
+                    <select class="form-input form-select" id="sup-setdef-category">
+                      <option value="">Select category...</option>
+                    </select>
+                  </div>
+                </div>
+                <div style="display:flex;gap:var(--space-2);padding-bottom:1px">
+                  <button class="btn btn-sm" onclick="addSupplierSetDef()">+ Add Set</button>
+                </div>
+              </div>
+
+              <div id="sup-set-defs-container">
+                <div class="set-defs-empty">No set definitions yet. Select a category and add a set.</div>
+              </div>
+            </div>
+
+            <!-- Save footer -->
+            <div class="save-footer">
+              <span class="text-muted" id="save-hint">Fill in supplier name to save</span>
+              <button class="btn btn-outline" onclick="switchTab('list')">Cancel</button>
+              <button class="btn btn-primary" id="save-btn" onclick="saveSupplier()">Save Supplier</button>
+            </div>
+
+          </div>
+          <!-- end content-form -->
+
+        </div>
+
+      </div>
+    </div>
+
+    <div id="toast" class="toast toast-green" style="display:none">
+      <span id="toast-icon" style="font-size:var(--text-xl)">&#x2705;</span>
+      <span id="toast-msg"></span>
+    </div>
+
+    <script src="/js/app.js"></script>
+    <script src="/js/pages/suppliers.js"></script>
+  </body>
+</html>

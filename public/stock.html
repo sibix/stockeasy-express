@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Stock View — StockEasy</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=DM+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="/css/core.css" />
+  </head>
+  <body>
+    <div class="se-shell">
+
+      <div id="sidebar-container"></div>
+
+      <div class="se-main">
+
+        <div id="topbar-container"></div>
+
+        <div class="se-page-content">
+
+          <div class="page-header">
+            <div>
+              <div class="page-header-title">Stock View</div>
+              <div class="page-header-sub">All variants, quantities, and values across every category.</div>
+            </div>
+            <button class="btn btn-outline" onclick="loadStock()">&#x21BB; Refresh</button>
+          </div>
+
+          <div id="stock-table-container"></div>
+
+        </div>
+
+      </div>
+    </div>
+
+    <div id="toast" class="toast toast-green" style="display:none">
+      <span id="toast-icon" style="font-size:var(--text-xl)">&#x2705;</span>
+      <span id="toast-msg"></span>
+    </div>
+
+    <script src="/js/app.js"></script>
+    <script src="/js/components/stock-table.js"></script>
+    <script src="/js/pages/stock.js"></script>
+  </body>
+</html>

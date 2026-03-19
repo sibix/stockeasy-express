@@ -3,622 +3,218 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Purchase Entry — StockEasy</title>
-    <link
-      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=DM+Mono:wght@400;500;600&display=swap"
-      rel="stylesheet"
-    />
+    <title>Purchases — StockEasy</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=DM+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="/css/core.css" />
-    <link rel="stylesheet" href="/css/pages/categories.css" />
-    <style>
-      /* ── Purchase specific styles ───────────────────── */
-
-      /* Supplier search */
-      #supplier-wrap {
-        position: relative;
-      }
-      .p-drop {
-        position: absolute;
-        top: calc(100% + 4px);
-        left: 0;
-        right: 0;
-        background: #fff;
-        border: 1.5px solid var(--slate-200);
-        border-radius: var(--radius-lg);
-        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.09);
-        z-index: 400;
-        max-height: 240px;
-        overflow-y: auto;
-      }
-      .p-drop-item {
-        padding: 10px 14px;
-        cursor: pointer;
-        border-bottom: 1px solid var(--slate-100);
-      }
-      .p-drop-item:last-child {
-        border-bottom: none;
-      }
-      .p-drop-item:hover {
-        background: var(--slate-50);
-      }
-      .p-drop-name {
-        font-weight: 600;
-        font-size: 13px;
-        color: var(--slate-800);
-      }
-      .p-drop-meta {
-        font-size: 11px;
-        color: var(--slate-400);
-        margin-top: 2px;
-      }
-      .p-drop-add {
-        color: var(--color-primary);
-        font-weight: 600;
-        font-size: 13px;
-      }
-
-      /* Supplier badge */
-      .supplier-badge {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        background: var(--slate-50);
-        border: 1px solid var(--slate-200);
-        border-radius: var(--radius-lg);
-        padding: 10px 14px;
-        margin-top: 8px;
-      }
-      .supplier-name {
-        font-weight: 700;
-        color: var(--slate-800);
-      }
-      .supplier-meta {
-        font-size: 12px;
-        color: var(--slate-400);
-      }
-      .supplier-clear {
-        margin-left: auto;
-        background: none;
-        border: none;
-        cursor: pointer;
-        color: var(--slate-400);
-        font-size: 18px;
-        line-height: 1;
-        padding: 0 4px;
-      }
-      .supplier-clear:hover {
-        color: var(--red-500);
-      }
-
-      /* Line item cards */
-      .line-item-card {
-        background: #fff;
-        border: 1.5px solid var(--slate-200);
-        border-radius: var(--radius-lg);
-        margin-bottom: 10px;
-        overflow: hidden;
-      }
-      .line-item-card:focus-within {
-        border-color: var(--color-primary);
-      }
-      .line-header {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        padding: 12px 16px;
-        background: var(--slate-50);
-        cursor: pointer;
-        user-select: none;
-      }
-      .line-header:hover {
-        background: var(--slate-100);
-      }
-      .line-num {
-        width: 24px;
-        height: 24px;
-        border-radius: 50%;
-        background: var(--slate-200);
-        color: var(--slate-600);
-        font-size: 11px;
-        font-weight: 700;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        flex-shrink: 0;
-      }
-      .line-title {
-        flex: 1;
-        font-size: 13px;
-        color: var(--slate-700);
-      }
-      .line-cat {
-        font-weight: 400;
-        color: var(--slate-400);
-        font-size: 12px;
-      }
-      .line-summary {
-        font-size: 12px;
-        color: var(--slate-400);
-        white-space: nowrap;
-      }
-      .line-chev {
-        font-size: 10px;
-        color: var(--slate-400);
-        flex-shrink: 0;
-      }
-      .line-remove {
-        background: none;
-        border: none;
-        cursor: pointer;
-        color: var(--slate-300);
-        font-size: 18px;
-        line-height: 1;
-        padding: 0 4px;
-        flex-shrink: 0;
-      }
-      .line-remove:hover {
-        color: var(--red-500, #ef4444);
-      }
-      .line-section {
-        padding: 14px 16px;
-        border-top: 1px solid var(--slate-100);
-      }
-
-      /* Variant grid */
-      .variant-grid-wrap {
-        overflow-x: auto;
-      }
-      .variant-table {
-        border-collapse: collapse;
-        font-size: 12px;
-        width: 100%;
-      }
-      .variant-table th {
-        background: var(--slate-50);
-        padding: 6px 10px;
-        font-size: 10px;
-        font-weight: 700;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-        color: var(--slate-500);
-        border-bottom: 1px solid var(--slate-200);
-        white-space: nowrap;
-        text-align: center;
-      }
-      .vt-attr {
-        text-align: left !important;
-        min-width: 60px;
-      }
-      .vt-col {
-        min-width: 72px;
-      }
-      .vt-attr-val {
-        padding: 6px 10px;
-        font-weight: 600;
-        color: var(--slate-700);
-        background: var(--slate-50);
-        border-right: 1px solid var(--slate-200);
-        white-space: nowrap;
-      }
-      .vt-cell {
-        padding: 4px 6px;
-        text-align: center;
-      }
-      .vt-input {
-        width: 64px;
-        padding: 4px 6px;
-        text-align: center;
-        border: 1px solid var(--slate-200);
-        border-radius: 6px;
-        font-size: 12px;
-        font-family: "DM Mono", monospace;
-        outline: none;
-      }
-      .vt-input:focus {
-        border-color: var(--color-primary);
-      }
-      .vt-row-total,
-      .vt-col-total,
-      .vt-grand-total {
-        padding: 6px 10px;
-        text-align: center;
-        font-weight: 700;
-        font-family: "DM Mono", monospace;
-        color: var(--slate-600);
-        background: var(--slate-50);
-        font-size: 12px;
-      }
-      .vt-grand-total {
-        color: var(--color-primary);
-      }
-      .vt-totals-row td {
-        border-top: 1px solid var(--slate-200);
-      }
-
-      /* 1D variant list */
-      .variant-1d {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 8px;
-      }
-      .variant-1d-row {
-        display: flex;
-        align-items: center;
-        gap: 6px;
-        background: var(--slate-50);
-        border: 1px solid var(--slate-200);
-        border-radius: var(--radius-md);
-        padding: 6px 10px;
-      }
-      .variant-1d-label {
-        min-width: 30px;
-        text-align: center;
-      }
-      .variant-1d-qty {
-        width: 64px !important;
-        padding: 4px 6px !important;
-        text-align: center;
-        font-family: "DM Mono", monospace;
-      }
-      .variant-1d-unit {
-        font-size: 11px;
-        color: var(--slate-400);
-      }
-
-      /* Empty state */
-      .empty-lines {
-        text-align: center;
-        padding: 40px;
-        color: var(--slate-400);
-      }
-
-      /* Bill summary */
-      .bill-summary {
-        background: #fff;
-        border: 1.5px solid var(--slate-200);
-        border-radius: var(--radius-lg);
-        padding: 16px;
-        position: sticky;
-        top: 16px;
-      }
-      .summary-row {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 6px 0;
-        border-bottom: 1px solid var(--slate-100);
-        font-size: 13px;
-      }
-      .summary-row:last-child {
-        border-bottom: none;
-      }
-      .summary-row.total {
-        font-weight: 700;
-        font-size: 15px;
-        color: var(--slate-800);
-        padding-top: 10px;
-      }
-      .summary-label {
-        color: var(--slate-500);
-      }
-      .summary-value {
-        font-family: "DM Mono", monospace;
-        font-weight: 600;
-      }
-
-      /* Layout */
-      .purchase-layout {
-        display: grid;
-        grid-template-columns: 1fr 280px;
-        gap: 16px;
-        align-items: start;
-      }
-      @media (max-width: 900px) {
-        .purchase-layout {
-          grid-template-columns: 1fr;
-        }
-      }
-
-      /* Quick supplier modal */
-      .modal-overlay {
-        position: fixed;
-        inset: 0;
-        background: rgba(0, 0, 0, 0.35);
-        z-index: 500;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-      }
-      .modal-box {
-        background: #fff;
-        border-radius: var(--radius-lg);
-        padding: 24px;
-        width: 400px;
-        max-width: 95vw;
-      }
-      .modal-title {
-        font-size: 16px;
-        font-weight: 700;
-        margin-bottom: 16px;
-      }
-      .modal-actions {
-        display: flex;
-        gap: 8px;
-        justify-content: flex-end;
-        margin-top: 16px;
-      }
-
-      /* Fix line items overflow */
-      .se-page-content {
-        overflow-y: auto;
-        overflow-x: hidden;
-      }
-
-      .purchase-layout {
-        min-height: 0;
-      }
-
-      .line-item-card {
-        overflow: visible !important;
-      }
-
-      /* Fix inner section overflow */
-      .line-section {
-        overflow: visible;
-      }
-
-      /* Variant grid scrolls horizontally */
-      .variant-grid-wrap {
-        overflow-x: auto;
-        overflow-y: visible;
-        max-width: 100%;
-      }
-    </style>
+    <link rel="stylesheet" href="/css/pages/purchases.css" />
   </head>
   <body>
     <div class="se-shell">
-      <!-- SIDEBAR -->
+
       <div id="sidebar-container"></div>
 
-      <!-- MAIN -->
       <div class="se-main">
-        <!-- TOPBAR -->
+
         <div id="topbar-container"></div>
 
         <!-- MODULE TABS -->
         <div class="module-tabs">
-          <a href="/purchases.html" class="mtab active">New Purchase</a>
-          <a href="/purchase-history.html" class="mtab">History</a>
-          <a href="/suppliers.html" class="mtab">Suppliers</a>
+          <a href="#" class="mtab" id="tab-history" onclick="switchTab('history'); return false;">History</a>
+          <a href="#" class="mtab active" id="tab-new" onclick="switchTab('new'); return false;">New Bill</a>
         </div>
 
-        <!-- PAGE CONTENT -->
         <div class="se-page-content">
-          <div class="page-header">
-            <div>
-              <div class="page-header-title">New Purchase Entry</div>
-              <div class="page-header-sub">
-                Record a purchase bill from a supplier. Stock updates
-                automatically.
+
+          <!-- ══════════════════════════════════════════
+               TAB: HISTORY
+          ══════════════════════════════════════════ -->
+          <div id="content-history" style="display:none">
+
+            <div class="page-header">
+              <div>
+                <div class="page-header-title">Purchase History</div>
+                <div class="page-header-sub">All bills — confirmed, draft, and cancelled.</div>
               </div>
+              <button class="btn btn-primary" onclick="switchTab('new')">+ New Bill</button>
             </div>
+
+            <!-- Stats bar -->
+            <div class="pur-stats-bar" id="pur-stats-bar">
+              <div class="pur-stat"><div class="pur-stat-label">Total Bills</div><div class="pur-stat-val" id="stat-bills">—</div></div>
+              <div class="pur-stat"><div class="pur-stat-label">Total Value</div><div class="pur-stat-val" id="stat-value">—</div></div>
+              <div class="pur-stat"><div class="pur-stat-label">Total GST</div><div class="pur-stat-val" id="stat-gst">—</div></div>
+              <div class="pur-stat"><div class="pur-stat-label">Suppliers</div><div class="pur-stat-val" id="stat-suppliers">—</div></div>
+            </div>
+
+            <!-- Table -->
+            <div class="card" style="overflow:hidden">
+              <table class="pur-table">
+                <thead>
+                  <tr>
+                    <th>Bill No</th>
+                    <th>Supplier</th>
+                    <th>Date</th>
+                    <th>Items</th>
+                    <th>Net Amount</th>
+                    <th>Status</th>
+                    <th style="text-align:right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="history-tbody">
+                  <tr><td colspan="7" style="text-align:center;padding:var(--space-8);color:var(--slate-400)">Loading...</td></tr>
+                </tbody>
+              </table>
+            </div>
+
           </div>
+          <!-- end content-history -->
 
-          <div class="purchase-layout">
-            <!-- LEFT — Main entry area -->
-            <div>
-              <!-- Bill Header -->
-              <div class="card card-padded mb-4">
-                <div class="section-title">Bill Details</div>
-                <div class="form-row">
-                  <!-- Supplier -->
-                  <div class="form-col" style="max-width: 300px">
-                    <div class="form-group">
-                      <label class="form-label">Supplier *</label>
-                      <div id="supplier-wrap" style="position: relative">
-                        <input
-                          class="form-input"
-                          type="text"
-                          id="supplier-input"
-                          placeholder="Search supplier..."
-                          autocomplete="off"
-                        />
-                        <div
-                          class="p-drop"
-                          id="supplier-drop"
-                          style="display: none"
-                        ></div>
-                      </div>
-                      <div id="supplier-info" style="display: none"></div>
-                    </div>
-                  </div>
+          <!-- ══════════════════════════════════════════
+               TAB: NEW BILL
+          ══════════════════════════════════════════ -->
+          <div id="content-new">
 
-                  <!-- Seller Bill Number -->
-                  <div class="form-col" style="max-width: 200px">
-                    <div class="form-group">
-                      <label class="form-label">Seller Bill No.</label>
-                      <input
-                        class="form-input"
-                        type="text"
-                        id="seller-bill-number"
-                        placeholder="e.g. INV-2024-001"
-                      />
-                      <span class="form-hint">Seller's invoice number</span>
-                    </div>
-                  </div>
-
-                  <!-- Date -->
-                  <div class="form-col" style="max-width: 160px">
-                    <div class="form-group">
-                      <label class="form-label">Date *</label>
-                      <input
-                        class="form-input"
-                        type="date"
-                        id="purchase-date"
-                      />
-                    </div>
-                  </div>
-
-                  <!-- Notes -->
-                  <div class="form-col">
-                    <div class="form-group">
-                      <label class="form-label">Notes</label>
-                      <input
-                        class="form-input"
-                        type="text"
-                        id="purchase-notes"
-                        placeholder="Optional notes..."
-                      />
-                    </div>
-                  </div>
-                </div>
+            <div class="page-header">
+              <div>
+                <div class="page-header-title" id="bill-form-title">New Purchase Bill</div>
+                <div class="page-header-sub">Enter items from the supplier's invoice.</div>
               </div>
+              <div class="flex gap-3">
+                <button class="btn btn-outline" onclick="resetBillForm()">Reset</button>
+              </div>
+            </div>
 
-              <!-- Line Items -->
-              <div class="card card-padded mb-4">
-                <div
-                  style="
-                    display: flex;
-                    align-items: center;
-                    justify-content: space-between;
-                    margin-bottom: 12px;
-                  "
-                >
-                  <div class="section-title" style="margin: 0">Line Items</div>
-                  <div style="display: flex; gap: 8px; align-items: center">
-                    <span class="form-hint" id="summary-line-count"
-                      >0 lines</span
-                    >
-                    <button class="btn btn-primary" onclick="addLineItem()">
-                      + Add Line Item
-                    </button>
+            <!-- SECTION 1: Bill Header -->
+            <div class="card card-padded mb-4">
+              <div class="section-title">Bill Details</div>
+              <div class="form-row">
+                <div class="form-col" style="max-width:300px">
+                  <div class="form-group" style="position:relative">
+                    <label class="form-label">Supplier *</label>
+                    <input class="form-input" type="text" id="sup-search-input"
+                      placeholder="Search supplier..." autocomplete="off"
+                      oninput="onSupSearch(this.value)" />
+                    <div class="p-drop" id="sup-drop" style="display:none"></div>
+                    <input type="hidden" id="sup-id" />
                   </div>
                 </div>
-
-                <div id="line-items-container"></div>
-
-                <div style="margin-top: 12px">
-                  <button
-                    class="btn btn-outline"
-                    onclick="addLineItem()"
-                    style="width: 100%; justify-content: center"
-                  >
-                    + Add Another Line Item
-                  </button>
+                <div class="form-col" style="max-width:200px">
+                  <div class="form-group">
+                    <label class="form-label">Seller Bill No</label>
+                    <input class="form-input" type="text" id="seller-bill-no"
+                      placeholder="e.g. INV-2024-001" />
+                  </div>
+                </div>
+                <div class="form-col" style="max-width:180px">
+                  <div class="form-group">
+                    <label class="form-label">Bill Date</label>
+                    <input class="form-input" type="date" id="bill-date" />
+                  </div>
+                </div>
+                <div class="form-col" style="max-width:180px">
+                  <div class="form-group">
+                    <label class="form-label">Supplier Bill Total ₹</label>
+                    <input class="form-input" type="number" id="supplier-bill-total"
+                      placeholder="0" min="0" oninput="checkTotalMatch()" />
+                    <span class="form-hint">Enter total from paper bill</span>
+                  </div>
+                </div>
+                <div class="form-col">
+                  <div class="form-group">
+                    <label class="form-label">Notes</label>
+                    <input class="form-input" type="text" id="bill-notes"
+                      placeholder="Optional notes..." />
+                  </div>
                 </div>
               </div>
             </div>
 
-            <!-- RIGHT — Summary + Save -->
-            <div>
-              <div class="bill-summary">
-                <div class="section-title">Bill Summary</div>
-
-                <div class="summary-row">
-                  <span class="summary-label">Total Pieces</span>
-                  <span class="summary-value" id="summary-total-pcs"
-                    >0 pcs</span
-                  >
-                </div>
-                <div class="summary-row">
-                  <span class="summary-label">Sub Total</span>
-                  <span class="summary-value" id="summary-total-amt"
-                    >₹0.00</span
-                  >
-                </div>
-                <div class="summary-row">
-                  <span class="summary-label">CGST</span>
-                  <span class="summary-value" id="summary-cgst">₹0.00</span>
-                </div>
-                <div class="summary-row">
-                  <span class="summary-label">SGST</span>
-                  <span class="summary-value" id="summary-sgst">₹0.00</span>
-                </div>
-                <div class="summary-row total">
-                  <span>Net Amount</span>
-                  <span id="summary-net-amt">₹0.00</span>
-                </div>
-
-                <button
-                  class="btn btn-primary"
-                  id="save-btn"
-                  onclick="savePurchase()"
-                  style="width: 100%; margin-top: 16px; justify-content: center"
-                >
-                  Save Bill
-                </button>
-
-                <button
-                  class="btn btn-outline"
-                  onclick="resetForm()"
-                  style="width: 100%; margin-top: 8px; justify-content: center"
-                >
-                  Clear Form
-                </button>
+            <!-- SECTION 2: How many items -->
+            <div class="card card-padded mb-4" id="row-count-section">
+              <div class="section-title">Line Items</div>
+              <div style="display:flex;align-items:center;gap:var(--space-3)">
+                <span class="form-label" style="margin-bottom:0">How many items in this bill?</span>
+                <input class="form-input" type="number" id="row-count-input"
+                  min="1" max="50" placeholder="5" style="width:80px" />
+                <button class="btn btn-outline" onclick="initRows()">Go</button>
+                <button class="btn btn-sm" onclick="addOneRow()" id="add-row-btn" style="display:none">+ Add Row</button>
               </div>
             </div>
+
+            <!-- SECTION 3: Simple view table -->
+            <div class="card" id="simple-view-card" style="display:none;overflow:hidden;margin-bottom:var(--space-4)">
+              <div class="pur-view-header">
+                <div class="section-title" style="margin-bottom:0">Simple View</div>
+                <div style="display:flex;gap:var(--space-2);align-items:center">
+                  <button class="btn btn-sm btn-outline" onclick="toggleDetailView()">Show Detail View</button>
+                  <button class="btn btn-sm" onclick="addOneRow()">+ Row</button>
+                </div>
+              </div>
+              <div style="overflow-x:auto">
+                <table class="pur-simple-table" id="simple-table">
+                  <thead>
+                    <tr>
+                      <th style="width:32px">#</th>
+                      <th style="min-width:160px">Category</th>
+                      <th style="min-width:180px">Item Name</th>
+                      <th style="min-width:140px">Set Def</th>
+                      <th style="min-width:120px" id="col-attr2-header">Colour / Attr2</th>
+                      <th style="min-width:100px" id="col-attr3-header">Attr3</th>
+                      <th style="min-width:130px">Qty</th>
+                      <th style="min-width:110px">Buy ₹</th>
+                      <th style="min-width:110px">Sell ₹</th>
+                      <th style="min-width:110px">MRP ₹</th>
+                      <th style="width:36px"></th>
+                    </tr>
+                  </thead>
+                  <tbody id="simple-tbody"></tbody>
+                </table>
+              </div>
+
+              <!-- Running total -->
+              <div class="pur-total-bar" id="total-bar">
+                <span id="total-match-msg">Enter items above</span>
+                <span class="pur-running-total">
+                  Calculated: <strong id="calc-total">₹0.00</strong>
+                  <span id="entered-total-display"></span>
+                </span>
+              </div>
+            </div>
+
+            <!-- SECTION 4: Detailed view (hidden by default) -->
+            <div id="detail-view-card" style="display:none;margin-bottom:var(--space-4)">
+              <div class="card card-padded">
+                <div class="pur-view-header">
+                  <div class="section-title" style="margin-bottom:0">Detailed View</div>
+                  <button class="btn btn-sm btn-outline" onclick="toggleDetailView()">Back to Simple</button>
+                </div>
+                <div id="detail-view-body"></div>
+              </div>
+            </div>
+
+            <!-- Save footer -->
+            <div class="save-footer">
+              <div class="pur-save-summary" id="save-summary">
+                <span id="save-items-count">0 items</span>
+                <span id="save-total-display">₹0.00</span>
+              </div>
+              <button class="btn btn-outline" onclick="saveBill('draft')" id="btn-save-draft">Save as Draft</button>
+              <button class="btn btn-primary" onclick="saveBill('confirm')" id="btn-confirm" disabled>Confirm Bill</button>
+            </div>
+
           </div>
-        </div>
-        <!-- end se-page-content -->
-      </div>
-      <!-- end se-main -->
-    </div>
-    <!-- end se-shell -->
+          <!-- end content-new -->
 
-    <!-- Quick Add Supplier Modal -->
-    <div
-      id="quick-supplier-modal"
-      class="modal-overlay"
-      style="display: none"
-      onclick="if (event.target === this) closeQuickSupplier();"
-    >
-      <div class="modal-box">
-        <div class="modal-title">Add New Supplier</div>
-        <div class="form-group">
-          <label class="form-label">Supplier Name *</label>
-          <input
-            class="form-input"
-            type="text"
-            id="qs-name"
-            placeholder="e.g. Ravi Textiles"
-          />
         </div>
-        <div class="form-group">
-          <label class="form-label">Contact</label>
-          <input
-            class="form-input"
-            type="text"
-            id="qs-contact"
-            placeholder="Phone / WhatsApp"
-          />
-        </div>
-        <div class="form-group">
-          <label class="form-label">Location</label>
-          <input
-            class="form-input"
-            type="text"
-            id="qs-location"
-            placeholder="City"
-          />
-        </div>
-        <div class="modal-actions">
-          <button class="btn btn-outline" onclick="closeQuickSupplier()">
-            Cancel
-          </button>
-          <button class="btn btn-primary" onclick="saveQuickSupplier()">
-            Add Supplier
-          </button>
-        </div>
+
       </div>
     </div>
 
-    <!-- TOAST -->
-    <div id="toast" class="toast toast-green" style="display: none">
-      <span id="toast-icon" style="font-size: var(--text-xl)">✅</span>
+    <div id="toast" class="toast toast-green" style="display:none">
+      <span id="toast-icon" style="font-size:var(--text-xl)">✅</span>
       <span id="toast-msg"></span>
     </div>
 
-    <!-- SCRIPTS -->
     <script src="/js/app.js"></script>
     <script src="/js/pages/purchases.js"></script>
   </body>

@@ -517,4 +517,25 @@ router.get("/stock/view", async (req, res) => {
   }
 });
 
+// ── GET — Dashboard stats ──────────────────────────────────
+router.get("/stats", async (req, res) => {
+  try {
+    const [[totals]] = await db.execute(`
+      SELECT
+        COUNT(DISTINCT i.id)                                  AS total_items,
+        SUM(CASE WHEN iv.stock = 0  THEN 1 ELSE 0 END)       AS out_of_stock,
+        SUM(CASE WHEN iv.stock > 0 AND iv.stock <= COALESCE(c.min_stock_alert, 5) THEN 1 ELSE 0 END) AS low_stock,
+        COALESCE(SUM(iv.stock * iv.buy_price), 0)            AS total_stock_value
+      FROM items i
+      LEFT JOIN item_variants iv ON iv.item_id = i.id AND iv.status = 'active'
+      LEFT JOIN categories c ON i.category_id = c.id
+      WHERE i.status = 'active'
+    `);
+    res.json(totals);
+  } catch (error) {
+    console.error("Stats error:", error);
+    res.status(500).json({ error: "Could not fetch stats." });
+  }
+});
+
 module.exports = router;

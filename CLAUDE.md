@@ -338,29 +338,6 @@ DELETE /purchases/:id           → cancels + reverses stock
 GET    /purchases/summary/stats
 ```
 
----
-
-## Current Known Issues
-
-**Sidebar not scrolling:**
-**Purchases.html render issue** Line items sections scrolling underneath another div
-
-
-**Fix approach:**
-1. Read the file
-2. Find the opening `{` of `bindEvents()`
-3. All code after it until the matching `}` needs to be extracted
-4. Each `function` inside needs to be moved to top level
-5. Keep only the event listener bindings inside `bindEvents()`
-
-### Minor — purchases.html scroll issue
-Line items section cuts off — needs CSS overflow fix:
-```css
-.se-main { overflow-y: auto; height: 100vh; }
-.se-page-content { overflow-y: auto; }
-```
-
----
 
 ## VS Code Settings Required
 Add to User Settings JSON to prevent auto-formatter breaking JS:
@@ -401,23 +378,26 @@ Add to User Settings JSON to prevent auto-formatter breaking JS:
 - ✅ Wizard reusable component
 - ✅ categories.html fully wired
 - ✅ items.html (wizard flow — may need revision)
-- ✅ purchases.html (UI done, JS has nesting bug)
+- ✅ purchases.html (UI need revision)
 
 ## What Is Not Built Yet
-- ⏳ Sales / POS billing screen
-- ⏳ Stock view page (uses StockTable component)
-- ⏳ Reports
-- ⏳ Suppliers management page
-- ⏳ Purchase history page
-- ⏳ Variant bulk edit (detailed view)
-- ⏳ GST filing
-- ⏳ Customer management
-- ⏳ Set definitions management UI
 
+- 1 store set definitions in category.html to database
+- 2 Sales / POS billing screen
+- 3 Stock view page (uses StockTable component)
+- 4 Reports
+- 5 Suppliers management page
+- 6 Purchase history page
+- 7 Variant bulk edit (detailed view)
+- 8 GST filing
+- 9 Customer management
+- 10 Home page
 ---
 
-## Next Steps After Fixing purchases.js
-1. Test full purchase flow end to end
+## Next Steps completing category page
+1. Build category management page
+2. Build purhcase management page
+2. Test full purchase flow end to end
 2. Build suppliers.html management page
 3. Build stock view page using StockTable component
 4. Build sales/POS billing screen

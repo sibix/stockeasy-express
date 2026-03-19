@@ -61,6 +61,7 @@ router.get('/', async (req, res) => {
 // GET — Single purchase with full details
 // ══════════════════════════════════════════════════════════
 router.get('/:id', async (req, res) => {
+  if (['summary', 'report'].includes(req.params.id)) return res.status(404).json({ error: 'Not found' });
   try {
     const [rows] = await db.execute(`
       SELECT p.*, s.name AS supplier_name
@@ -119,7 +120,9 @@ router.post('/', async (req, res) => {
       seller_bill_number,
       purchase_date,
       notes,
-      line_items    // array of line items
+      supplier_bill_total,  // entered by user for validation
+      save_as,              // 'draft' | undefined (confirmed)
+      line_items            // array of line items
     } = req.body;
 
     // ── Validation ─────────────────────────────────────────
@@ -171,13 +174,15 @@ router.post('/', async (req, res) => {
 
     await connection.beginTransaction();
 
+    const billStatus = save_as === 'draft' ? 'draft' : 'completed';
+
     // ── 1. Insert purchase header ───────────────────────────
     const [purchaseResult] = await connection.execute(`
       INSERT INTO purchases (
         purchase_number, supplier_id, seller_bill_number,
         total_amount, cgst_amount, sgst_amount, net_amount,
         notes, status, created_by, created_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'completed', ?, ?)`,
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         purchase_number,
         supplier_id,
@@ -187,6 +192,7 @@ router.post('/', async (req, res) => {
         sgst_amount.toFixed(2),
         net_amount.toFixed(2),
         notes || null,
+        billStatus,
         req.session.userId,
         purchase_date || new Date()
       ]
@@ -196,7 +202,41 @@ router.post('/', async (req, res) => {
     let   variantsCreated = 0;
     let   variantsUpdated = 0;
 
-    // ── 2. Process each line item ───────────────────────────
+    // ── 2. Process each line item (skip for drafts) ─────────
+    if (billStatus === 'draft') {
+      // For drafts, just save line items without stock changes
+      for (const line of line_items) {
+        for (const variant of (line.variants || [])) {
+          const qty = parseFloat(variant.quantity || 0);
+          if (qty <= 0) continue;
+          await connection.execute(`
+            INSERT INTO purchase_items (
+              purchase_id, item_id, variant_id, uom_id,
+              quantity, conversion_factor, base_qty,
+              unit_price, cgst_amount, sgst_amount, total_price
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            [
+              purchaseId,
+              line.item_id || null,
+              variant.variant_id || null,
+              line.uom_id || 1,
+              qty, 1, qty,
+              parseFloat(variant.unit_price || 0).toFixed(2),
+              '0.00', '0.00',
+              (qty * parseFloat(variant.unit_price || 0)).toFixed(2)
+            ]
+          );
+        }
+      }
+      await connection.commit();
+      return res.status(201).json({
+        message:         `Draft ${purchase_number} saved.`,
+        purchase_id:     purchaseId,
+        purchase_number,
+        status:          'draft'
+      });
+    }
+
     for (const line of line_items) {
       const {
         item_id,
@@ -453,6 +493,82 @@ router.delete('/:id', async (req, res) => {
 });
 
 // ══════════════════════════════════════════════════════════
+// PUT — Confirm draft purchase (runs stock update)
+// ══════════════════════════════════════════════════════════
+router.put('/:id/confirm', async (req, res) => {
+  const connection = await db.getConnection();
+  try {
+    const { id } = req.params;
+
+    const [rows] = await db.execute(
+      "SELECT * FROM purchases WHERE id = ? AND status = 'draft'",
+      [id]
+    );
+    if (!rows.length) {
+      return res.status(404).json({ error: 'Draft not found' });
+    }
+
+    const purchase = rows[0];
+
+    await connection.beginTransaction();
+
+    // Fetch saved line items from DB
+    const [items] = await connection.execute(
+      'SELECT pi.*, i.name AS item_name FROM purchase_items pi JOIN items i ON pi.item_id = i.id WHERE pi.purchase_id = ?',
+      [id]
+    );
+
+    for (const item of items) {
+      const qty = parseFloat(item.quantity);
+      if (qty <= 0 || !item.variant_id) continue;
+
+      const [v] = await connection.execute(
+        'SELECT stock FROM item_variants WHERE id = ?', [item.variant_id]
+      );
+      const stockBefore = v.length ? parseFloat(v[0].stock) : 0;
+
+      await connection.execute(
+        'UPDATE item_variants SET stock = stock + ? WHERE id = ?',
+        [qty, item.variant_id]
+      );
+      await connection.execute(
+        'UPDATE items SET base_stock = base_stock + ? WHERE id = ?',
+        [qty, item.item_id]
+      );
+      await connection.execute(`
+        INSERT INTO stock_ledger (
+          item_id, variant_id, uom_id,
+          transaction_type, reference_id, reference_type,
+          quantity, base_qty, stock_before, stock_after,
+          notes, created_by
+        ) VALUES (?, ?, ?, 'purchase', ?, 'purchase', ?, ?, ?, ?, ?, ?)`,
+        [
+          item.item_id, item.variant_id, item.uom_id, id,
+          qty, qty,
+          stockBefore.toFixed(4), (stockBefore + qty).toFixed(4),
+          `Purchase ${purchase.purchase_number} (confirmed)`,
+          req.session.userId
+        ]
+      );
+    }
+
+    await connection.execute(
+      "UPDATE purchases SET status = 'completed' WHERE id = ?", [id]
+    );
+
+    await connection.commit();
+    res.json({ message: `Purchase ${purchase.purchase_number} confirmed and stock updated!` });
+
+  } catch (error) {
+    await connection.rollback();
+    console.error('Error confirming purchase:', error);
+    res.status(500).json({ error: 'Could not confirm purchase.' });
+  } finally {
+    connection.release();
+  }
+});
+
+// ══════════════════════════════════════════════════════════
 // GET — Purchase history summary
 // ══════════════════════════════════════════════════════════
 router.get('/summary/stats', async (req, res) => {
@@ -471,6 +587,61 @@ router.get('/summary/stats', async (req, res) => {
   } catch (error) {
     console.error('Stats error:', error);
     res.status(500).json({ error: 'Could not fetch stats.' });
+  }
+});
+
+// ══════════════════════════════════════════════════════════
+// GET — Purchase report (date range)
+// ══════════════════════════════════════════════════════════
+router.get('/report', async (req, res) => {
+  try {
+    const { from, to } = req.query;
+    if (!from || !to) return res.status(400).json({ error: 'from and to dates required.' });
+
+    const [rows] = await db.execute(`
+      SELECT
+        p.id, p.bill_number, p.bill_date, p.net_amount,
+        p.cgst_amount, p.sgst_amount, p.status,
+        s.name AS supplier_name,
+        COUNT(pi.id) AS line_count
+      FROM purchases p
+      LEFT JOIN suppliers    s  ON s.id  = p.supplier_id
+      LEFT JOIN purchase_items pi ON pi.purchase_id = p.id
+      WHERE p.status = 'completed'
+        AND p.bill_date BETWEEN ? AND ?
+      GROUP BY p.id
+      ORDER BY p.bill_date DESC
+    `, [from, to]);
+
+    const [totals] = await db.execute(`
+      SELECT
+        COUNT(*)                       AS total_bills,
+        COALESCE(SUM(net_amount), 0)   AS total_net,
+        COALESCE(SUM(cgst_amount), 0)  AS total_cgst,
+        COALESCE(SUM(sgst_amount), 0)  AS total_sgst,
+        COALESCE(SUM(cgst_amount + sgst_amount), 0) AS total_gst
+      FROM purchases
+      WHERE status = 'completed'
+        AND bill_date BETWEEN ? AND ?
+    `, [from, to]);
+
+    const [bySupplier] = await db.execute(`
+      SELECT
+        s.name AS supplier_name,
+        COUNT(p.id) AS bill_count,
+        COALESCE(SUM(p.net_amount), 0) AS total_net
+      FROM purchases p
+      LEFT JOIN suppliers s ON s.id = p.supplier_id
+      WHERE p.status = 'completed'
+        AND p.bill_date BETWEEN ? AND ?
+      GROUP BY p.supplier_id
+      ORDER BY total_net DESC
+    `, [from, to]);
+
+    res.json({ bills: rows, totals: totals[0], by_supplier: bySupplier });
+  } catch (error) {
+    console.error('Purchase report error:', error);
+    res.status(500).json({ error: 'Could not generate report.' });
   }
 });
 

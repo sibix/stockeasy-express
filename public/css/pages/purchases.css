@@ -1,0 +1,550 @@
+/* ================================================================
+   purchases.css — Purchase Bills page styles
+================================================================ */
+
+/* ── Stats bar ─────────────────────────────────────────────── */
+.pur-stats-bar {
+  display: flex;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+  flex-wrap: wrap;
+}
+
+.pur-stat {
+  flex: 1;
+  min-width: 140px;
+  background: var(--white);
+  border: 1px solid var(--slate-100);
+  border-radius: var(--radius-lg);
+  padding: var(--space-4);
+}
+
+.pur-stat-label {
+  font-size: var(--text-xs);
+  color: var(--slate-500);
+  font-weight: var(--weight-semibold);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: var(--space-1);
+}
+
+.pur-stat-val {
+  font-size: var(--text-xl);
+  font-weight: var(--weight-bold);
+  color: var(--slate-800);
+  font-family: var(--font-mono);
+}
+
+/* ── History table ─────────────────────────────────────────── */
+.pur-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--text-sm);
+}
+
+.pur-table thead tr {
+  background: var(--slate-50);
+  border-bottom: 1px solid var(--slate-100);
+}
+
+.pur-table th {
+  padding: var(--space-3) var(--space-4);
+  text-align: left;
+  font-size: var(--text-xs);
+  font-weight: var(--weight-bold);
+  color: var(--slate-500);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+}
+
+.pur-table td {
+  padding: var(--space-3) var(--space-4);
+  border-bottom: 1px solid var(--slate-50);
+  color: var(--slate-700);
+  vertical-align: middle;
+}
+
+.pur-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.pur-table tbody tr:hover td {
+  background: var(--slate-50);
+}
+
+/* ── Status badges ─────────────────────────────────────────── */
+.pur-badge {
+  display: inline-block;
+  padding: 2px var(--space-2);
+  border-radius: var(--radius-sm);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-semibold);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.pur-badge-draft {
+  background: var(--amber-50, #fffbeb);
+  color: var(--amber-600, #d97706);
+  border: 1px solid var(--amber-200, #fde68a);
+}
+
+.pur-badge-confirmed {
+  background: var(--green-50, #f0fdf4);
+  color: var(--green-700, #15803d);
+  border: 1px solid var(--green-200, #bbf7d0);
+}
+
+.pur-badge-cancelled {
+  background: var(--slate-100);
+  color: var(--slate-500);
+  border: 1px solid var(--slate-200);
+}
+
+/* ── Section view header (simple / detail toggle) ──────────── */
+.pur-view-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-3) var(--space-4);
+  border-bottom: 1px solid var(--slate-100);
+}
+
+/* ── Simple view table ─────────────────────────────────────── */
+.pur-simple-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--text-sm);
+}
+
+.pur-simple-table thead tr {
+  background: var(--slate-50);
+  border-bottom: 2px solid var(--slate-100);
+}
+
+.pur-simple-table th {
+  padding: var(--space-2) var(--space-3);
+  text-align: left;
+  font-size: var(--text-xs);
+  font-weight: var(--weight-bold);
+  color: var(--slate-500);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+
+.pur-simple-table td {
+  padding: var(--space-2) var(--space-2);
+  border-bottom: 1px solid var(--slate-50);
+  vertical-align: middle;
+}
+
+.pur-simple-table tbody tr:hover td {
+  background: var(--slate-50);
+}
+
+/* Row number cell */
+.pur-row-num {
+  font-size: var(--text-xs);
+  font-family: var(--font-mono);
+  color: var(--slate-400);
+  text-align: center;
+  width: 32px;
+}
+
+/* Generic cell select (category/set def dropdowns) */
+.pur-cell-sel {
+  width: 100%;
+  padding: var(--space-1) var(--space-2);
+  border: 1px solid var(--slate-200);
+  border-radius: var(--radius-md);
+  background: var(--white);
+  font-size: var(--text-sm);
+  color: var(--slate-700);
+  cursor: pointer;
+  height: 32px;
+}
+
+.pur-cell-sel:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 2px rgba(34, 197, 94, 0.15);
+}
+
+/* Generic cell input (item name, attr values, prices) */
+.pur-cell-inp {
+  width: 100%;
+  padding: var(--space-1) var(--space-2);
+  border: 1px solid var(--slate-200);
+  border-radius: var(--radius-md);
+  font-size: var(--text-sm);
+  color: var(--slate-700);
+  height: 32px;
+  background: var(--white);
+}
+
+.pur-cell-inp:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 2px rgba(34, 197, 94, 0.15);
+}
+
+.pur-cell-inp[type="number"] {
+  font-family: var(--font-mono);
+  -moz-appearance: textfield;
+}
+
+.pur-cell-inp[type="number"]::-webkit-outer-spin-button,
+.pur-cell-inp[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+}
+
+/* ── Qty + Pcs/Sets toggle ─────────────────────────────────── */
+.pur-qty-wrap {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.pur-qty-inp {
+  width: 64px;
+  padding: var(--space-1) var(--space-2);
+  border: 1px solid var(--slate-200);
+  border-radius: var(--radius-md);
+  font-size: var(--text-sm);
+  font-family: var(--font-mono);
+  text-align: right;
+  height: 32px;
+  color: var(--slate-700);
+  -moz-appearance: textfield;
+}
+
+.pur-qty-inp:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 2px rgba(34, 197, 94, 0.15);
+}
+
+.pur-qty-inp::-webkit-outer-spin-button,
+.pur-qty-inp::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+}
+
+.pur-qty-toggle {
+  display: flex;
+  border: 1px solid var(--slate-200);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.pur-qty-toggle button {
+  padding: 0 var(--space-2);
+  height: 32px;
+  border: none;
+  background: var(--white);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-semibold);
+  color: var(--slate-500);
+  cursor: pointer;
+  transition: background 0.1s, color 0.1s;
+}
+
+.pur-qty-toggle button + button {
+  border-left: 1px solid var(--slate-200);
+}
+
+.pur-qty-toggle button.active {
+  background: var(--color-primary);
+  color: var(--white);
+}
+
+/* ── Delete row button ─────────────────────────────────────── */
+.pur-del-btn {
+  width: 28px;
+  height: 28px;
+  border: none;
+  background: transparent;
+  color: var(--slate-300);
+  font-size: var(--text-base);
+  cursor: pointer;
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  transition: background 0.1s, color 0.1s;
+}
+
+.pur-del-btn:hover {
+  background: var(--red-50, #fef2f2);
+  color: var(--red-500, #ef4444);
+}
+
+/* ── Running total bar ─────────────────────────────────────── */
+.pur-total-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-3) var(--space-4);
+  background: var(--slate-50);
+  border-top: 1px solid var(--slate-100);
+  font-size: var(--text-sm);
+}
+
+.pur-total-bar.match {
+  background: var(--green-50, #f0fdf4);
+  border-top-color: var(--green-200, #bbf7d0);
+}
+
+.pur-total-bar.mismatch {
+  background: var(--amber-50, #fffbeb);
+  border-top-color: var(--amber-200, #fde68a);
+}
+
+#total-match-msg {
+  color: var(--slate-500);
+  font-weight: var(--weight-semibold);
+}
+
+.pur-total-bar.match #total-match-msg {
+  color: var(--green-700, #15803d);
+}
+
+.pur-total-bar.mismatch #total-match-msg {
+  color: var(--amber-700, #b45309);
+}
+
+.pur-running-total {
+  font-family: var(--font-mono);
+  color: var(--slate-600);
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.pur-running-total strong {
+  color: var(--slate-800);
+  font-size: var(--text-base);
+}
+
+/* ── Detail view ───────────────────────────────────────────── */
+.pur-detail-group {
+  border: 1px solid var(--slate-100);
+  border-radius: var(--radius-lg);
+  margin-bottom: var(--space-3);
+  overflow: hidden;
+}
+
+.pur-detail-group:last-child {
+  margin-bottom: 0;
+}
+
+.pur-detail-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-3) var(--space-4);
+  background: var(--slate-50);
+  cursor: pointer;
+  user-select: none;
+}
+
+.pur-detail-header:hover {
+  background: var(--slate-100);
+}
+
+.pur-detail-title {
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semibold);
+  color: var(--slate-700);
+}
+
+.pur-detail-subtitle {
+  font-size: var(--text-xs);
+  color: var(--slate-400);
+  margin-top: 2px;
+}
+
+.pur-detail-body {
+  padding: var(--space-3) var(--space-4);
+  background: var(--white);
+}
+
+.pur-variant-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-2) 0;
+  border-bottom: 1px solid var(--slate-50);
+  font-size: var(--text-sm);
+}
+
+.pur-variant-row:last-child {
+  border-bottom: none;
+}
+
+.pur-variant-size {
+  width: 80px;
+  font-weight: var(--weight-semibold);
+  color: var(--slate-700);
+}
+
+.pur-variant-qty-inp {
+  width: 72px;
+  padding: var(--space-1) var(--space-2);
+  border: 1px solid var(--slate-200);
+  border-radius: var(--radius-md);
+  font-size: var(--text-sm);
+  font-family: var(--font-mono);
+  text-align: right;
+  height: 30px;
+  -moz-appearance: textfield;
+}
+
+.pur-variant-qty-inp::-webkit-outer-spin-button,
+.pur-variant-qty-inp::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+}
+
+.pur-variant-qty-inp:focus {
+  outline: none;
+  border-color: var(--color-primary);
+}
+
+.pur-variant-label {
+  font-size: var(--text-xs);
+  color: var(--slate-400);
+  min-width: 60px;
+}
+
+/* ── Save footer summary ───────────────────────────────────── */
+.pur-save-summary {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  font-size: var(--text-sm);
+  color: var(--slate-600);
+  flex: 1;
+}
+
+.pur-save-summary span {
+  font-family: var(--font-mono);
+  font-weight: var(--weight-semibold);
+}
+
+/* ── Supplier search dropdown ──────────────────────────────── */
+.p-drop {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  background: var(--white);
+  border: 1px solid var(--slate-200);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  z-index: 200;
+  max-height: 240px;
+  overflow-y: auto;
+}
+
+.p-drop-item {
+  display: flex;
+  flex-direction: column;
+  padding: var(--space-3) var(--space-4);
+  cursor: pointer;
+  border-bottom: 1px solid var(--slate-50);
+  transition: background 0.1s;
+}
+
+.p-drop-item:last-child {
+  border-bottom: none;
+}
+
+.p-drop-item:hover {
+  background: var(--green-50, #f0fdf4);
+}
+
+.p-drop-item span:first-child {
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semibold);
+  color: var(--slate-800);
+}
+
+.p-drop-sub {
+  font-size: var(--text-xs);
+  color: var(--slate-400);
+  margin-top: 2px;
+}
+
+.p-drop-empty {
+  padding: var(--space-4);
+  text-align: center;
+  color: var(--slate-400);
+  font-size: var(--text-sm);
+}
+
+/* ── Danger button ─────────────────────────────────────────── */
+.btn-danger {
+  background: transparent;
+  border: 1px solid var(--red-300, #fca5a5);
+  color: var(--red-600, #dc2626);
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-md);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-semibold);
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.btn-danger:hover {
+  background: var(--red-50, #fef2f2);
+  border-color: var(--red-400, #f87171);
+}
+
+/* ── Table action buttons ──────────────────────────────────── */
+.pur-table .btn {
+  font-size: var(--text-xs);
+  padding: var(--space-1) var(--space-2);
+}
+
+/* ── Segmented control (Pcs / Sets toggle) ─────────────────── */
+/* mirrors categories.css — needed here since purchases.css loads independently */
+.seg-control {
+  display: flex;
+  background: var(--slate-100);
+  border-radius: var(--radius-md);
+  padding: 3px;
+  width: fit-content;
+}
+
+.seg-btn {
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: var(--text-xs);
+  font-weight: var(--weight-semibold);
+  cursor: pointer;
+  color: var(--slate-500);
+  transition: background 0.15s, color 0.15s;
+  white-space: nowrap;
+  border: none;
+  background: transparent;
+}
+
+.seg-btn:hover { color: var(--slate-800); }
+
+.seg-btn.active {
+  background: var(--white);
+  color: var(--slate-800);
+  box-shadow: var(--shadow-sm);
+  font-weight: var(--weight-bold);
+}
+
+/* ── Empty state ───────────────────────────────────────────── */
+.pur-empty {
+  padding: var(--space-10) var(--space-4);
+  text-align: center;
+  color: var(--slate-400);
+  font-size: var(--text-sm);
+}

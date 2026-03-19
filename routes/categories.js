@@ -99,6 +99,7 @@ router.post("/", async (req, res) => {
       serial_number_enabled,
       has_variants,
       attributes,
+      set_definitions,
     } = req.body;
 
     // ── Validate ───────────────────────────────────────────
@@ -184,6 +185,27 @@ router.post("/", async (req, res) => {
       }
     }
 
+    // ── Insert set definitions ─────────────────────────────
+    if (set_definitions && set_definitions.length > 0) {
+      for (const sd of set_definitions) {
+        if (!sd.name || !sd.name.trim()) continue;
+        await connection.execute(
+          `INSERT INTO set_definitions
+           (category_id, supplier_id, name, set_type, size_ratios, total_pcs, is_default, created_by)
+           VALUES (?, NULL, ?, ?, ?, ?, ?, ?)`,
+          [
+            categoryId,
+            sd.name.trim(),
+            sd.set_type || 'uniform',
+            JSON.stringify(sd.size_ratios || {}),
+            sd.total_pcs || 0,
+            sd.is_default || 0,
+            req.session.userId,
+          ],
+        );
+      }
+    }
+
     await connection.commit();
 
     res.status(201).json({
@@ -227,6 +249,7 @@ router.put("/:id", async (req, res) => {
       serial_number_enabled,
       has_variants,
       attributes,
+      set_definitions,
     } = req.body;
 
     if (!name || name.trim() === "") {
@@ -311,6 +334,32 @@ router.put("/:id", async (req, res) => {
             JSON.stringify(attr.attribute_values),
             attr.is_required !== undefined ? attr.is_required : 1,
             i,
+          ],
+        );
+      }
+    }
+
+    // Update set definitions — soft delete existing, then recreate
+    await connection.execute(
+      "UPDATE set_definitions SET status = 'inactive' WHERE category_id = ? AND supplier_id IS NULL",
+      [id],
+    );
+
+    if (set_definitions && set_definitions.length > 0) {
+      for (const sd of set_definitions) {
+        if (!sd.name || !sd.name.trim()) continue;
+        await connection.execute(
+          `INSERT INTO set_definitions
+           (category_id, supplier_id, name, set_type, size_ratios, total_pcs, is_default, created_by)
+           VALUES (?, NULL, ?, ?, ?, ?, ?, ?)`,
+          [
+            id,
+            sd.name.trim(),
+            sd.set_type || 'uniform',
+            JSON.stringify(sd.size_ratios || {}),
+            sd.total_pcs || 0,
+            sd.is_default || 0,
+            req.session.userId,
           ],
         );
       }

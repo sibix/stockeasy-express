@@ -16,8 +16,17 @@ const db = pool.promise();
 
 async function initializeDatabase() {
   try {
-    const [rows] = await db.execute("SELECT 1");
+    await db.execute("SELECT 1");
     console.log("Database connected successfully!");
+
+    // ── Migrations ──────────────────────────────────────────
+    // Add 'draft' status to purchases if not already present
+    try {
+      await db.execute(
+        "ALTER TABLE purchases MODIFY COLUMN status ENUM('draft','completed','cancelled') DEFAULT 'completed'"
+      );
+    } catch(e) { /* already migrated */ }
+
   } catch (error) {
     console.error("Database connection failed:", error);
     process.exit(1);
