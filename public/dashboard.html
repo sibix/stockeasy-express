@@ -5,95 +5,129 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Dashboard — StockEasy</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=DM+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
-    <link rel="stylesheet" href="/css/core.css" />
-    <link rel="stylesheet" href="/css/pages/dashboard.css" />
+    <link rel="stylesheet" href="/css/styles.css" />
   </head>
   <body>
-    <div class="se-shell">
+    <div class="shell">
 
       <div id="sidebar-container"></div>
 
-      <div class="se-main">
+      <div class="main">
 
         <div id="topbar-container"></div>
 
-        <div class="se-page-content">
+        <div class="page-content">
 
-          <!-- Page header -->
-          <div class="page-header">
-            <div>
-              <div class="page-header-title" id="dash-greeting">Good morning</div>
-              <div class="page-header-sub" id="dash-date"></div>
+          <!-- Quick stats bar -->
+          <div class="quick-stats">
+            <div class="qs-item">
+              <div class="qs-val" id="qs-sales" style="color:var(--g600)">—</div>
+              <div class="qs-lbl">Today's Sales</div>
+            </div>
+            <div class="qs-item">
+              <div class="qs-val" id="qs-purchase" style="color:var(--blue)">—</div>
+              <div class="qs-lbl">Today's Purchase</div>
+            </div>
+            <div class="qs-item">
+              <div class="qs-val" id="qs-outstanding" style="color:var(--amber)">—</div>
+              <div class="qs-lbl">Total Outstanding</div>
+            </div>
+            <div class="qs-item">
+              <div class="qs-val" id="qs-items">—</div>
+              <div class="qs-lbl">Items in Stock</div>
+            </div>
+            <div class="qs-item">
+              <div class="qs-val" id="qs-lowstock" style="color:var(--red)">—</div>
+              <div class="qs-lbl">Low Stock Alerts</div>
             </div>
           </div>
 
-          <!-- Metric tiles -->
-          <div class="metric-grid" id="metric-grid">
-            <div class="metric-tile">
-              <div class="metric-tile-label">This Month Purchases</div>
-              <div class="metric-tile-value" id="metric-purchases">—</div>
+          <!-- Action tiles -->
+          <div class="sec-header">
+            <div class="sec-title">What do you want to do?</div>
+          </div>
+          <div class="action-grid mb-16">
+            <div class="action-tile featured" onclick="location.href='/pos.html'">
+              <div class="action-tile-icon">🛒</div>
+              <div class="action-tile-label">Quick Billing</div>
+              <div class="action-tile-sub">POS mode</div>
             </div>
-            <div class="metric-tile">
-              <div class="metric-tile-label">Total Items</div>
-              <div class="metric-tile-value" id="metric-items">—</div>
+            <div class="action-tile" onclick="location.href='/pos.html'">
+              <div class="action-tile-icon">🧾</div>
+              <div class="action-tile-label">New Sale</div>
+              <div class="action-tile-sub">GST bill</div>
             </div>
-            <div class="metric-tile">
-              <div class="metric-tile-label">Stock Value</div>
-              <div class="metric-tile-value" id="metric-value">—</div>
+            <div class="action-tile" onclick="location.href='/purchases.html'">
+              <div class="action-tile-icon">📦</div>
+              <div class="action-tile-label">Record Purchase</div>
+              <div class="action-tile-sub">Add stock</div>
             </div>
-            <div class="metric-tile">
-              <div class="metric-tile-label">Out of Stock</div>
-              <div class="metric-tile-value metric-tile-value--alert" id="metric-oos">—</div>
+            <div class="action-tile" onclick="showToast('Coming soon','amber')">
+              <div class="action-tile-icon">💰</div>
+              <div class="action-tile-label">Receive Money</div>
+              <div class="action-tile-sub">From customer</div>
+            </div>
+            <div class="action-tile" onclick="showToast('Coming soon','amber')">
+              <div class="action-tile-icon">🤝</div>
+              <div class="action-tile-label">Pay Supplier</div>
+              <div class="action-tile-sub">Clear dues</div>
+            </div>
+            <div class="action-tile" onclick="location.href='/stock.html'">
+              <div class="action-tile-icon">📊</div>
+              <div class="action-tile-label">Check Stock</div>
+              <div class="action-tile-sub">View inventory</div>
+            </div>
+            <div class="action-tile" onclick="showToast('Coming soon','amber')">
+              <div class="action-tile-icon">💸</div>
+              <div class="action-tile-label">Add Expense</div>
+              <div class="action-tile-sub">Daily costs</div>
+            </div>
+            <div class="action-tile" onclick="location.href='/items.html'">
+              <div class="action-tile-icon">➕</div>
+              <div class="action-tile-label">Add New Item</div>
+              <div class="action-tile-sub">Catalogue</div>
             </div>
           </div>
 
-          <!-- Two-column row -->
-          <div class="dash-two-col">
-
-            <!-- Recent Purchases -->
-            <div class="card card-padded">
-              <div class="section-title">Recent Purchases</div>
-              <div id="recent-purchases-list"><div class="dash-empty">Loading...</div></div>
-              <a href="/purchases.html" class="dash-see-all">See all purchases →</a>
+          <div class="grid-2">
+            <!-- Recent bills -->
+            <div class="card card-pad">
+              <div class="sec-header">
+                <div class="sec-title">Recent Bills</div>
+                <a href="/pos.html" class="btn btn-ghost" style="font-size:12px">View all →</a>
+              </div>
+              <div class="tbl-wrap">
+                <table>
+                  <thead>
+                    <tr><th>Bill #</th><th>Customer</th><th>Amount</th><th>Status</th></tr>
+                  </thead>
+                  <tbody id="recent-bills-tbody">
+                    <tr><td colspan="4" style="text-align:center;color:var(--slate400);padding:20px">Loading...</td></tr>
+                  </tbody>
+                </table>
+              </div>
             </div>
 
-            <!-- Low Stock Alerts -->
-            <div class="card card-padded">
-              <div class="section-title">Low Stock Alerts</div>
-              <div id="low-stock-list"><div class="dash-empty">Loading...</div></div>
-              <a href="/stock.html" class="dash-see-all">View full stock →</a>
-            </div>
+            <!-- Right column -->
+            <div style="display:flex;flex-direction:column;gap:14px">
+              <!-- Low stock alerts -->
+              <div class="card card-pad">
+                <div class="sec-header" style="margin-bottom:10px">
+                  <div class="sec-title">⚠️ Low Stock Alerts</div>
+                  <a href="/stock.html" class="btn btn-ghost" style="font-size:12px">View all →</a>
+                </div>
+                <div id="low-stock-feed">
+                  <div style="color:var(--slate400);font-size:13px;padding:8px 0">Loading...</div>
+                </div>
+              </div>
 
-          </div>
-
-          <!-- Quick Actions -->
-          <div class="card card-padded" style="margin-bottom:var(--space-12)">
-            <div class="section-title">Quick Actions</div>
-            <div class="dash-actions">
-              <a href="/purchases.html" class="dash-action-card">
-                <div class="dash-action-icon">&#x1F4E6;</div>
-                <div class="dash-action-label">New Purchase</div>
-              </a>
-              <a href="/pos.html" class="dash-action-card">
-                <div class="dash-action-icon">&#x1F4B3;</div>
-                <div class="dash-action-label">New Sale</div>
-              </a>
-              <a href="/stock.html" class="dash-action-card">
-                <div class="dash-action-icon">&#x1F4CA;</div>
-                <div class="dash-action-label">View Stock</div>
-              </a>
-              <a href="/suppliers.html" class="dash-action-card">
-                <div class="dash-action-icon">&#x1F3EA;</div>
-                <div class="dash-action-label">Suppliers</div>
-              </a>
-              <a href="/categories.html" class="dash-action-card">
-                <div class="dash-action-icon">&#x1F3F7;&#xFE0F;</div>
-                <div class="dash-action-label">Categories</div>
-              </a>
-              <a href="/items.html" class="dash-action-card">
-                <div class="dash-action-icon">&#x1F4CB;</div>
-                <div class="dash-action-label">Add Item</div>
-              </a>
+              <!-- Today's activity -->
+              <div class="card card-pad">
+                <div class="sec-title mb-16" style="margin-bottom:10px">📅 Today's Activity</div>
+                <div id="activity-feed">
+                  <div style="color:var(--slate400);font-size:13px;padding:8px 0">Loading...</div>
+                </div>
+              </div>
             </div>
           </div>
 
@@ -102,7 +136,7 @@
     </div>
 
     <div id="toast" class="toast toast-green" style="display:none">
-      <span id="toast-icon" style="font-size:var(--text-xl)">&#x2705;</span>
+      <span class="toast-icon" id="toast-icon">✅</span>
       <span id="toast-msg"></span>
     </div>
 

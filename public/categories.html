@@ -7,21 +7,22 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=DM+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="/css/core.css" />
     <link rel="stylesheet" href="/css/pages/categories.css" />
+    <link rel="stylesheet" href="/css/styles.css" />
   </head>
   <body>
-    <div class="se-shell">
+    <div class="shell">
 
       <!-- SIDEBAR — loaded by app.js loadComponent() -->
       <div id="sidebar-container"></div>
 
       <!-- MAIN -->
-      <div class="se-main">
+      <div class="main">
 
         <!-- TOPBAR — loaded by app.js loadComponent() -->
         <div id="topbar-container"></div>
 
         <!-- MODULE TABS -->
-        <div class="module-tabs">
+        <div class="module-tabs visible">
           <a href="/items.html"      class="mtab">Catalogue</a>
           <a href="/categories.html" class="mtab active">Categories</a>
           <a href="/pricelists.html" class="mtab">Price Lists</a>
@@ -29,7 +30,7 @@
         </div>
 
         <!-- PAGE CONTENT -->
-        <div class="se-page-content">
+        <div class="page-content">
 
           <!-- Page header -->
           <div class="page-header">
@@ -499,9 +500,9 @@
         </div>
 
       </div>
-      <!-- end se-main -->
+      <!-- end main -->
     </div>
-    <!-- end se-shell -->
+    <!-- end shell -->
 
     <!-- TEMPLATE LIBRARY COMPONENT -->
     <div id="template-library-container"></div>

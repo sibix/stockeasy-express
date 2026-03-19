@@ -9,9 +9,9 @@ function showToast(msg, type) {
   type = type || "green";
   var icons = { green: "✅", amber: "⚠️", red: "❌" };
   var borders = {
-    green: "var(--green-500)",
-    amber: "var(--color-warning)",
-    red: "var(--color-danger)",
+    green: "#22c55e",
+    amber: "#f59e0b",
+    red: "#ef4444",
   };
   var el = document.getElementById("toast");
   if (!el) return;
@@ -48,7 +48,7 @@ function toggleSidebar() {
 
 // ── Mark active sidebar item by data-page attribute ────────
 function setActivePage(pageName) {
-  document.querySelectorAll(".se-sb-item").forEach(function (item) {
+  document.querySelectorAll(".sb-item").forEach(function (item) {
     item.classList.toggle("active", item.dataset.page === pageName);
   });
 }

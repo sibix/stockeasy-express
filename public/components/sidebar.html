@@ -1,90 +1,94 @@
-﻿<div class="se-sidebar" id="sidebar">
-  <div class="se-sb-logo">
-    <div class="se-sb-logo-icon">&#x1F3EA;</div>
+<div class="se-sidebar sidebar" id="sidebar">
+  <div class="se-sb-logo sb-logo">
+    <div class="se-sb-logo-icon sb-logo-icon">&#x1F3EA;</div>
     <div>
-      <div class="se-sb-logo-name">StockEasy</div>
-      <div class="se-sb-logo-tagline">Smart Business App</div>
+      <div class="se-sb-logo-name sb-logo-text">StockEasy</div>
+      <div class="se-sb-logo-tagline sb-logo-sub">Smart Business App</div>
     </div>
   </div>
-  <button class="se-sb-toggle" onclick="toggleSidebar()">&#x25C0;</button>
-  <nav class="se-sb-nav">
-    <div class="se-sb-section">Main</div>
-    <a href="/dashboard.html" class="se-sb-item" data-page="dashboard">
-      <span class="se-sb-item-icon">&#x1F3E0;</span>
-      <span class="se-sb-item-label">Dashboard</span>
+  <button class="se-sb-toggle sb-toggle" onclick="toggleSidebar()">&#x25C0;</button>
+  <nav class="se-sb-nav sb-nav">
+    <div class="se-sb-section sb-section">Main</div>
+    <a href="/dashboard.html" class="se-sb-item sb-item" data-page="dashboard">
+      <span class="se-sb-item-icon sb-item-icon">&#x1F3E0;</span>
+      <span class="se-sb-item-label sb-item-label">Dashboard</span>
     </a>
-    <a href="/pos.html" class="se-sb-item" data-page="pos">
-      <span class="se-sb-item-icon">&#x1F6D2;</span>
-      <span class="se-sb-item-label">Quick Billing (POS)</span>
+    <a href="/pos.html" class="se-sb-item sb-item" data-page="pos">
+      <span class="se-sb-item-icon sb-item-icon">&#x1F6D2;</span>
+      <span class="se-sb-item-label sb-item-label">Quick Billing (POS)</span>
     </a>
-    <div class="se-sb-section">Buy &amp; Sell</div>
-    <a href="/sales.html" class="se-sb-item" data-page="sales">
-      <span class="se-sb-item-icon">&#x1F9FE;</span>
-      <span class="se-sb-item-label">Sales &amp; Invoices</span>
+    <div class="se-sb-section sb-section">Buy &amp; Sell</div>
+    <a href="/sales.html" class="se-sb-item sb-item" data-page="sales">
+      <span class="se-sb-item-icon sb-item-icon">&#x1F9FE;</span>
+      <span class="se-sb-item-label sb-item-label">Sales &amp; Invoices</span>
     </a>
-    <a href="/purchases.html" class="se-sb-item" data-page="purchases">
-      <span class="se-sb-item-icon">&#x1F4E6;</span>
-      <span class="se-sb-item-label">Purchases</span>
+    <a href="/purchases.html" class="se-sb-item sb-item" data-page="purchases">
+      <span class="se-sb-item-icon sb-item-icon">&#x1F4E6;</span>
+      <span class="se-sb-item-label sb-item-label">Purchases</span>
     </a>
-    <a href="/returns.html" class="se-sb-item" data-page="returns">
-      <span class="se-sb-item-icon">&#x21A9;️</span>
-      <span class="se-sb-item-label">Returns</span>
-      <span class="se-sb-item-badge" id="badge-returns"></span>
+    <a href="/returns.html" class="se-sb-item sb-item" data-page="returns">
+      <span class="se-sb-item-icon sb-item-icon">&#x21A9;️</span>
+      <span class="se-sb-item-label sb-item-label">Returns</span>
+      <span class="se-sb-item-badge sb-item-badge" id="badge-returns"></span>
     </a>
-    <div class="se-sb-section">Money</div>
-    <a href="/payments.html" class="se-sb-item" data-page="payments">
-      <span class="se-sb-item-icon">&#x1F4B3;</span>
-      <span class="se-sb-item-label">Payments</span>
+    <div class="se-sb-section sb-section">Money</div>
+    <a href="/payments.html" class="se-sb-item sb-item" data-page="payments">
+      <span class="se-sb-item-icon sb-item-icon">&#x1F4B3;</span>
+      <span class="se-sb-item-label sb-item-label">Payments</span>
     </a>
-    <a href="/dues.html" class="se-sb-item" data-page="dues">
-      <span class="se-sb-item-icon">&#x23F3;</span>
-      <span class="se-sb-item-label">Due &amp; Outstanding</span>
-      <span class="se-sb-item-badge" id="badge-dues"></span>
+    <a href="/dues.html" class="se-sb-item sb-item" data-page="dues">
+      <span class="se-sb-item-icon sb-item-icon">&#x23F3;</span>
+      <span class="se-sb-item-label sb-item-label">Due &amp; Outstanding</span>
+      <span class="se-sb-item-badge sb-item-badge" id="badge-dues"></span>
     </a>
-    <a href="/expenses.html" class="se-sb-item" data-page="expenses">
-      <span class="se-sb-item-icon">&#x1F4B8;</span>
-      <span class="se-sb-item-label">Expenses</span>
+    <a href="/expenses.html" class="se-sb-item sb-item" data-page="expenses">
+      <span class="se-sb-item-icon sb-item-icon">&#x1F4B8;</span>
+      <span class="se-sb-item-label sb-item-label">Expenses</span>
     </a>
-    <div class="se-sb-section">Inventory</div>
-    <a href="/stock.html" class="se-sb-item" data-page="stock">
-      <span class="se-sb-item-icon">&#x1F4CA;</span>
-      <span class="se-sb-item-label">Stock</span>
+    <div class="se-sb-section sb-section">Inventory</div>
+    <a href="/stock.html" class="se-sb-item sb-item" data-page="stock">
+      <span class="se-sb-item-icon sb-item-icon">&#x1F4CA;</span>
+      <span class="se-sb-item-label sb-item-label">Stock</span>
     </a>
-    <a href="/items.html" class="se-sb-item" data-page="items">
-      <span class="se-sb-item-icon">&#x1F3F7;️</span>
-      <span class="se-sb-item-label">Items &amp; Catalogue</span>
+    <a href="/items.html" class="se-sb-item sb-item" data-page="items">
+      <span class="se-sb-item-icon sb-item-icon">&#x1F3F7;️</span>
+      <span class="se-sb-item-label sb-item-label">Items &amp; Catalogue</span>
     </a>
-    <a href="/suppliers.html" class="se-sb-item" data-page="suppliers">
-      <span class="se-sb-item-icon">&#x1F3ED;</span>
-      <span class="se-sb-item-label">Suppliers</span>
+    <a href="/categories.html" class="se-sb-item sb-item" data-page="categories">
+      <span class="se-sb-item-icon sb-item-icon">&#x1F4CB;</span>
+      <span class="se-sb-item-label sb-item-label">Categories</span>
     </a>
-    <a href="/parties.html" class="se-sb-item" data-page="parties">
-      <span class="se-sb-item-icon">&#x1F465;</span>
-      <span class="se-sb-item-label">Parties</span>
+    <a href="/suppliers.html" class="se-sb-item sb-item" data-page="suppliers">
+      <span class="se-sb-item-icon sb-item-icon">&#x1F3ED;</span>
+      <span class="se-sb-item-label sb-item-label">Suppliers</span>
     </a>
-    <div class="se-sb-section">Reports</div>
-    <a href="/reports.html" class="se-sb-item" data-page="reports">
-      <span class="se-sb-item-icon">&#x1F4C8;</span>
-      <span class="se-sb-item-label">Reports</span>
+    <a href="/parties.html" class="se-sb-item sb-item" data-page="parties">
+      <span class="se-sb-item-icon sb-item-icon">&#x1F465;</span>
+      <span class="se-sb-item-label sb-item-label">Parties</span>
     </a>
-    <a href="/gst.html" class="se-sb-item" data-page="gst">
-      <span class="se-sb-item-icon">&#x1F3DB;️</span>
-      <span class="se-sb-item-label">GST Filing</span>
+    <div class="se-sb-section sb-section">Reports</div>
+    <a href="/reports.html" class="se-sb-item sb-item" data-page="reports">
+      <span class="se-sb-item-icon sb-item-icon">&#x1F4C8;</span>
+      <span class="se-sb-item-label sb-item-label">Reports</span>
     </a>
-    <div class="se-sb-section">Setup</div>
-    <a href="/settings.html" class="se-sb-item" data-page="settings">
-      <span class="se-sb-item-icon">&#x2699;️</span>
-      <span class="se-sb-item-label">Settings</span>
+    <a href="/gst.html" class="se-sb-item sb-item" data-page="gst">
+      <span class="se-sb-item-icon sb-item-icon">&#x1F3DB;️</span>
+      <span class="se-sb-item-label sb-item-label">GST Filing</span>
+    </a>
+    <div class="se-sb-section sb-section">Setup</div>
+    <a href="/settings.html" class="se-sb-item sb-item" data-page="settings">
+      <span class="se-sb-item-icon sb-item-icon">&#x2699;️</span>
+      <span class="se-sb-item-label sb-item-label">Settings</span>
     </a>
   </nav>
-  <div class="se-sb-bottom">
-    <div class="se-sb-user">
-      <div class="se-sb-avatar" id="sb-avatar">--</div>
-      <div class="se-sb-user-info">
-        <div class="se-sb-user-name" id="sb-username">Loading...</div>
-        <div class="se-sb-user-role" id="sb-role"></div>
+  <div class="se-sb-bottom sb-bottom">
+    <div class="se-sb-user sb-user">
+      <div class="se-sb-avatar sb-avatar" id="sb-avatar">--</div>
+      <div class="se-sb-user-info sb-user-info">
+        <div class="se-sb-user-name sb-user-name" id="sb-username">Loading...</div>
+        <div class="se-sb-user-role sb-user-role" id="sb-role"></div>
       </div>
     </div>
-    <button class="se-sb-logout-btn" onclick="logout()" title="Logout">&#x23FB;</button>
+    <button class="se-sb-logout-btn sb-logout-btn" onclick="logout()" title="Logout">&#x23FB;</button>
   </div>
 </div>
