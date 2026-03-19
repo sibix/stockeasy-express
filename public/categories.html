@@ -1,4 +1,4 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -148,9 +148,25 @@
             <!-- Exempt block -->
             <div id="block-exempt" style="display:none">
               <div class="info-panel">
-                ✅ All items in this category will be billed at 0% GST and excluded from GSTR filings.
+                &#x2705; All items in this category will be billed at 0% GST and excluded from GSTR filings.
               </div>
             </div>
+          </div>
+
+          <!-- ══════════════════════════════════════════
+               CARD 1B — Set Definitions
+          ══════════════════════════════════════════ -->
+          <div class="card card-padded mb-4">
+            <div class="set-def-header">
+              <div class="section-title" style="margin-bottom:0">Set Definitions</div>
+              <div class="set-def-actions">
+                <button class="btn btn-sm btn-outline" onclick="openSetTemplateLibrary()">
+                  Browse templates
+                </button>
+                <button class="btn btn-sm" onclick="addCustomSetDef()">+ Custom set</button>
+              </div>
+            </div>
+            <div id="set-defs-container"></div>
           </div>
 
           <!-- ══════════════════════════════════════════
@@ -447,7 +463,7 @@
                CARD 9 — Clone
           ══════════════════════════════════════════ -->
           <div class="clone-card" style="margin-bottom:var(--space-12)">
-            <div class="clone-icon">📋</div>
+            <div class="clone-icon">&#x1F4CB;</div>
             <div style="flex:1">
               <div style="font-size:var(--text-base);font-weight:var(--weight-bold);color:var(--green-800);margin-bottom:var(--space-1)">
                 Clone this Category
@@ -458,7 +474,7 @@
               </div>
             </div>
             <button class="btn btn-outline" onclick="cloneCategory()" style="flex-shrink:0">
-              📋 Clone Category
+              &#x1F4CB; Clone Category
             </button>
           </div>
 
@@ -481,14 +497,18 @@
     </div>
     <!-- end se-shell -->
 
+    <!-- TEMPLATE LIBRARY COMPONENT -->
+    <div id="template-library-container"></div>
+
     <!-- TOAST -->
     <div id="toast" class="toast toast-green" style="display:none">
-      <span id="toast-icon" style="font-size:var(--text-xl)">✅</span>
+      <span id="toast-icon" style="font-size:var(--text-xl)">&#x2705;</span>
       <span id="toast-msg"></span>
     </div>
 
     <!-- SCRIPTS — app.js first, then page script -->
     <script src="/js/app.js"></script>
+    <script src="/js/components/template-library.js"></script>
     <script src="/js/pages/categories.js"></script>
   </body>
 </html>

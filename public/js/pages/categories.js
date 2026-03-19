@@ -5,14 +5,17 @@
 var _categoryId = null;
 var _marginMode = 'percent';
 var _attrCount  = 2;
+var _setDefs    = [];
 
 // ── Page init ──────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', async function() {
   await loadComponent('sidebar-container', '/components/sidebar.html');
   await loadComponent('topbar-container',  '/components/topbar.html');
+  await loadComponent('template-library-container', '/components/template-library.html');
   await checkSession();
   setActivePage('items');
   setTopbar('Items & Catalogue', 'Inventory › Categories › New Category');
+  renderSetDefs();
 });
 
 // ── GST mode toggle ────────────────────────────────────────
@@ -56,6 +59,127 @@ function onToggle(cb, label) {
     label + (cb.checked ? ' enabled' : ' disabled'),
     cb.checked ? 'green' : 'amber'
   );
+}
+
+// ── Set Definitions ───────────────────────────────────────────
+function renderSetDefs() {
+  var el = document.getElementById('set-defs-container');
+  if (!el) return;
+  if (!_setDefs.length) {
+    el.innerHTML =
+      '<div class="set-defs-empty">No set types yet. Browse templates or add a custom set.</div>';
+    return;
+  }
+  el.innerHTML = _setDefs
+    .map(function(s, i) {
+      var sizes = s.sizesStr || (s.sizes ? s.sizes.join(', ') : '');
+      var pcs = s.ratioMap
+        ? Object.keys(s.ratioMap).reduce(function(a, k) { return a + (s.ratioMap[k] || 0); }, 0)
+        : (s.sizes ? s.sizes.length : 0) * (s.ppc || 1);
+      var ratioNote = s.ratioMap
+        ? '<span class="set-def-note">Ratio set — ' +
+          Object.keys(s.ratioMap).map(function(k){return k + ':' + s.ratioMap[k];}).join(', ') +
+          '</span>'
+        : '';
+      return (
+        '<div class="set-def-card">' +
+          '<div class="set-def-row">' +
+            '<div class="form-group" style="flex:1">' +
+              '<label class="form-label">Set name</label>' +
+              '<input class="form-input" type="text" value="' + escHtml(s.name || '') + '"' +
+                ' oninput="updateSetDefName(' + i + ', this.value)">' +
+            '</div>' +
+            '<div class="form-group" style="max-width:140px">' +
+              '<label class="form-label">Pcs/size</label>' +
+              '<input class="form-input" type="number" min="1" value="' + (s.ppc || 1) + '"' +
+                ' oninput="updateSetDefPpc(' + i + ', this.value)">' +
+            '</div>' +
+            '<button class="btn btn-sm btn-danger" onclick="removeSetDef(' + i + ')">×</button>' +
+          '</div>' +
+          '<div class="form-group">' +
+            '<label class="form-label">Sizes (comma separated)</label>' +
+            '<input class="form-input" type="text" value="' + escHtml(sizes) + '"' +
+              ' oninput="updateSetDefSizes(' + i + ', this.value)">' +
+          '</div>' +
+          '<div class="set-def-meta">' +
+            '<span>' + pcs + ' pcs per set</span>' +
+            ratioNote +
+          '</div>' +
+        '</div>'
+      );
+    })
+    .join('');
+}
+
+function escHtml(s) {
+  return (s || '')
+    .replace(/&/g, '&amp;')
+    .replace(/"/g, '&quot;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+}
+
+function addCustomSetDef() {
+  _setDefs.push({
+    id: 'set_' + Date.now() + Math.random(),
+    name: '',
+    sizes: [],
+    sizesStr: '',
+    ppc: 1,
+    ratioMap: null
+  });
+  renderSetDefs();
+}
+
+function updateSetDefName(i, val) {
+  if (_setDefs[i]) _setDefs[i].name = val;
+}
+
+function updateSetDefPpc(i, val) {
+  if (_setDefs[i]) _setDefs[i].ppc = parseInt(val, 10) || 1;
+  renderSetDefs();
+}
+
+function updateSetDefSizes(i, val) {
+  if (!_setDefs[i]) return;
+  _setDefs[i].sizesStr = val;
+  _setDefs[i].sizes = val
+    .split(',')
+    .map(function(x) { return x.trim(); })
+    .filter(Boolean);
+  renderSetDefs();
+}
+
+function removeSetDef(i) {
+  _setDefs.splice(i, 1);
+  renderSetDefs();
+}
+
+function openSetTemplateLibrary() {
+  if (!window.TemplateLibrary) {
+    showToast('Template library not loaded yet', 'amber');
+    return;
+  }
+  TemplateLibrary.open({
+    onApply: function(templates) {
+      var added = 0;
+      templates.forEach(function(t) {
+        if (_setDefs.find(function(s) { return s.name === t.name; })) return;
+        _setDefs.push({
+          id: 'tpl_' + Date.now() + Math.random(),
+          name: t.name,
+          sizes: t.sizes.slice(),
+          sizesStr: t.sizes.join(', '),
+          ppc: t.ppc || 1,
+          ratioMap: t.ratioMap || null
+        });
+        added++;
+      });
+      renderSetDefs();
+      if (!added) showToast('All selected templates already added', 'amber');
+      else showToast(added + ' template' + (added > 1 ? 's' : '') + ' added', 'green');
+    }
+  });
 }
 
 // ── Attributes ────────────────────────────────────────────

@@ -1,0 +1,81 @@
+<div
+  id="tpl-modal"
+  class="modal-overlay"
+  style="display: none"
+  onclick="if(event.target===this)TemplateLibrary.close()"
+>
+  <div class="modal modal-xl" role="dialog" aria-modal="true" aria-labelledby="tpl-title">
+    <div class="modal-header">
+      <div>
+        <div class="modal-title" id="tpl-title">Template Library</div>
+        <div class="tpl-subtitle">Tick templates and click "Add to seller"</div>
+      </div>
+      <div class="tpl-header-actions">
+        <button class="btn btn-sm btn-info" onclick="TemplateLibrary.openAddSector()">
+          + New sector
+        </button>
+        <button class="modal-close" aria-label="Close" onclick="TemplateLibrary.close()">✕</button>
+      </div>
+    </div>
+    <div class="modal-body" style="padding: 16px">
+      <div class="tpl-layout">
+        <div class="tpl-sectors" id="tpl-sector-list"></div>
+        <div class="tpl-right">
+          <div class="tpl-search-bar">
+            <input
+              type="text"
+              id="tpl-search"
+              placeholder="Search templates..."
+              oninput="TemplateLibrary.renderList()"
+            />
+          </div>
+          <div class="tpl-list" id="tpl-list-body"></div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer tpl-footer">
+      <div class="tpl-sel-info" id="tpl-sel-info">No templates selected</div>
+      <button class="btn btn-primary" onclick="TemplateLibrary.apply()">Add to seller</button>
+    </div>
+  </div>
+</div>
+
+<div
+  id="sector-modal"
+  class="modal-overlay"
+  style="display: none"
+  onclick="if(event.target===this)TemplateLibrary.closeAddSector()"
+>
+  <div class="modal modal-sm" role="dialog" aria-modal="true" aria-labelledby="tpl-sector-title">
+    <div class="modal-header">
+      <div class="modal-title" id="tpl-sector-title">Add New Sector</div>
+      <button class="modal-close" aria-label="Close" onclick="TemplateLibrary.closeAddSector()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">Sector name</label>
+        <input
+          class="form-input"
+          type="text"
+          id="ns-name"
+          placeholder="e.g. Footwear, Toys, Hardware"
+        />
+      </div>
+      <div class="form-group" style="margin-top: 12px; max-width: 140px">
+        <label class="form-label">Emoji (optional)</label>
+        <input class="form-input" type="text" id="ns-emoji" placeholder=":)" />
+      </div>
+      <div style="margin-top: 14px">
+        <div class="tpl-ns-title">Set templates for this sector</div>
+        <div id="ns-sets-container"></div>
+        <button class="btn btn-sm btn-outline" onclick="TemplateLibrary.addNsSet()">
+          + Add template
+        </button>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="TemplateLibrary.closeAddSector()">Cancel</button>
+      <button class="btn btn-primary" onclick="TemplateLibrary.saveNewSector()">Save sector</button>
+    </div>
+  </div>
+</div>
