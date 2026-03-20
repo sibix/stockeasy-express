@@ -18,10 +18,10 @@ var CAT_SCHEMA = {
     { k:'name',                lb:'Category Name',              t:'bold',      w:190, srt:1, flt:1, vis:1 },
     { k:'item_count',          lb:'Items',                      t:'num',       w:70,  srt:1, flt:0, vis:1 },
     { k:'hsn_code',            lb:'HSN Code',                   t:'mono',      w:100, srt:0, flt:1, vis:1 },
-    { k:'std_gst',             lb:'Standard GST (%)',           t:'rate',      w:140, srt:0, flt:0, vis:1 },
-    { k:'var_gst',             lb:'Variable GST (%)',           t:'var_rate',  w:140, srt:0, flt:0, vis:1 },
+    { k:'cgst_rate',            lb:'Standard GST (%)',           t:'rate',      w:140, srt:0, flt:0, vis:1 },
+    { k:'lower_cgst',          lb:'Variable GST (%)',           t:'var_rate',  w:140, srt:0, flt:0, vis:1 },
     { k:'gst_threshold',       lb:'Threshold Amount',           t:'threshold', w:130, srt:1, flt:0, vis:1 },
-    { k:'exempt',              lb:'Exempt',                     t:'exempt',    w:80,  srt:0, flt:0, vis:1 },
+    { k:'gst_type',            lb:'Exempt',                     t:'exempt',    w:80,  srt:0, flt:0, vis:1 },
     { k:'attribute_names',     lb:'Attribute Names',            t:'chips',     w:180, srt:0, flt:0, vis:0 },
     { k:'tags',                lb:'Tags',                       t:'json_chips',w:160, srt:0, flt:0, vis:0 },
     { k:'units',               lb:'Units',                      t:'chips',     w:130, srt:0, flt:0, vis:0 },
@@ -85,6 +85,7 @@ async function initCategoryList() {
     filterLabel: 'Search by name, HSN, or attribute…',
     countLabel:  'categories',
     schema:      CAT_SCHEMA,
+    storageKey:  'dt-pref-categories',
   });
 
   window._catTable.setStats(stats);

@@ -48,7 +48,7 @@ router.patch("/:id/toggle", async (req, res) => {
     if (rows.length === 0) {
       return res.status(404).json({ error: "Category not found" });
     }
-    const newStatus = rows[0].status === 'active' ? 'disabled' : 'active';
+    const newStatus = rows[0].status === 'active' ? 'inactive' : 'active';
     await db.execute(
       "UPDATE categories SET status = ? WHERE id = ?",
       [newStatus, id]

@@ -11,6 +11,7 @@
        tableEl:     '#cat-table',
        filterLabel: 'Search categories…',
        countLabel:  'categories',
+       storageKey:  'dt-pref-categories',   // optional: persist column prefs
        schema: {
          cols: [
            { k:'name', lb:'Category', t:'bold', w:180, srt:1, flt:1, vis:1 },
@@ -36,8 +37,8 @@ function DetailedTable(cfg) {
     colf: {},                      // column text filters: { name: 'foo', hsn_code: '' }
     srt:  { k: null, d: 'asc' },  // single sort state
     pg:   1,                       // current page
-    vis:  {},                      // column visibility (shared)
-    cw:   {},                      // column widths (shared)
+    vis:  {},                      // column visibility
+    cw:   {},                      // column widths
     q:    '',                      // global search query
   };
 
@@ -48,9 +49,12 @@ function DetailedTable(cfg) {
     self._S.cw[col.k]  = col.w || 120;
   });
 
+  // Load saved column preferences from localStorage (overrides schema defaults)
+  this._loadPrefs();
+
   this._cpOpen  = false;
   this._resize  = null;
-  this._chipsEl = null;   // set after toolbar is built
+  this._chipsEl = null;
 
   this._buildToolbar();
   this._bindGlobal();
@@ -76,6 +80,30 @@ DetailedTable.prototype.setData = function(rows) {
   this._render();
 };
 
+/* ── LOCAL-STORAGE PREFS ────────────────────────────────────────────── */
+
+DetailedTable.prototype._loadPrefs = function() {
+  if (!this._cfg.storageKey) return;
+  try {
+    var saved = JSON.parse(localStorage.getItem(this._cfg.storageKey) || 'null');
+    if (!saved || !saved.vis) return;
+    var self = this;
+    Object.keys(saved.vis).forEach(function(k) {
+      // Only restore visibility for columns that still exist in the schema
+      if (self._S.vis.hasOwnProperty(k)) {
+        self._S.vis[k] = !!saved.vis[k];
+      }
+    });
+  } catch(e) { /* ignore corrupted prefs */ }
+};
+
+DetailedTable.prototype._savePrefs = function() {
+  if (!this._cfg.storageKey) return;
+  try {
+    localStorage.setItem(this._cfg.storageKey, JSON.stringify({ vis: this._S.vis }));
+  } catch(e) {}
+};
+
 /* ── TOOLBAR ────────────────────────────────────────────────────────── */
 
 DetailedTable.prototype._buildToolbar = function() {
@@ -84,7 +112,6 @@ DetailedTable.prototype._buildToolbar = function() {
   var label     = this._cfg.filterLabel || 'Search…';
   var countWord = this._cfg.countLabel  || 'rows';
 
-  // Controls row + chips row (both inside toolbar)
   this._toolEl.innerHTML =
     '<div class="dt-toolbar-row">'
     +  '<div class="dt-tf" style="flex:1;min-width:220px">'
@@ -101,10 +128,8 @@ DetailedTable.prototype._buildToolbar = function() {
     +    '</div>'
     +  '</div>'
     + '</div>'
-    // Chips row lives inside toolbar, below controls
     + '<div class="dt-chips-row" id="dt-chips-inner"></div>';
 
-  // Store ref to chips container (now inside toolbar)
   this._chipsEl = document.getElementById('dt-chips-inner');
 
   // Search input
@@ -114,7 +139,7 @@ DetailedTable.prototype._buildToolbar = function() {
     self._render();
   });
 
-  // Column picker toggle
+  // Column picker toggle — opens/closes dropdown
   document.getElementById('dt-cpbtn').addEventListener('click', function(e) {
     e.stopPropagation();
     self._cpOpen = !self._cpOpen;
@@ -137,9 +162,16 @@ DetailedTable.prototype._renderCP = function() {
   }).join('');
 
   list.querySelectorAll('.dt-cpi').forEach(function(el) {
-    el.addEventListener('click', function() {
+    el.addEventListener('click', function(e) {
+      /* Stop bubbling so the global document click handler (which closes the
+         picker on outside clicks) does not see this event. Without this, when
+         _renderCP() replaces list.innerHTML the clicked element becomes a
+         detached DOM node; closest('#dt-cpw') returns null on detached nodes,
+         causing the picker to close immediately after every selection. */
+      e.stopPropagation();
       var k = this.getAttribute('data-k');
       self._S.vis[k] = !self._S.vis[k];
+      self._savePrefs();   // persist the new visibility preference
       self._renderCP();
       self._render();
     });
@@ -167,7 +199,7 @@ DetailedTable.prototype._bindGlobal = function() {
 
   document.addEventListener('mouseup', function() { self._resize = null; });
 
-  // Close column picker on outside click
+  // Close column picker when user clicks anywhere outside it
   document.addEventListener('click', function(e) {
     if (!e.target.closest('#dt-cpw') && self._cpOpen) {
       self._cpOpen = false;
@@ -183,7 +215,7 @@ DetailedTable.prototype._filteredRows = function() {
   var self = this;
   var rows = (this._data || []).slice();
 
-  // Global search — checks name, hsn_code, attribute_names, tags
+  // Global search
   if (self._S.q) {
     rows = rows.filter(function(r) {
       return (r.name            || '').toLowerCase().includes(self._S.q)
@@ -220,10 +252,20 @@ DetailedTable.prototype._filteredRows = function() {
 
 /* ── CELL RENDERER ──────────────────────────────────────────────────── */
 
+/* Cell types that drive their own empty/— logic internally.
+   These must bypass the top-level empty check because their
+   column key may not directly map to a DB field (e.g. 'rate'
+   reads from row.cgst_rate+row.sgst_rate regardless of col.k),
+   or because they need row.gst_type to decide what to show. */
+var _DT_SKIP_EMPTY = { toggle:1, action:1, rate:1, var_rate:1, threshold:1, exempt:1, bool:1 };
+
 DetailedTable.prototype._cell = function(col, row) {
   var v = row[col.k];
-  var empty = (v === undefined || v === null || v === '') && col.t !== 'toggle' && col.t !== 'action';
-  if (empty) return '<span class="dt-cmut">—</span>';
+
+  // Show — for truly empty values, unless the cell type handles emptiness itself
+  if ((v === undefined || v === null || v === '') && !_DT_SKIP_EMPTY[col.t]) {
+    return '<span class="dt-cmut">—</span>';
+  }
 
   switch (col.t) {
 
@@ -236,7 +278,7 @@ DetailedTable.prototype._cell = function(col, row) {
     case 'num':
       return '<span class="dt-cm">' + v + '</span>';
 
-    case 'rate': // standard GST: cgst + sgst
+    case 'rate': // standard GST: cgst + sgst (uses row fields, not col.k)
       if (row.gst_type !== 'standard') return '<span class="dt-cmut">—</span>';
       var rateTotal = Number(row.cgst_rate || 0) + Number(row.sgst_rate || 0);
       return '<span class="dt-cm">' + rateTotal + '%</span>'
@@ -248,15 +290,15 @@ DetailedTable.prototype._cell = function(col, row) {
       var hiRate = Number(row.higher_cgst || 0) + Number(row.higher_sgst || 0);
       return '<span class="dt-cam">' + loRate + '% ↔ ' + hiRate + '%</span>';
 
-    case 'threshold': // variable GST threshold
+    case 'threshold': // variable GST threshold amount
       if (row.gst_type !== 'variable') return '<span class="dt-cmut">—</span>';
       return '<span class="dt-cm">₹' + Number(v).toLocaleString('en-IN') + '</span>';
 
-    case 'exempt': // exempt badge
+    case 'exempt': // exempt badge (col.k should point to gst_type)
       if (row.gst_type !== 'none') return '<span class="dt-cmut">—</span>';
       return '<span class="dt-bdg dt-bok2">Exempt</span>';
 
-    case 'chips': // comma-separated string → chips
+    case 'chips': // comma-separated string → inline chips
       if (!v) return '<span class="dt-cmut">—</span>';
       var chipArr = typeof v === 'string' ? v.split(',') : (Array.isArray(v) ? v : [String(v)]);
       chipArr = chipArr.map(function(n) { return n.trim(); }).filter(Boolean);
@@ -265,7 +307,7 @@ DetailedTable.prototype._cell = function(col, row) {
         + chipArr.map(function(n) { return '<span class="dt-chip">' + _esc(n) + '</span>'; }).join('')
         + '</div>';
 
-    case 'json_chips': // JSON array string → chips
+    case 'json_chips': // JSON array string → inline chips
       try {
         var jsonArr = typeof v === 'string' ? JSON.parse(v) : (Array.isArray(v) ? v : []);
         if (!jsonArr.length) return '<span class="dt-cmut">—</span>';
@@ -276,27 +318,28 @@ DetailedTable.prototype._cell = function(col, row) {
         return '<span class="dt-cmut">—</span>';
       }
 
-    case 'mar': // margin value + type
+    case 'mar': // margin value + type suffix
       var mt = row.min_margin_type || 'none';
       if (mt === 'none' || !v || Number(v) === 0) return '<span class="dt-cmut">None</span>';
       var marSuffix = mt === 'percentage' ? '%' : '₹';
       return '<span class="dt-cm">' + Number(v).toFixed(1) + marSuffix + '</span>';
 
     case 'bool':
+      // Treat null/undefined as Off rather than —
       return v ? '<span class="dt-bool-on">On</span>' : '<span class="dt-bool-off">Off</span>';
 
-    case 'action': // Edit button
+    case 'action':
       return '<a class="dt-act-btn" href="/add-category.html?edit=' + row.id + '">✏️ Edit</a>';
 
-    case 'toggle': // Enable / Disable toggle
-      var enabled = row.status !== 'disabled';
+    case 'toggle': // Enable / Disable row toggle
+      var enabled = row.status === 'active';
       return '<label class="dt-tog" title="' + (enabled ? 'Enabled — click to disable' : 'Disabled — click to enable') + '">'
         + '<input type="checkbox" ' + (enabled ? 'checked' : '') + ' onchange="window._dtToggleCat(' + row.id + ', this)">'
         + '<span class="dt-tog-track"></span>'
         + '</label>';
 
     default:
-      return _esc(String(v));
+      return _esc(String(v === null || v === undefined ? '' : v));
   }
 };
 
@@ -352,7 +395,7 @@ DetailedTable.prototype._buildTable = function() {
       + '</td></tr>';
   } else {
     pRows.forEach(function(row) {
-      var disabled = row.status === 'disabled';
+      var disabled = row.status !== 'active';
       tbody += '<tr' + (disabled ? ' class="dt-row-disabled"' : '') + '>'
         + cols.map(function(c) {
             return '<td title="' + _esc(String(row[c.k] !== null && row[c.k] !== undefined ? row[c.k] : '')) + '">'
@@ -363,7 +406,7 @@ DetailedTable.prototype._buildTable = function() {
   }
   tbody += '</tbody>';
 
-  // pagination
+  // Pagination
   var from  = tot ? (pg - 1) * pp + 1 : 0;
   var to    = Math.min(pg * pp, tot);
   var pages = [];
@@ -397,7 +440,6 @@ DetailedTable.prototype._renderChips = function() {
   var self  = this;
   var chips = [];
 
-  // Global search chip
   if (self._S.q) {
     chips.push({
       t:  'Search: "' + self._S.q + '"',
@@ -410,7 +452,6 @@ DetailedTable.prototype._renderChips = function() {
     });
   }
 
-  // Per-column filter chips (flat colf — no group name)
   Object.keys(self._S.colf).forEach(function(k) {
     var v = (self._S.colf[k] || '').trim();
     if (!v) return;
@@ -430,8 +471,7 @@ DetailedTable.prototype._renderChips = function() {
 
   this._chipsEl.querySelectorAll('.x').forEach(function(el) {
     el.addEventListener('click', function() {
-      var idx = parseInt(this.getAttribute('data-chip'));
-      chips[idx].rm();
+      chips[parseInt(this.getAttribute('data-chip'))].rm();
     });
   });
 
@@ -455,7 +495,6 @@ DetailedTable.prototype._render = function() {
 
   this._renderChips();
 
-  // Empty data state
   if (!this._data || !this._data.length) {
     this._tableEl.innerHTML =
       '<div style="padding:44px;text-align:center;color:var(--slate400)">'
@@ -476,7 +515,7 @@ DetailedTable.prototype._render = function() {
   this._tableEl.innerHTML = this._buildTable();
   this._bindTableEvents();
 
-  // Restore focus to the same column filter after DOM rebuild
+  // Restore focus to same column filter after DOM rebuild
   if (focusKey) {
     var el = this._tableEl.querySelector('[data-flt-k="' + focusKey + '"]');
     if (el) { el.focus(); el.setSelectionRange(focusCaret, focusCaret); }
