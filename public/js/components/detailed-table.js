@@ -463,8 +463,22 @@ DetailedTable.prototype._render = function() {
     return;
   }
 
+  // Save focus — column filter inputs lose focus when innerHTML is replaced
+  var focusKey = null, focusCaret = 0;
+  var fa = document.activeElement;
+  if (fa && fa.hasAttribute && fa.hasAttribute('data-flt-k')) {
+    focusKey   = fa.getAttribute('data-flt-k');
+    focusCaret = fa.selectionStart || 0;
+  }
+
   this._tableEl.innerHTML = this._buildTable();
   this._bindTableEvents();
+
+  // Restore focus to the same column filter after DOM rebuild
+  if (focusKey) {
+    var el = this._tableEl.querySelector('[data-flt-k="' + focusKey + '"]');
+    if (el) { el.focus(); el.setSelectionRange(focusCaret, focusCaret); }
+  }
 
   // Update count label in toolbar
   var countEl = document.getElementById('dt-count-label');
