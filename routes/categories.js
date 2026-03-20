@@ -91,6 +91,16 @@ router.get("/:id", async (req, res) => {
       category.attributes = [];
     }
 
+    // Fetch set definitions
+    const [setDefs] = await db.execute(
+      "SELECT * FROM set_definitions WHERE category_id = ? AND status = 'active' ORDER BY id ASC",
+      [category.id]
+    );
+    category.set_definitions = setDefs.map(s => ({
+      ...s,
+      size_ratios: JSON.parse(s.size_ratios || '{}')
+    }));
+
     res.json(category);
   } catch (error) {
     console.error("Error fetching category:", error);

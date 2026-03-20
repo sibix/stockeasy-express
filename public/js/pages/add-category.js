@@ -9,12 +9,14 @@ var _hsnCodes     = [];           // ['6109','6203', ...]
 var _globalTags   = [];           // ['ethnic','women', ...]
 var _allowedUnits = [];           // ['pcs','box','kg', ...]
 var _attrCounter  = 0;
+var _sdCounter    = 0;            // set definition card ID counter
 var _editId       = null;
 
 /* ── Page Init ──────────────────────────────────────────────── */
 document.addEventListener('DOMContentLoaded', async function () {
-  await loadComponent('sidebar-container', '/components/sidebar.html');
-  await loadComponent('topbar-container',  '/components/topbar.html');
+  await loadComponent('sidebar-container',       '/components/sidebar.html');
+  await loadComponent('topbar-container',        '/components/topbar.html');
+  await loadComponent('template-library-container', '/components/template-library.html');
   await checkSession();
   setActivePage('categories');
   setTopbar('Add Category', 'Inventory › Categories › Add');
@@ -237,6 +239,20 @@ async function loadCategory(id) {
   buyUnits.forEach(function (u)  { addUnitChip(u, 'buy-units',  'buy-unit-input'); });
   sellUnits.forEach(function (u) { addUnitChip(u, 'sell-units', 'sell-unit-input'); });
 
+  /* Set definitions */
+  if (d.set_definitions && d.set_definitions.length) {
+    d.set_definitions.forEach(function(sd) {
+      renderSetDefCard({
+        name:        sd.name,
+        set_type:    sd.set_type,
+        size_ratios: typeof sd.size_ratios === 'string' ? JSON.parse(sd.size_ratios) : (sd.size_ratios || {}),
+        total_pcs:   sd.total_pcs,
+        is_default:  sd.is_default,
+        custom:      false
+      });
+    });
+  }
+
   /* Attributes */
   if (d.attributes && d.attributes.length) {
     d.attributes.forEach(function (attr) {
@@ -458,6 +474,7 @@ async function saveCategory() {
     tags:                  JSON.stringify(collectTags()),
     buy_units:             JSON.stringify(collectUnits('buy-units')),
     sell_units:            JSON.stringify(collectUnits('sell-units')),
+    set_definitions:       collectSetDefs(),
   };
 
   var btns = document.querySelectorAll('#save-btn-top, #save-btn-footer');
@@ -475,6 +492,194 @@ async function saveCategory() {
   } else {
     showToast((result.data && result.data.error) || 'Failed to save category.', 'red');
   }
+}
+
+/* ── Set Definitions ────────────────────────────────────────── */
+
+/* Opens the Template Library modal; on apply, add each template as a card */
+function openSetTemplateLibrary() {
+  TemplateLibrary.open({
+    onApply: function(templates) {
+      templates.forEach(function(t) { addSetDefFromTemplate(t); });
+    }
+  });
+}
+
+/* Convert a TemplateLibrary template object → set def card */
+function addSetDefFromTemplate(t) {
+  var ratios = {};
+  if (t.ratioMap) {
+    ratios = t.ratioMap;
+  } else {
+    t.sizes.forEach(function(s) { ratios[s] = t.ppc || 1; });
+  }
+  var total   = Object.keys(ratios).reduce(function(sum, k) { return sum + (ratios[k] || 0); }, 0);
+  var isRatio = t.ratioMap != null;
+  renderSetDefCard({
+    name:        t.name,
+    set_type:    isRatio ? 'ratio' : 'uniform',
+    size_ratios: ratios,
+    total_pcs:   total,
+    is_default:  0,
+    custom:      false
+  });
+}
+
+/* Render an empty custom card for manual size entry */
+function addCustomSetDef() {
+  renderSetDefCard({
+    name:        '',
+    set_type:    'uniform',
+    size_ratios: {},
+    total_pcs:   0,
+    is_default:  0,
+    custom:      true
+  });
+}
+
+/* Build and append a .set-def-card
+   sd.custom = true  → editable chip-input for sizes
+   sd.custom = false → read-only size chips (from template or saved DB row) */
+function renderSetDefCard(sd) {
+  _sdCounter++;
+  var cid      = 'sd-' + _sdCounter;
+  var ratios   = sd.size_ratios || {};
+  var sizeKeys = Object.keys(ratios);
+  var total    = sizeKeys.reduce(function(s, k) { return s + (ratios[k] || 0); }, 0);
+  var isRatio  = sd.set_type === 'ratio';
+
+  var div = document.createElement('div');
+  div.className = 'set-def-card';
+  div.id        = cid;
+  div.setAttribute('data-ratios',   JSON.stringify(ratios));
+  div.setAttribute('data-set-type', sd.set_type || 'uniform');
+
+  /* ── Name row ── */
+  var nameRow =
+    '<div class="set-def-row">' +
+      '<div class="form-group" style="flex:1">' +
+        '<label class="form-label">Set Name</label>' +
+        '<input class="form-input sd-name" type="text" value="' + _escAttr(sd.name) + '"' +
+          ' placeholder="e.g. Full Set (S-XXL)" />' +
+      '</div>' +
+      '<button class="attr-del-btn" onclick="deleteSetDef(this)" title="Remove">×</button>' +
+    '</div>';
+
+  /* ── Sizes row ── */
+  var sizesRow;
+  if (sd.custom) {
+    sizesRow =
+      '<div class="set-def-row">' +
+        '<div class="form-group" style="flex:1">' +
+          '<label class="form-label">Sizes / Values</label>' +
+          '<div class="tag-input-wrap sd-sizes-wrap" id="' + cid + '-wrap"' +
+            ' onclick="document.getElementById(\'' + cid + '-sinput\').focus()">' +
+            '<input class="tag-text-input" id="' + cid + '-sinput" type="text"' +
+              ' placeholder="Type a size, press Enter…"' +
+              ' onkeydown="sdSizeKeydown(event,this,\'' + cid + '\')" />' +
+          '</div>' +
+        '</div>' +
+        '<div class="form-group" style="max-width:90px">' +
+          '<label class="form-label">Pcs/size</label>' +
+          '<input class="form-input sd-ppc" type="number" min="1" value="1"' +
+            ' oninput="sdUpdateMeta(\'' + cid + '\')" />' +
+        '</div>' +
+      '</div>';
+  } else {
+    var chips = sizeKeys.map(function(k) {
+      return isRatio
+        ? '<span class="tag-chip" style="cursor:default">' + k + ' ×' + ratios[k] + '</span>'
+        : '<span class="tag-chip" style="cursor:default">' + k + '</span>';
+    }).join('');
+    sizesRow =
+      '<div class="set-def-row">' +
+        '<div style="display:flex;gap:6px;flex-wrap:wrap">' + chips + '</div>' +
+      '</div>';
+  }
+
+  /* ── Meta line ── */
+  var typeLabel = isRatio ? 'Ratio' : 'Uniform';
+  var metaHtml  =
+    '<div class="set-def-meta" id="' + cid + '-meta">' +
+      typeLabel + ' · ' + (sd.custom ? 0 : total) + ' pcs per set' +
+    '</div>';
+
+  div.innerHTML = nameRow + sizesRow + metaHtml;
+  document.getElementById('set-defs-container').appendChild(div);
+}
+
+function deleteSetDef(btn) {
+  btn.closest('.set-def-card').remove();
+}
+
+/* Custom card — Enter or comma adds a size chip */
+function sdSizeKeydown(e, input, cid) {
+  if (e.key !== 'Enter' && e.key !== ',') return;
+  e.preventDefault();
+  var v = input.value.replace(/,/g, '').trim();
+  if (!v) return;
+  var wrap = document.getElementById(cid + '-wrap');
+  var chip = document.createElement('span');
+  chip.className = 'tag-chip';
+  chip.innerHTML = v + '<span class="tag-chip-x" onclick="sdRemoveSize(this,\'' + cid + '\')">×</span>';
+  wrap.insertBefore(chip, input);
+  input.value = '';
+  sdUpdateMeta(cid);
+}
+
+function sdRemoveSize(x, cid) {
+  x.parentElement.remove();
+  sdUpdateMeta(cid);
+}
+
+/* Update the "X pcs per set" meta label after any chip/ppc change */
+function sdUpdateMeta(cid) {
+  var card  = document.getElementById(cid);
+  if (!card) return;
+  var meta  = document.getElementById(cid + '-meta');
+  var wrap  = document.getElementById(cid + '-wrap');
+  var ppcEl = card.querySelector('.sd-ppc');
+  var ppc   = ppcEl ? (parseInt(ppcEl.value, 10) || 1) : 1;
+  var chips = wrap ? wrap.querySelectorAll('.tag-chip').length : 0;
+  if (meta) meta.textContent = 'Uniform · ' + (chips * ppc) + ' pcs per set';
+}
+
+/* Collect all set def cards → array for save payload */
+function collectSetDefs() {
+  var out = [];
+  document.querySelectorAll('#set-defs-container .set-def-card').forEach(function(card) {
+    var nameEl = card.querySelector('.sd-name');
+    var name   = nameEl ? nameEl.value.trim() : '';
+    if (!name) return;
+
+    var setType = card.getAttribute('data-set-type') || 'uniform';
+    var ratios;
+
+    if (card.querySelector('.sd-sizes-wrap')) {
+      /* Custom card — build ratios from chips × ppc */
+      var ppcEl = card.querySelector('.sd-ppc');
+      var ppc   = ppcEl ? (parseInt(ppcEl.value, 10) || 1) : 1;
+      var chips = Array.from(card.querySelectorAll('.sd-sizes-wrap .tag-chip'))
+        .map(function(c) { return c.childNodes[0] ? c.childNodes[0].nodeValue.trim() : ''; })
+        .filter(Boolean);
+      ratios  = {};
+      chips.forEach(function(s) { ratios[s] = ppc; });
+      setType = 'uniform';
+    } else {
+      /* Template / saved card — ratios in data attribute */
+      try { ratios = JSON.parse(card.getAttribute('data-ratios') || '{}'); }
+      catch (e) { ratios = {}; }
+    }
+
+    var total = Object.keys(ratios).reduce(function(s, k) { return s + (ratios[k] || 0); }, 0);
+    out.push({ name: name, set_type: setType, size_ratios: ratios, total_pcs: total, is_default: 0 });
+  });
+  return out;
+}
+
+/* Escape a string for use inside an HTML attribute value */
+function _escAttr(s) {
+  return (s || '').replace(/&/g, '&amp;').replace(/"/g, '&quot;');
 }
 
 /* ── Clone ──────────────────────────────────────────────────── */
