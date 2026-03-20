@@ -30,6 +30,20 @@
   --weight-normal:400;--weight-semibold:600;--weight-bold:700;--weight-extrabold:800;
   --font-mono:'DM Mono',monospace;
   --gap-sm:8px;
+
+  /* ── extended backward-compat (page-specific CSS files without core.css) ── */
+  --font-sans:'Inter',sans-serif;
+  --radius-sm:var(--radius);--radius-md:var(--radius);--radius-lg:var(--radius2);--radius-xl:var(--radius3);--radius-full:9999px;
+  --weight-regular:400;--weight-medium:500;--weight-black:900;
+  --transition-fast:all .15s ease;
+  --shadow-sm:var(--shadow);--shadow-lg:var(--shadow3);
+  --leading-tight:1.25;--leading-snug:1.375;--leading-normal:1.5;--leading-relaxed:1.625;
+  --tracking-tight:-0.025em;--tracking-wide:0.025em;--tracking-widest:0.1em;
+  --color-primary:var(--g600);
+  --color-danger-bg:var(--redbg);--color-danger-text:#991b1b;
+  --color-info:var(--blue);--color-info-bg:var(--bluebg);--color-info-text:#1e40af;
+  --green-50:var(--g50);--green-100:var(--g100);--green-200:var(--g200);--green-300:var(--g300);--green-400:var(--g400);
+  --text-md:var(--text-base);
 }
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:'Inter',sans-serif;background:var(--slate100);color:var(--slate800);font-size:15px;overflow:hidden;height:100vh}
