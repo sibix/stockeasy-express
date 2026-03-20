@@ -27,6 +27,7 @@ document.addEventListener('DOMContentLoaded', async function() {
 function switchTab(tab) {
   document.getElementById('content-history').style.display = tab === 'history' ? '' : 'none';
   document.getElementById('content-new').style.display     = tab === 'new'     ? '' : 'none';
+  document.getElementById('save-footer').style.display     = tab === 'new'     ? 'flex' : 'none';
   document.getElementById('tab-history').classList.toggle('active', tab === 'history');
   document.getElementById('tab-new').classList.toggle('active', tab === 'new');
   if (tab === 'history') loadHistory();

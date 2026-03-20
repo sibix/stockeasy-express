@@ -192,22 +192,23 @@
               </div>
             </div>
 
-            <!-- Save footer -->
-            <div class="save-footer">
-              <div class="pur-save-summary" id="save-summary">
-                <span id="save-items-count">0 items</span>
-                <span id="save-total-display">₹0.00</span>
-              </div>
-              <button class="btn btn-outline" onclick="saveBill('draft')" id="btn-save-draft">Save as Draft</button>
-              <button class="btn btn-primary" onclick="saveBill('confirm')" id="btn-confirm" disabled>Confirm Bill</button>
-            </div>
-
           </div>
           <!-- end content-new -->
 
         </div>
-
+        <!-- Save footer — outside .page-content so it sits at bottom of .main flex column -->
+      <div class="save-footer" id="save-footer" style="display:none">
+        <div class="pur-save-summary" id="save-summary">
+          <span id="save-items-count">0 items</span>
+          <span id="save-total-display">₹0.00</span>
+        </div>
+        <button class="btn btn-outline" onclick="saveBill('draft')" id="btn-save-draft">Save as Draft</button>
+        <button class="btn btn-primary" onclick="saveBill('confirm')" id="btn-confirm" disabled>Confirm Bill</button>
       </div>
+      </div>
+
+      
+
     </div>
 
     <div id="toast" class="toast toast-green" style="display:none">

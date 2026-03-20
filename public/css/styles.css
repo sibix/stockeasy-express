@@ -589,15 +589,16 @@ tr:hover td{background:var(--g50)}
 .pos-cust-sub{font-size:11px;color:var(--slate400)}
 
 /* =====================================================================
-   27. STICKY SAVE FOOTER
-   Pinned to bottom of a page for save/discard actions.
+   27. SAVE FOOTER
+   Always placed OUTSIDE .page-content as a direct flex child of .main.
+   Never use position:sticky — the footer sits naturally at the bottom of
+   the flex column and the page content scrolls above it.
    ===================================================================== */
 .save-footer{
-  position:sticky;bottom:0;
   background:#fff;
   border-top:1px solid var(--slate200);
   padding:12px 20px;
-  display:flex;align-items:center;gap:10px;justify-content:flex-end;
+  display:flex;align-items:center;gap:10px;justify-content:space-between;
   box-shadow:0 -2px 8px rgba(0,0,0,.06);
   flex-shrink:0;z-index:10;
 }
