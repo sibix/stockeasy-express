@@ -158,6 +158,8 @@ DetailedTable.prototype._bindGlobal = function() {
     if (!self._resize) return;
     var nw = Math.max(48, self._resize.sw + (e.clientX - self._resize.sx));
     self._S.cw[self._resize.k] = nw;
+    var col = document.querySelector('.dt-table col[data-colk="' + self._resize.k + '"]');
+    if (col) col.style.width = nw + 'px';
     var th = document.querySelector('.dt-table th[data-k="' + self._resize.k + '"]');
     if (th) th.style.width = nw + 'px';
     e.preventDefault();
@@ -314,7 +316,7 @@ DetailedTable.prototype._buildTable = function() {
 
   // colgroup
   var cg = '<colgroup>' + cols.map(function(c) {
-    return '<col style="width:' + self._S.cw[c.k] + 'px">';
+    return '<col data-colk="' + c.k + '" style="width:' + self._S.cw[c.k] + 'px">';
   }).join('') + '</colgroup>';
 
   // thead
