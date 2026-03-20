@@ -116,17 +116,18 @@ body{
    ===================================================================== */
 .sidebar{
   width:var(--sidebar-w);
+  height:100vh;            /* must be explicit — align-self:stretch alone is not a "definite"
+                              height in some browsers, so flex:1 on .sb-nav won't constrain */
   background:var(--slate900);
   display:flex;flex-direction:column;
   flex-shrink:0;
-  overflow:hidden;
   transition:width .25s ease;
   position:relative;
   z-index:20;
 }
 .sidebar.collapsed{width:var(--sidebar-collapsed)}
 
-.sb-logo{padding:18px 16px;display:flex;align-items:center;gap:10px;border-bottom:1px solid rgba(255,255,255,.08);flex-shrink:0}
+.sb-logo{padding:18px 16px;display:flex;align-items:center;gap:10px;border-bottom:1px solid rgba(255,255,255,.08);flex-shrink:0;overflow:hidden}
 .sb-logo-icon{width:38px;height:38px;background:linear-gradient(135deg,var(--g500),var(--g600));border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
 .sb-logo-text{font-size:18px;font-weight:800;color:#fff;white-space:nowrap;overflow:hidden}
 .sb-logo-sub{font-size:11px;color:var(--g400);font-weight:400}
@@ -136,7 +137,7 @@ body{
 .sidebar.collapsed .sb-toggle{transform:rotate(180deg)}
 
 /* Scrollable nav area */
-.sb-nav{flex:1;overflow-y:auto;overflow-x:hidden;padding:8px 0}
+.sb-nav{flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;padding:8px 0}
 
 /* Section labels */
 .sb-section{padding:8px 14px 4px;font-size:10px;font-weight:700;color:rgba(255,255,255,.3);text-transform:uppercase;letter-spacing:.8px;white-space:nowrap;overflow:hidden}
@@ -154,7 +155,7 @@ body{
 .sidebar.collapsed .sb-item-badge{display:none}
 
 /* User info + logout at bottom */
-.sb-bottom{padding:12px;border-top:1px solid rgba(255,255,255,.08);flex-shrink:0;display:flex;align-items:center}
+.sb-bottom{padding:12px;border-top:1px solid rgba(255,255,255,.08);flex-shrink:0;display:flex;align-items:center;overflow:hidden}
 .sb-user{display:flex;align-items:center;gap:10px;padding:8px;border-radius:var(--radius);cursor:pointer;flex:1;min-width:0}
 .sb-user:hover{background:rgba(255,255,255,.07)}
 .sb-avatar{width:32px;height:32px;background:linear-gradient(135deg,var(--g500),var(--g700));border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;flex-shrink:0}

@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Product Configurations — StockEasy</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=DM+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="/css/styles.css" />
+  </head>
+  <body>
+    <div class="shell">
+
+      <div id="sidebar-container"></div>
+
+      <div class="main">
+
+        <div id="topbar-container"></div>
+
+        <div class="page-content">
+
+          <div class="page-header">
+            <div>
+              <div class="page-header-title">Product Configurations</div>
+              <div class="page-header-sub">Barcode, SKU format, units, and pricing defaults.</div>
+            </div>
+            <a href="/settings.html" class="btn btn-outline">← Back to Settings</a>
+          </div>
+
+          <!-- ── 1. Barcode Configuration ──────────────────── -->
+          <div class="card card-padded mb-4">
+            <div class="section-title">Barcode Configuration</div>
+            <div class="form-row">
+              <div class="form-col" style="max-width:200px">
+                <div class="form-group">
+                  <label class="form-label">Barcode Prefix</label>
+                  <input class="form-input" type="text" id="barcode-prefix"
+                    placeholder="e.g. SE" maxlength="10" />
+                  <span class="form-hint">Prepended to every generated barcode.</span>
+                </div>
+              </div>
+              <div class="form-col" style="max-width:180px">
+                <div class="form-group">
+                  <label class="form-label">Barcode Length</label>
+                  <input class="form-input" type="number" id="barcode-length"
+                    min="8" max="20" placeholder="13" />
+                  <span class="form-hint">Total digits including prefix.</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ── 2. SKU Format ──────────────────────────────── -->
+          <div class="card card-padded mb-4">
+            <div class="section-title">SKU Format</div>
+            <p style="color:var(--slate400);font-size:var(--text-sm);margin-bottom:var(--space-4)">
+              Define fields and lengths that build your SKU code. Fields are joined left-to-right.
+            </p>
+
+            <div id="sku-rows"></div>
+
+            <button class="btn btn-outline" style="margin-top:var(--space-3)" onclick="addSkuRow()">+ Add Field</button>
+
+            <div style="margin-top:var(--space-4);color:var(--slate400);font-size:var(--text-sm)">
+              Preview: <strong id="sku-preview" style="color:var(--slate700);font-family:var(--mono)">—</strong>
+            </div>
+          </div>
+
+          <!-- ── 3. Units of Measurement ───────────────────── -->
+          <div class="card card-padded mb-4">
+            <div class="section-title">Allowed Units</div>
+            <p style="color:var(--slate400);font-size:var(--text-sm);margin-bottom:var(--space-3)">
+              These units will be available when configuring categories and items.
+            </p>
+            <div class="form-group">
+              <input class="form-input" type="text" id="allowed-units"
+                placeholder="pcs,box,kg,g,litre,ml,pair,set,dozen"
+                onblur="sanitizeField('allowed-units')" />
+              <span class="form-hint">Comma separated. Duplicates are removed automatically.</span>
+            </div>
+          </div>
+
+          <!-- ── 4. Pricing Defaults ────────────────────────── -->
+          <div class="card card-padded mb-4">
+            <div class="section-title">Pricing Defaults</div>
+            <div class="form-row">
+              <div class="form-col" style="max-width:240px">
+                <div class="form-group">
+                  <label class="form-label">Recommended Margin (%)</label>
+                  <input class="form-input" type="number" id="rec-margin"
+                    min="0" max="100" placeholder="30" />
+                  <span class="form-hint">Used when no margin is set at category level.</span>
+                </div>
+              </div>
+              <div class="form-col" style="max-width:240px">
+                <div class="form-group">
+                  <label class="form-label">Low Margin Warning (%)</label>
+                  <input class="form-input" type="number" id="low-margin"
+                    min="0" max="100" placeholder="10" />
+                  <span class="form-hint">Show warning if margin falls below this value.</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ── 5. HSN Defaults ────────────────────────────── -->
+          <div class="card card-padded mb-4">
+            <div class="section-title">HSN Codes</div>
+            <p style="color:var(--slate400);font-size:var(--text-sm);margin-bottom:var(--space-3)">
+              These HSN codes will be available when configuring categories and items.
+            </p>
+            <div class="form-group">
+              <input class="form-input" type="text" id="hsn-codes"
+                placeholder="e.g. 6109,6203,6204"
+                onblur="sanitizeField('hsn-codes')" />
+              <span class="form-hint">Comma separated. Duplicates are removed automatically.</span>
+            </div>
+          </div>
+
+        </div>
+        <!-- end page-content -->
+
+      </div>
+    </div>
+
+    <!-- Save footer -->
+    <div class="save-footer">
+      <div></div>
+      <div style="display:flex;align-items:center;gap:var(--space-3)">
+        <span id="save-status" style="color:var(--g600);font-size:var(--text-sm);display:none">Saved ✓</span>
+        <button class="btn btn-primary" id="save-btn" onclick="saveSettings()">Save Settings</button>
+      </div>
+    </div>
+
+    <div id="toast" class="toast toast-green" style="display:none">
+      <span id="toast-icon" style="font-size:var(--text-xl)">✅</span>
+      <span id="toast-msg"></span>
+    </div>
+
+    <script src="/js/app.js"></script>
+    <script src="/js/pages/product-config.js"></script>
+  </body>
+</html>

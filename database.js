@@ -27,6 +27,25 @@ async function initializeDatabase() {
       );
     } catch(e) { /* already migrated */ }
 
+    // app_settings — key/value store for product & system configuration
+    await db.execute(`
+      CREATE TABLE IF NOT EXISTS app_settings (
+        \`key\`      VARCHAR(100) PRIMARY KEY,
+        value       TEXT,
+        updated_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+      )
+    `);
+    await db.execute(`
+      INSERT IGNORE INTO app_settings (\`key\`, value) VALUES
+        ('barcode_prefix',       'SE'),
+        ('barcode_length',       '13'),
+        ('sku_format',           '[]'),
+        ('allowed_units',        'pcs,box,kg,g,litre,ml,pair,set,dozen'),
+        ('recommended_margin',   '30'),
+        ('low_margin_warning',   '10'),
+        ('hsn_codes',            '')
+    `);
+
   } catch (error) {
     console.error("Database connection failed:", error);
     process.exit(1);

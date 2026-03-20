@@ -48,6 +48,7 @@ app.use('/items',      require('./routes/items'));
 app.use('/suppliers',  require('./routes/suppliers'));
 app.use('/purchases',  require('./routes/purchases'));
 app.use('/sales',      require('./routes/sales'));
+app.use('/settings',   require('./routes/settings'));
 
 // ── 404 handler ────────────────────────────────────────────
 app.use((req, res) => {
