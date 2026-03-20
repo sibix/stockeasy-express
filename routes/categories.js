@@ -125,6 +125,9 @@ router.post("/", async (req, res) => {
       has_variants,
       attributes,
       set_definitions,
+      tags,
+      buy_units,
+      sell_units,
     } = req.body;
 
     // ── Validate ───────────────────────────────────────────
@@ -160,8 +163,8 @@ router.post("/", async (req, res) => {
         min_margin_type, min_margin_value,
         allow_price_edit, underprice_safety, dynamic_price,
         min_stock_alert, serial_number_enabled,
-        has_variants, created_by
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        has_variants, tags, buy_units, sell_units, created_by
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         name.trim(),
         description || null,
@@ -182,6 +185,9 @@ router.post("/", async (req, res) => {
         min_stock_alert || 0,
         serial_number_enabled || 0,
         has_variants ? 1 : 0,
+        tags ? String(tags) : null,
+        buy_units ? String(buy_units) : null,
+        sell_units ? String(sell_units) : null,
         req.session.userId,
       ],
     );
@@ -275,6 +281,9 @@ router.put("/:id", async (req, res) => {
       has_variants,
       attributes,
       set_definitions,
+      tags,
+      buy_units,
+      sell_units,
     } = req.body;
 
     if (!name || name.trim() === "") {
@@ -311,7 +320,8 @@ router.put("/:id", async (req, res) => {
         lower_cgst = ?, lower_sgst = ?, higher_cgst = ?, higher_sgst = ?,
         gst_threshold = ?, min_margin_type = ?, min_margin_value = ?,
         allow_price_edit = ?, underprice_safety = ?, dynamic_price = ?,
-        min_stock_alert = ?, serial_number_enabled = ?, has_variants = ?
+        min_stock_alert = ?, serial_number_enabled = ?, has_variants = ?,
+        tags = ?, buy_units = ?, sell_units = ?
        WHERE id = ?`,
       [
         name.trim(),
@@ -333,6 +343,9 @@ router.put("/:id", async (req, res) => {
         min_stock_alert || 0,
         serial_number_enabled || 0,
         has_variants ? 1 : 0,
+        tags ? String(tags) : null,
+        buy_units ? String(buy_units) : null,
+        sell_units ? String(sell_units) : null,
         id,
       ],
     );

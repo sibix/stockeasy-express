@@ -40,7 +40,7 @@
               </div>
             </div>
             <div class="flex gap-3">
-              <button class="btn btn-outline" onclick="showToast('Changes discarded', 'amber')">
+              <button class="btn btn-outline" onclick="window.location.href='/categories.html'">
                 Discard
               </button>
               <button class="btn btn-primary" id="save-btn-top" onclick="saveCategory()">
@@ -67,6 +67,7 @@
                 <div class="form-group">
                   <label class="form-label">HSN Code</label>
                   <input class="form-input" type="text" id="cat-hsn"
+                    list="hsn-suggestions"
                     placeholder="e.g. 6204" maxlength="8" />
                   <span class="form-hint">Harmonised System of Nomenclature</span>
                 </div>
@@ -168,55 +169,7 @@
               e.g. Size × Color → Churidar · Red · M is one variant with its own stock.
             </span>
             <div class="attr-list" id="attr-list">
-              <!-- Attribute row 1 -->
-              <div class="attr-row" id="attr-0">
-                <div class="attr-num">1</div>
-                <div class="attr-fields">
-                  <div class="form-group" style="max-width:260px">
-                    <label class="form-label">Attribute Name</label>
-                    <input class="form-input" type="text" value="Size"
-                      placeholder="e.g. Size, Color, Material" />
-                  </div>
-                  <div class="form-group">
-                    <label class="form-label">Attribute Values</label>
-                    <div class="chip-input-wrap" onclick="focusLast(this)">
-                      <span class="value-chip">S<span class="value-chip-x" onclick="removeChip(this)">×</span></span>
-                      <span class="value-chip">M<span class="value-chip-x" onclick="removeChip(this)">×</span></span>
-                      <span class="value-chip">L<span class="value-chip-x" onclick="removeChip(this)">×</span></span>
-                      <span class="value-chip">XL<span class="value-chip-x" onclick="removeChip(this)">×</span></span>
-                      <span class="value-chip">XXL<span class="value-chip-x" onclick="removeChip(this)">×</span></span>
-                      <input class="chip-text-input" type="text"
-                        placeholder="Type and press Enter…"
-                        onkeydown="chipKeydown(event,this)" />
-                    </div>
-                    <span class="form-hint">Values selectable when adding items in this category</span>
-                  </div>
-                </div>
-                <button class="attr-del-btn" onclick="deleteAttr('attr-0')">×</button>
-              </div>
-              <!-- Attribute row 2 -->
-              <div class="attr-row" id="attr-1">
-                <div class="attr-num">2</div>
-                <div class="attr-fields">
-                  <div class="form-group" style="max-width:260px">
-                    <label class="form-label">Attribute Name</label>
-                    <input class="form-input" type="text" value="Color"
-                      placeholder="e.g. Size, Color, Material" />
-                  </div>
-                  <div class="form-group">
-                    <label class="form-label">Attribute Values</label>
-                    <div class="chip-input-wrap" onclick="focusLast(this)">
-                      <span class="value-chip">Red<span class="value-chip-x" onclick="removeChip(this)">×</span></span>
-                      <span class="value-chip">Blue<span class="value-chip-x" onclick="removeChip(this)">×</span></span>
-                      <span class="value-chip">Black<span class="value-chip-x" onclick="removeChip(this)">×</span></span>
-                      <input class="chip-text-input" type="text"
-                        placeholder="Type and press Enter…"
-                        onkeydown="chipKeydown(event,this)" />
-                    </div>
-                  </div>
-                </div>
-                <button class="attr-del-btn" onclick="deleteAttr('attr-1')">×</button>
-              </div>
+              <!-- rows added dynamically by addAttribute() -->
             </div>
             <button class="add-attr-btn" onclick="addAttribute()">+ Add Attribute</button>
 
@@ -249,9 +202,8 @@
             <div class="form-group">
               <label class="form-label">Tags</label>
               <div class="tag-input-wrap" onclick="document.getElementById('tag-input').focus()">
-                <span class="tag-chip">ethnic<span class="tag-chip-x" onclick="removeTag(this)">×</span></span>
-                <span class="tag-chip">women<span class="tag-chip-x" onclick="removeTag(this)">×</span></span>
                 <input class="tag-text-input" id="tag-input" type="text"
+                  list="tag-suggestions"
                   placeholder="Add tags, press Enter…"
                   onkeydown="tagKeydown(event,this)" />
               </div>
@@ -307,36 +259,14 @@
               <label class="form-label">Allowed Units for Purchase</label>
               <span class="form-hint" style="margin-bottom:var(--gap-sm)">Units in which you buy from suppliers</span>
               <div class="unit-picker" id="buy-units">
-                <div class="unit-pill selected" onclick="toggleUnit(this)">Pcs</div>
-                <div class="unit-pill selected" onclick="toggleUnit(this)">Dozen</div>
-                <div class="unit-pill selected" onclick="toggleUnit(this)">Set</div>
-                <div class="unit-pill" onclick="toggleUnit(this)">Box</div>
-                <div class="unit-pill" onclick="toggleUnit(this)">Kg</div>
-                <div class="unit-pill" onclick="toggleUnit(this)">g</div>
-                <div class="unit-pill" onclick="toggleUnit(this)">Litre</div>
-                <div class="unit-pill" onclick="toggleUnit(this)">ml</div>
-                <div class="unit-pill" onclick="toggleUnit(this)">Metre</div>
-                <div class="unit-pill" onclick="toggleUnit(this)">Pair</div>
-                <div class="unit-pill" onclick="toggleUnit(this)">Crate</div>
-                <div class="unit-pill" onclick="toggleUnit(this)">Roll</div>
+                <!-- pills built dynamically from allowed_units in product-config settings -->
               </div>
             </div>
             <div class="form-group">
               <label class="form-label">Allowed Units for Selling</label>
               <span class="form-hint" style="margin-bottom:var(--gap-sm)">Units in which you sell to customers</span>
               <div class="unit-picker" id="sell-units">
-                <div class="unit-pill selected" onclick="toggleUnit(this)">Pcs</div>
-                <div class="unit-pill" onclick="toggleUnit(this)">Dozen</div>
-                <div class="unit-pill" onclick="toggleUnit(this)">Set</div>
-                <div class="unit-pill" onclick="toggleUnit(this)">Box</div>
-                <div class="unit-pill" onclick="toggleUnit(this)">Kg</div>
-                <div class="unit-pill" onclick="toggleUnit(this)">g</div>
-                <div class="unit-pill" onclick="toggleUnit(this)">Litre</div>
-                <div class="unit-pill" onclick="toggleUnit(this)">ml</div>
-                <div class="unit-pill" onclick="toggleUnit(this)">Metre</div>
-                <div class="unit-pill" onclick="toggleUnit(this)">Pair</div>
-                <div class="unit-pill" onclick="toggleUnit(this)">Crate</div>
-                <div class="unit-pill" onclick="toggleUnit(this)">Roll</div>
+                <!-- pills built dynamically from allowed_units in product-config settings -->
               </div>
             </div>
           </div>
@@ -490,7 +420,7 @@
         <!-- STICKY SAVE FOOTER -->
         <div class="save-footer">
           <span class="text-muted">Changes apply to this category only</span>
-          <button class="btn btn-outline" onclick="showToast('Changes discarded','amber')">
+          <button class="btn btn-outline" onclick="window.location.href='/categories.html'">
             Discard
           </button>
           <button class="btn btn-primary" id="save-btn-footer" onclick="saveCategory()">
@@ -506,6 +436,11 @@
     <!-- TEMPLATE LIBRARY COMPONENT -->
     <div id="template-library-container"></div>
 
+    <!-- DATALISTS — populated by add-category.js from product-config settings -->
+    <datalist id="hsn-suggestions"></datalist>
+    <datalist id="attr-name-suggestions"></datalist>
+    <datalist id="tag-suggestions"></datalist>
+
     <!-- TOAST -->
     <div id="toast" class="toast toast-green" style="display:none">
       <span id="toast-icon" style="font-size:var(--text-xl)">&#x2705;</span>
@@ -515,6 +450,6 @@
     <!-- SCRIPTS — app.js first, then page script -->
     <script src="/js/app.js"></script>
     <script src="/js/components/template-library.js"></script>
-    <script src="/js/pages/categories.js"></script>
+    <script src="/js/pages/add-category.js"></script>
   </body>
 </html>
