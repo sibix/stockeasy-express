@@ -1,0 +1,573 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Detailed View — StockEasy</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --g50:#f0fdf4;--g100:#dcfce7;--g200:#bbf7d0;--g500:#22c55e;--g600:#16a34a;--g700:#15803d;--g800:#166534;
+  --sl50:#f8fafc;--sl100:#f1f5f9;--sl200:#e2e8f0;--sl300:#cbd5e1;--sl400:#94a3b8;--sl500:#64748b;--sl600:#475569;--sl700:#334155;--sl800:#1e293b;--sl900:#0f172a;
+  --red:#ef4444;--redbg:#fef2f2;--redt:#991b1b;
+  --amber:#f59e0b;--amberbg:#fffbeb;--ambert:#92400e;
+  --blue:#3b82f6;--bluebg:#eff6ff;--bluet:#1e40af;
+  --teal:#0d9488;--tealbg:#f0fdfa;--tealt:#115e59;
+  --pink:#ec4899;--pinkbg:#fdf2f8;--pinkt:#9d174d;
+  --purplebg:#f5f3ff;--purplet:#5b21b6;
+  --r:8px;--r2:10px;--r3:14px;
+  --sh:0 1px 3px rgba(0,0,0,.07),0 1px 2px rgba(0,0,0,.05);
+  --sh2:0 4px 16px rgba(0,0,0,.09);
+  --f:'Inter',sans-serif;
+  --m:'DM Mono',monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--f);background:var(--sl100);color:var(--sl800);font-size:14px}
+.page{max-width:1440px;margin:0 auto;padding:18px 20px}
+
+/* STATS */
+.stats{display:flex;background:#fff;border:1px solid var(--sl200);border-radius:var(--r2);overflow:hidden;margin-bottom:14px;box-shadow:var(--sh)}
+.qs{flex:1;padding:13px 16px;border-right:1px solid var(--sl200);text-align:center}
+.qs:last-child{border-right:none}
+.qs-v{font-family:var(--m);font-size:19px;font-weight:500;color:var(--sl800);line-height:1;font-variant-numeric:tabular-nums}
+.qs-l{font-size:10px;font-weight:700;color:var(--sl400);text-transform:uppercase;letter-spacing:.5px;margin-top:3px}
+
+/* TOOLBAR */
+.toolbar{background:#fff;border:1px solid var(--sl200);border-radius:var(--r2);padding:13px 15px;margin-bottom:10px;display:flex;gap:9px;flex-wrap:wrap;align-items:flex-end;box-shadow:var(--sh)}
+.tf{display:flex;flex-direction:column;gap:3px}
+.tfl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--sl500)}
+.ti{padding:7px 10px;border:1.5px solid var(--sl200);border-radius:var(--r);font-size:13px;font-family:var(--f);color:var(--sl800);outline:none;background:#fff;transition:border-color .12s;width:100%}
+.ti:focus{border-color:var(--g500)}
+.ti::placeholder{color:var(--sl400)}
+
+/* category dropdown */
+.cw{position:relative;width:200px}
+.cdrop{position:absolute;top:calc(100% + 4px);left:0;right:0;background:#fff;border:1.5px solid var(--sl200);border-radius:var(--r2);box-shadow:var(--sh2);z-index:400;display:none;overflow:hidden;max-height:200px;overflow-y:auto}
+.cdrop.open{display:block}
+.copt{padding:9px 12px;cursor:pointer;font-size:13px;display:flex;align-items:center;gap:7px;transition:background .1s}
+.copt:hover{background:var(--g50)}
+.copt-ic{font-size:15px;width:18px;flex-shrink:0}
+.copt-n{flex:1}
+.copt-c{font-size:10px;color:var(--sl400);font-family:var(--m)}
+.c-clr{position:absolute;right:8px;top:50%;transform:translateY(-50%);cursor:pointer;color:var(--sl400);font-size:15px;line-height:1;display:none}
+
+/* multiselect */
+.mw{position:relative;width:252px}
+.mt{padding:6px 9px;border:1.5px solid var(--sl200);border-radius:var(--r);cursor:pointer;display:flex;align-items:center;gap:5px;min-height:36px;background:#fff;transition:border-color .12s;flex-wrap:nowrap}
+.mt:hover,.mt.open{border-color:var(--g500)}
+.mchips{display:flex;flex-wrap:wrap;gap:3px;flex:1;min-width:0}
+.mchip{background:var(--g100);color:var(--g800);padding:1px 6px;border-radius:4px;font-size:11px;font-weight:700;display:flex;align-items:center;gap:2px;max-width:110px}
+.mchip span.x{color:var(--g700);cursor:pointer;font-size:13px;line-height:1}
+.mph{color:var(--sl400);font-size:13px}
+.marrow{color:var(--sl400);font-size:9px;flex-shrink:0;transition:transform .15s}
+.mt.open .marrow{transform:rotate(180deg)}
+.mcnt{background:var(--g600);color:#fff;font-size:10px;font-weight:700;padding:1px 5px;border-radius:10px;flex-shrink:0}
+.mdrop{position:absolute;top:calc(100% + 4px);left:0;right:0;background:#fff;border:1.5px solid var(--sl200);border-radius:var(--r2);box-shadow:var(--sh2);z-index:400;display:none;flex-direction:column;max-height:240px}
+.mdrop.open{display:flex}
+.msb{padding:7px 9px;border-bottom:1px solid var(--sl100);flex-shrink:0}
+.msb input{width:100%;border:1px solid var(--sl200);border-radius:5px;padding:5px 8px;font-size:12px;font-family:var(--f);outline:none;background:var(--sl50)}
+.msb input:focus{border-color:var(--g400)}
+.mlist{overflow-y:auto}
+.mopt{padding:7px 11px;cursor:pointer;display:flex;align-items:center;gap:8px;font-size:12px;transition:background .1s}
+.mopt:hover{background:var(--g50)}
+.mopt.on{color:var(--g700);font-weight:600}
+.mck{width:14px;height:14px;border-radius:3px;border:1.5px solid var(--sl300);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:9px;transition:all .1s}
+.mopt.on .mck{background:var(--g600);border-color:var(--g600);color:#fff}
+
+/* col picker */
+.cpw{position:relative}
+.cpb{padding:7px 12px;border:1.5px solid var(--sl200);border-radius:var(--r);font-size:12px;font-weight:700;cursor:pointer;background:#fff;color:var(--sl600);display:flex;align-items:center;gap:5px;height:36px;transition:all .12s;white-space:nowrap}
+.cpb:hover{border-color:var(--g500);color:var(--g700)}
+.cpdrop{position:absolute;top:calc(100% + 4px);right:0;background:#fff;border:1.5px solid var(--sl200);border-radius:var(--r2);box-shadow:var(--sh2);z-index:400;width:210px;display:none;overflow:hidden}
+.cpdrop.open{display:block}
+.cptabs{display:flex;border-bottom:1px solid var(--sl100);overflow-x:auto}
+.cptab{padding:6px 10px;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;color:var(--sl500);border-bottom:2px solid transparent;transition:all .12s}
+.cptab:hover{color:var(--sl800)}
+.cptab.active{color:var(--g700);border-bottom-color:var(--g600)}
+.cplist{max-height:210px;overflow-y:auto}
+.cpi{padding:7px 12px;cursor:pointer;display:flex;align-items:center;gap:8px;font-size:12px;transition:background .1s}
+.cpi:hover{background:var(--g50)}
+.cpck{width:14px;height:14px;border-radius:3px;border:1.5px solid var(--sl300);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:9px}
+.cpi.on .cpck{background:var(--g600);border-color:var(--g600);color:#fff}
+.cpi.off{color:var(--sl400)}
+
+/* active chips */
+.chips-row{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:10px}
+.fc{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;background:var(--g50);border:1px solid var(--g200);border-radius:20px;font-size:11px;font-weight:700;color:var(--g800)}
+.fc .x{color:var(--g600);cursor:pointer;font-size:14px;line-height:1}
+.fc .x:hover{color:var(--g800)}
+.clr-btn{font-size:11px;color:var(--sl500);background:none;border:none;cursor:pointer;padding:3px 8px;border-radius:6px}
+.clr-btn:hover{background:var(--sl100)}
+
+/* group */
+.grp{background:#fff;border:1px solid var(--sl200);border-radius:var(--r2);overflow:hidden;margin-bottom:13px;box-shadow:var(--sh)}
+.gh{display:flex;align-items:center;gap:9px;padding:9px 15px;background:var(--sl50);border-bottom:1px solid var(--sl200);cursor:pointer;user-select:none;transition:background .12s}
+.gh:hover{background:var(--g50)}
+.gic{font-size:15px;width:18px;text-align:center;flex-shrink:0}
+.gn{font-size:13px;font-weight:800;color:var(--sl800);flex:1}
+.gm{font-size:11px;color:var(--sl400);font-family:var(--m)}
+.gbadge{font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px}
+.bok{background:var(--g100);color:var(--g800)}
+.blow{background:var(--amberbg);color:var(--ambert)}
+.bout{background:var(--redbg);color:var(--redt)}
+.gchev{font-size:9px;color:var(--sl400);transition:transform .18s;flex-shrink:0}
+.gchev.open{transform:rotate(180deg)}
+
+/* table */
+.tscroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+table{border-collapse:collapse;font-size:13px;table-layout:fixed}
+th{position:relative;background:var(--sl50);border-bottom:1px solid var(--sl200);vertical-align:top;padding:0;white-space:nowrap;user-select:none}
+.tht{display:flex;align-items:center;gap:3px;padding:8px 11px 5px;min-height:32px}
+.thl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--sl500);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.srt{display:flex;flex-direction:column;cursor:pointer;flex-shrink:0}
+.sa{display:block;line-height:.8;font-size:9px;color:var(--sl300);transition:color .1s}
+.sa.on{color:var(--g600)}
+.tfi{padding:0 8px 6px}
+.cfi{width:100%;padding:4px 7px;border:1px solid var(--sl200);border-radius:5px;font-size:11px;font-family:var(--f);outline:none;background:#fff;color:var(--sl800);transition:border-color .12s}
+.cfi:focus{border-color:var(--g500)}
+.cfi::placeholder{color:var(--sl300)}
+.rh{position:absolute;right:0;top:0;bottom:0;width:5px;cursor:col-resize;z-index:10}
+.rh::after{content:'';position:absolute;right:1px;top:25%;bottom:25%;width:2px;background:var(--sl200);border-radius:2px}
+.rh:hover::after{background:var(--g500)}
+td{padding:9px 11px;border-bottom:1px solid var(--sl100);color:var(--sl700);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:var(--g50)}
+
+/* cell values */
+.cb{font-weight:700;color:var(--sl800)}
+.cm{font-family:var(--m);font-size:12px;font-variant-numeric:tabular-nums}
+.cmut{color:var(--sl400);font-size:12px}
+.cgr{color:var(--g700);font-family:var(--m);font-size:12px;font-weight:700}
+.cam{color:var(--amber);font-family:var(--m);font-size:12px;font-weight:700}
+.crd{color:var(--red);font-family:var(--m);font-size:12px;font-weight:700}
+.mhint{font-size:10px;color:var(--sl400);margin-left:1px}
+
+/* pills */
+.pill{display:inline-block;padding:2px 7px;border-radius:4px;font-size:11px;font-weight:700}
+.pg{background:var(--sl100);color:var(--sl600)}
+.pb{background:var(--bluebg);color:var(--bluet)}
+.pt{background:var(--tealbg);color:var(--tealt)}
+.pa{background:var(--amberbg);color:var(--ambert)}
+.pp{background:var(--pinkbg);color:var(--pinkt)}
+
+/* badges */
+.bdg{font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;white-space:nowrap}
+.bok2{background:var(--g100);color:var(--g800)}
+.blow2{background:var(--amberbg);color:var(--ambert)}
+.bout2{background:var(--redbg);color:var(--redt)}
+
+/* pagination */
+.pgn{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:7px;padding:9px 15px;border-top:1px solid var(--sl100)}
+.pgi{font-size:12px;color:var(--sl500)}
+.pgbs{display:flex;gap:3px;align-items:center}
+.pgb{width:27px;height:27px;border-radius:6px;border:1px solid var(--sl200);background:#fff;cursor:pointer;font-size:12px;font-weight:700;font-family:var(--f);color:var(--sl500);display:flex;align-items:center;justify-content:center;transition:all .12s}
+.pgb:hover:not([disabled]){border-color:var(--g500);color:var(--g700)}
+.pgb.cur{background:var(--g600);color:#fff;border-color:var(--g600)}
+.pgb[disabled]{opacity:.3;cursor:not-allowed}
+.pgell{padding:0 3px;color:var(--sl400);font-size:12px}
+.pgpp{display:flex;align-items:center;gap:5px;font-size:12px;color:var(--sl500)}
+.pgpp select{padding:4px 8px;border:1px solid var(--sl200);border-radius:6px;font-size:12px;font-family:var(--f);color:var(--sl800);outline:none}
+.pgpp select:focus{border-color:var(--g500)}
+
+/* empty */
+.empt td{text-align:center;padding:30px;color:var(--sl400)}
+</style>
+</head>
+<body>
+<div class="page">
+
+<div class="stats" id="stats"></div>
+
+<div class="toolbar">
+  <!-- 1. CATEGORY -->
+  <div class="tf" style="width:195px">
+    <div class="tfl">Category</div>
+    <div class="cw" id="cw">
+      <input class="ti" type="text" id="ci" placeholder="Search category..." autocomplete="off"
+        oninput="onCI(this.value)" onfocus="openCD()">
+      <span class="c-clr" id="cclr" onclick="clrCat()">×</span>
+      <div class="cdrop" id="cdrop"></div>
+    </div>
+  </div>
+
+  <!-- 2. TAGS MULTISELECT -->
+  <div class="tf" style="width:248px">
+    <div class="tfl">Filter by tags</div>
+    <div class="mw" id="mw">
+      <div class="mt" id="mt" onclick="togMS()">
+        <div class="mchips" id="mchips"><span class="mph">All tags</span></div>
+        <span id="mcnt" class="mcnt" style="display:none"></span>
+        <span class="marrow">▼</span>
+      </div>
+      <div class="mdrop" id="mdrop">
+        <div class="msb"><input type="text" id="msq" placeholder="Search tags…" oninput="renderML(this.value)"></div>
+        <div class="mlist" id="mlist"></div>
+      </div>
+    </div>
+  </div>
+
+  <div style="flex:1"></div>
+
+  <!-- COL PICKER -->
+  <div class="tf">
+    <div class="tfl" style="opacity:0">—</div>
+    <div class="cpw" id="cpw">
+      <button class="cpb" onclick="togCP()" id="cpbtn">⊞ Columns <span id="cpbadge" style="background:var(--sl100);padding:1px 6px;border-radius:4px;font-size:11px"></span></button>
+      <div class="cpdrop" id="cpdrop">
+        <div class="cptabs" id="cptabs"></div>
+        <div class="cplist" id="cplist"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="chips-row" id="chips-row"></div>
+<div id="groups"></div>
+
+</div>
+<script>
+/* ================================================================
+   DATA
+================================================================ */
+var D=[
+  {id:1,cat:'Apparel',tags:['churidar','cotton','DES-01'],item:'Churidar',design:'DES-01',color:'Red',size:'S',purch:50,sold:46,stock:4,cost:380,sell:450,mrp:500,val:1520},
+  {id:2,cat:'Apparel',tags:['churidar','cotton','DES-01'],item:'Churidar',design:'DES-01',color:'Red',size:'M',purch:50,sold:48,stock:2,cost:380,sell:450,mrp:500,val:760},
+  {id:3,cat:'Apparel',tags:['churidar','cotton','DES-01'],item:'Churidar',design:'DES-01',color:'Red',size:'L',purch:50,sold:42,stock:8,cost:380,sell:450,mrp:500,val:3040},
+  {id:4,cat:'Apparel',tags:['churidar','cotton','DES-01'],item:'Churidar',design:'DES-01',color:'Red',size:'XL',purch:50,sold:50,stock:0,cost:380,sell:450,mrp:500,val:0},
+  {id:5,cat:'Apparel',tags:['churidar','cotton','DES-01'],item:'Churidar',design:'DES-01',color:'Blue',size:'M',purch:40,sold:38,stock:2,cost:380,sell:450,mrp:500,val:760},
+  {id:6,cat:'Apparel',tags:['kurti','polyester','DES-05'],item:'Kurti',design:'DES-05',color:'Green',size:'XL',purch:24,sold:20,stock:4,cost:320,sell:380,mrp:420,val:1280},
+  {id:7,cat:'Apparel',tags:['kurti','polyester','DES-05'],item:'Kurti',design:'DES-05',color:'Green',size:'L',purch:24,sold:24,stock:0,cost:320,sell:380,mrp:420,val:0},
+  {id:8,cat:'Apparel',tags:['leggings','cotton'],item:'Leggings',design:'',color:'Black',size:'Free',purch:48,sold:45,stock:3,cost:100,sell:120,mrp:150,val:300},
+  {id:9,cat:'Apparel',tags:['salwar','cotton','DES-12'],item:'Salwar',design:'DES-12',color:'Pink',size:'M',purch:20,sold:11,stock:9,cost:480,sell:520,mrp:600,val:4320},
+  {id:10,cat:'Apparel',tags:['salwar','cotton','DES-12'],item:'Salwar',design:'DES-12',color:'Pink',size:'L',purch:20,sold:17,stock:3,cost:480,sell:520,mrp:600,val:1440},
+  {id:11,cat:'Apparel',tags:['dupatta','chiffon'],item:'Dupatta',design:'',color:'Pink',size:'Free',purch:60,sold:55,stock:5,cost:140,sell:180,mrp:220,val:700},
+  {id:12,cat:'Apparel',tags:['innerwear','cotton'],item:'Innerwear',design:'',color:'White',size:'S',purch:48,sold:48,stock:0,cost:60,sell:80,mrp:100,val:0},
+  {id:13,cat:'Sarees & Dupattas',tags:['saree','silk','kanjivaram'],item:'Saree',design:'Kanjivaram',color:'Green',material:'Silk',length:'6.3m',purch:30,sold:22,stock:8,cost:750,sell:950,mrp:1100,val:6000},
+  {id:14,cat:'Sarees & Dupattas',tags:['saree','cotton','plain'],item:'Saree',design:'Plain',color:'Red',material:'Cotton',length:'6m',purch:20,sold:18,stock:2,cost:650,sell:850,mrp:1000,val:1300},
+  {id:15,cat:'Sarees & Dupattas',tags:['dupatta','chiffon','embroidery'],item:'Dupatta',design:'Embroidery',color:'Pink',material:'Chiffon',length:'2.5m',purch:60,sold:40,stock:20,cost:150,sell:180,mrp:220,val:3000},
+  {id:16,cat:'Sarees & Dupattas',tags:['saree','silk','printed'],item:'Saree',design:'Printed',color:'Yellow',material:'Silk',length:'6m',purch:15,sold:15,stock:0,cost:720,sell:920,mrp:1080,val:0},
+  {id:17,cat:'Sarees & Dupattas',tags:['dupatta','cotton','plain'],item:'Dupatta',design:'Plain',color:'Blue',material:'Cotton',length:'2.5m',purch:40,sold:32,stock:8,cost:120,sell:150,mrp:180,val:960},
+  {id:18,cat:'Sarees & Dupattas',tags:['saree','georgette'],item:'Saree',design:'Printed',color:'Orange',material:'Georgette',length:'6m',purch:12,sold:9,stock:3,cost:680,sell:880,mrp:1020,val:2040},
+  {id:19,cat:'Hardware & Tools',tags:['spanner','hand-tool','stanley'],item:'Spanner',spec:'8mm',brand:'Stanley',grade:'CR-V',unit:'Pcs',purch:20,sold:14,stock:6,cost:80,sell:120,mrp:150,val:480},
+  {id:20,cat:'Hardware & Tools',tags:['spanner','hand-tool','stanley'],item:'Spanner',spec:'10mm',brand:'Stanley',grade:'CR-V',unit:'Pcs',purch:20,sold:19,stock:1,cost:90,sell:130,mrp:160,val:90},
+  {id:21,cat:'Hardware & Tools',tags:['drill-bit','power-tool','bosch'],item:'Drill Bit',spec:'3mm HSS',brand:'Bosch',grade:'HSS',unit:'Pcs',purch:50,sold:38,stock:12,cost:45,sell:70,mrp:90,val:540},
+  {id:22,cat:'Hardware & Tools',tags:['drill-bit','power-tool','bosch'],item:'Drill Bit',spec:'6mm HSS',brand:'Bosch',grade:'HSS',unit:'Pcs',purch:50,sold:50,stock:0,cost:60,sell:90,mrp:110,val:0},
+  {id:23,cat:'Hardware & Tools',tags:['blade','cutting'],item:'Blade',spec:'18mm box cutter',brand:'Generic',grade:'Standard',unit:'Box',purch:30,sold:22,stock:8,cost:65,sell:95,mrp:120,val:520},
+  {id:24,cat:'Hardware & Tools',tags:['spanner','hand-tool','taparia'],item:'Spanner',spec:'12mm',brand:'Taparia',grade:'CR-V',unit:'Pcs',purch:15,sold:9,stock:6,cost:95,sell:140,mrp:175,val:570},
+  {id:25,cat:'Hardware & Tools',tags:['screwdriver','hand-tool'],item:'Screwdriver',spec:'PH2×150mm',brand:'Stanley',grade:'CrV',unit:'Pcs',purch:24,sold:20,stock:4,cost:55,sell:85,mrp:110,val:220},
+  {id:26,cat:'Hardware & Tools',tags:['pliers','hand-tool','taparia'],item:'Pliers',spec:'8" nose',brand:'Taparia',grade:'Carbon',unit:'Pcs',purch:18,sold:18,stock:0,cost:110,sell:160,mrp:200,val:0},
+];
+
+/* SCHEMAS — each category defines exactly its own columns */
+var SCH={
+  'Apparel':{icon:'👗',cols:[
+    {k:'item',  lb:'Item',          t:'bold',  w:110,srt:0,flt:1,vis:1},
+    {k:'design',lb:'Design',        t:'pg',    w:90, srt:0,flt:1,vis:1},
+    {k:'color', lb:'Color',         t:'pt',    w:85, srt:0,flt:1,vis:1},
+    {k:'size',  lb:'Size',          t:'pb',    w:65, srt:0,flt:1,vis:1},
+    {k:'purch', lb:'Purchased',     t:'num',   w:95, srt:1,flt:0,vis:1},
+    {k:'sold',  lb:'Sold',          t:'num',   w:72, srt:1,flt:0,vis:1},
+    {k:'stock', lb:'In Stock',      t:'stk',   w:82, srt:1,flt:0,vis:1},
+    {k:'cost',  lb:'Cost ₹',        t:'cost',  w:92, srt:1,flt:0,vis:1},
+    {k:'sell',  lb:'Sell ₹',        t:'sell',  w:105,srt:1,flt:0,vis:1},
+    {k:'mrp',   lb:'MRP ₹',         t:'cur',   w:85, srt:1,flt:0,vis:0},
+    {k:'val',   lb:'Stock Value ₹', t:'val',   w:118,srt:1,flt:0,vis:1},
+    {k:'status',lb:'Status',        t:'sts',   w:102,srt:0,flt:0,vis:1},
+  ]},
+  'Sarees & Dupattas':{icon:'🥻',cols:[
+    {k:'item',    lb:'Item',          t:'bold',  w:100,srt:0,flt:1,vis:1},
+    {k:'design',  lb:'Design / Zari', t:'pg',    w:125,srt:0,flt:1,vis:1},
+    {k:'color',   lb:'Color',         t:'pt',    w:95, srt:0,flt:1,vis:1},
+    {k:'material',lb:'Material',      t:'pp',    w:95, srt:0,flt:1,vis:1},
+    {k:'length',  lb:'Length',        t:'pg',    w:75, srt:0,flt:1,vis:1},
+    {k:'purch',   lb:'Purchased',     t:'num',   w:95, srt:1,flt:0,vis:1},
+    {k:'sold',    lb:'Sold',          t:'num',   w:72, srt:1,flt:0,vis:1},
+    {k:'stock',   lb:'In Stock',      t:'stk',   w:82, srt:1,flt:0,vis:1},
+    {k:'cost',    lb:'Cost ₹',        t:'cost',  w:92, srt:1,flt:0,vis:1},
+    {k:'sell',    lb:'Sell ₹',        t:'sell',  w:105,srt:1,flt:0,vis:1},
+    {k:'mrp',     lb:'MRP ₹',         t:'cur',   w:85, srt:1,flt:0,vis:0},
+    {k:'val',     lb:'Stock Value ₹', t:'val',   w:118,srt:1,flt:0,vis:1},
+    {k:'status',  lb:'Status',        t:'sts',   w:102,srt:0,flt:0,vis:1},
+  ]},
+  'Hardware & Tools':{icon:'🔧',cols:[
+    {k:'item',  lb:'Item',          t:'bold',  w:105,srt:0,flt:1,vis:1},
+    {k:'spec',  lb:'Spec / Size',   t:'pa',    w:135,srt:0,flt:1,vis:1},
+    {k:'brand', lb:'Brand',         t:'pg',    w:85, srt:0,flt:1,vis:1},
+    {k:'grade', lb:'Grade',         t:'pg',    w:90, srt:0,flt:1,vis:1},
+    {k:'unit',  lb:'Unit',          t:'pg',    w:60, srt:0,flt:0,vis:1},
+    {k:'purch', lb:'Purchased',     t:'num',   w:95, srt:1,flt:0,vis:1},
+    {k:'sold',  lb:'Sold',          t:'num',   w:72, srt:1,flt:0,vis:1},
+    {k:'stock', lb:'In Stock',      t:'stk',   w:82, srt:1,flt:0,vis:1},
+    {k:'cost',  lb:'Cost ₹',        t:'cost',  w:92, srt:1,flt:0,vis:1},
+    {k:'sell',  lb:'Sell ₹',        t:'sell',  w:105,srt:1,flt:0,vis:1},
+    {k:'mrp',   lb:'MRP ₹',         t:'cur',   w:85, srt:1,flt:0,vis:0},
+    {k:'val',   lb:'Stock Value ₹', t:'val',   w:118,srt:1,flt:0,vis:1},
+    {k:'status',lb:'Status',        t:'sts',   w:102,srt:0,flt:0,vis:1},
+  ]}
+};
+
+var CATS=Object.keys(SCH);
+var TAGS=(function(){var t={};D.forEach(function(r){(r.tags||[]).forEach(function(x){t[x]=1;});});return Object.keys(t).sort();})();
+
+/* STATE */
+var S={catF:'',tagS:[],colf:{},srt:{},pg:{},pp:10,vis:{},cw:{},open:{},cpcat:null};
+CATS.forEach(function(c){
+  S.colf[c]={};S.srt[c]={k:null,d:'asc'};S.pg[c]=1;S.vis[c]={};S.cw[c]={};S.open[c]=true;
+  SCH[c].cols.forEach(function(col){S.vis[c][col.k]=!!col.vis;S.cw[c][col.k]=col.w;});
+});
+
+/* ---- CATEGORY ---- */
+function openCD(){renderCD(document.getElementById('ci').value);document.getElementById('cdrop').classList.add('open');}
+function onCI(v){S.catF=v.toLowerCase();document.getElementById('cclr').style.display=v?'block':'none';renderCD(v);document.getElementById('cdrop').classList.add('open');render();}
+function renderCD(q){
+  var ql=q.toLowerCase();
+  var m=CATS.filter(function(c){return !q||c.toLowerCase().includes(ql);});
+  document.getElementById('cdrop').innerHTML=m.map(function(c){
+    return '<div class="copt" onclick="selCat(\''+c+'\')">'
+      +'<span class="copt-ic">'+SCH[c].icon+'</span>'
+      +'<span class="copt-n">'+c+'</span>'
+      +'<span class="copt-c">'+D.filter(function(r){return r.cat===c;}).length+'</span></div>';
+  }).join('')||'<div style="padding:10px;font-size:12px;color:var(--sl400);text-align:center">No match</div>';
+}
+function selCat(c){document.getElementById('ci').value=c;document.getElementById('cclr').style.display='block';S.catF=c.toLowerCase();document.getElementById('cdrop').classList.remove('open');render();}
+function clrCat(){document.getElementById('ci').value='';document.getElementById('cclr').style.display='none';S.catF='';document.getElementById('cdrop').classList.remove('open');render();}
+document.addEventListener('click',function(e){if(!e.target.closest('#cw'))document.getElementById('cdrop').classList.remove('open');});
+
+/* ---- MULTISELECT ---- */
+var msO=false;
+function togMS(){msO=!msO;document.getElementById('mdrop').classList.toggle('open',msO);document.getElementById('mt').classList.toggle('open',msO);if(msO){document.getElementById('msq').value='';renderML('');setTimeout(function(){document.getElementById('msq').focus();},40);}}
+function renderML(q){
+  var f=TAGS.filter(function(t){return !q||t.includes(q.toLowerCase());});
+  document.getElementById('mlist').innerHTML=f.length?f.map(function(t){
+    var on=S.tagS.indexOf(t)>=0;
+    return '<div class="mopt'+(on?' on':'')+'" onclick="togTag(\''+t+'\')">'
+      +'<div class="mck">'+(on?'✓':'')+'</div><span>'+t+'</span></div>';
+  }).join(''):'<div style="padding:10px;font-size:12px;color:var(--sl400);text-align:center">No tags</div>';
+}
+function togTag(t){var i=S.tagS.indexOf(t);if(i>=0)S.tagS.splice(i,1);else S.tagS.push(t);renderMChips();renderML(document.getElementById('msq').value||'');render();}
+function renderMChips(){
+  var mc=document.getElementById('mchips'),cnt=document.getElementById('mcnt');
+  if(!S.tagS.length){mc.innerHTML='<span class="mph">All tags</span>';cnt.style.display='none';return;}
+  cnt.textContent=S.tagS.length;cnt.style.display='flex';
+  mc.innerHTML=S.tagS.slice(0,3).map(function(t){
+    return '<span class="mchip">'+t+'<span class="x" onclick="event.stopPropagation();togTag(\''+t+'\')">×</span></span>';
+  }).join('')+(S.tagS.length>3?'<span class="mchip" style="background:var(--sl100);color:var(--sl600)">+'+( S.tagS.length-3)+'</span>':'');
+}
+document.addEventListener('click',function(e){if(!e.target.closest('#mw')&&msO){msO=false;document.getElementById('mdrop').classList.remove('open');document.getElementById('mt').classList.remove('open');}});
+
+/* ---- COL PICKER ---- */
+var cpO=false;
+function togCP(){cpO=!cpO;document.getElementById('cpdrop').classList.toggle('open',cpO);if(cpO)renderCP();}
+function renderCP(){
+  var vc=visCats();if(!S.cpcat||vc.indexOf(S.cpcat)<0)S.cpcat=vc[0]||CATS[0];
+  document.getElementById('cptabs').innerHTML=vc.map(function(c){
+    return '<div class="cptab'+(S.cpcat===c?' active':'')+'" onclick="S.cpcat=\''+c+'\';renderCP()">'+SCH[c].icon+' '+c.split(' ')[0]+'</div>';
+  }).join('');
+  document.getElementById('cplist').innerHTML=SCH[S.cpcat].cols.map(function(col){
+    var on=S.vis[S.cpcat][col.k];
+    return '<div class="cpi'+(on?' on':' off')+'" onclick="togCV(\''+S.cpcat+'\',\''+col.k+'\')">'
+      +'<div class="cpck">'+(on?'✓':'')+'</div><span>'+col.lb+'</span></div>';
+  }).join('');
+  document.getElementById('cpbadge').textContent=vc.reduce(function(a,c){return a+Object.values(S.vis[c]).filter(Boolean).length;},0);
+}
+function togCV(cat,k){S.vis[cat][k]=!S.vis[cat][k];renderCP();render();}
+document.addEventListener('click',function(e){if(!e.target.closest('#cpw')&&cpO){cpO=false;document.getElementById('cpdrop').classList.remove('open');}});
+
+/* ---- RESIZE ---- */
+var _r=null;
+document.addEventListener('mousemove',function(e){if(!_r)return;var nw=Math.max(48,_r.sw+(e.clientX-_r.sx));S.cw[_r.cat][_r.k]=nw;var th=document.querySelector('th[data-c="'+_r.cat+'"][data-k="'+_r.k+'"]');if(th)th.style.width=nw+'px';e.preventDefault();});
+document.addEventListener('mouseup',function(){_r=null;});
+function startR(e,cat,k){e.stopPropagation();e.preventDefault();_r={sx:e.clientX,sw:S.cw[cat][k],cat:cat,k:k};}
+
+/* ---- SORT ---- */
+function doSort(cat,k){var s=S.srt[cat];if(s.k===k)s.d=s.d==='asc'?'desc':'asc';else{s.k=k;s.d='asc';}S.pg[cat]=1;render();}
+
+/* ---- FILTER DATA ---- */
+function rows(cat){
+  var r=D.filter(function(x){return x.cat===cat;});
+  if(S.tagS.length)r=r.filter(function(x){return S.tagS.every(function(t){return (x.tags||[]).indexOf(t)>=0;});});
+  Object.keys(S.colf[cat]||{}).forEach(function(k){var v=(S.colf[cat][k]||'').toLowerCase().trim();if(!v)return;r=r.filter(function(x){return String(x[k]||'').toLowerCase().includes(v);});});
+  var s=S.srt[cat];
+  if(s.k)r=r.slice().sort(function(a,b){var av=a[s.k],bv=b[s.k],n=typeof av==='number';return s.d==='asc'?(n?av-bv:String(av).localeCompare(String(bv))):(n?bv-av:String(bv).localeCompare(String(av)));});
+  return r;
+}
+function visCats(){return CATS.filter(function(c){return !S.catF||c.toLowerCase()===S.catF;});}
+
+/* ---- CELL ---- */
+function inr(n){return '₹'+Number(n).toLocaleString('en-IN');}
+function mkCell(col,row){
+  var v=row[col.k];
+  var emp=(v===undefined||v===null||v==='')&&col.t!=='sts';
+  if(emp)return '<span class="cmut">—</span>';
+  switch(col.t){
+    case 'bold':return '<span class="cb">'+v+'</span>';
+    case 'pg':  return '<span class="pill pg">'+v+'</span>';
+    case 'pb':  return '<span class="pill pb">'+v+'</span>';
+    case 'pt':  return '<span class="pill pt">'+v+'</span>';
+    case 'pa':  return '<span class="pill pa">'+v+'</span>';
+    case 'pp':  return '<span class="pill pp">'+v+'</span>';
+    case 'num': return '<span class="cm">'+v+'</span>';
+    case 'stk':
+      if(v===0)return '<span class="crd">0</span>';
+      if(v<=3) return '<span class="cam">'+v+'</span>';
+      return '<span class="cgr">'+v+'</span>';
+    case 'cost':return '<span class="cm">'+inr(v)+'</span>';
+    case 'sell':
+      var mg=Math.round((row.sell-row.cost)/row.cost*100);
+      return '<span class="cm">'+inr(v)+'</span><span class="mhint">'+mg+'%↑</span>';
+    case 'cur': return '<span class="cm">'+inr(v)+'</span>';
+    case 'val':
+      if(v===0)return '<span class="cmut">₹0</span>';
+      return '<span class="cgr">'+inr(v)+'</span>';
+    case 'sts':
+      if(row.stock===0)return '<span class="bdg bout2">Out of stock</span>';
+      if(row.stock<=3) return '<span class="bdg blow2">Low stock</span>';
+      return '<span class="bdg bok2">In stock</span>';
+  }
+  return String(v);
+}
+
+/* ---- BUILD TABLE ---- */
+function buildTable(cat){
+  var sch=SCH[cat];
+  var vc=sch.cols.filter(function(c){return S.vis[cat][c.k];});
+  var allR=rows(cat),tot=allR.length;
+  var pp=S.pp,pg=S.pg[cat],mx=Math.max(1,Math.ceil(tot/pp));
+  if(pg>mx)pg=S.pg[cat]=mx;
+  var pr=allR.slice((pg-1)*pp,pg*pp);
+  var s=S.srt[cat];
+
+  var cg='<colgroup>'+vc.map(function(c){return '<col style="width:'+S.cw[cat][c.k]+'px">';}).join('')+'</colgroup>';
+
+  var th=vc.map(function(c){
+    var sb='';
+    if(c.srt){
+      var aa=s.k===c.k&&s.d==='asc'?' on':'',da=s.k===c.k&&s.d==='desc'?' on':'';
+      sb='<span class="srt" onclick="doSort(\''+cat+'\',\''+c.k+'\');event.stopPropagation()">'
+        +'<span class="sa'+aa+'">▲</span><span class="sa'+da+'">▼</span></span>';
+    }
+    var fi=c.flt
+      ?'<div class="tfi"><input class="cfi" type="text" placeholder="Filter…" value="'+(S.colf[cat][c.k]||'')+'" '
+        +'oninput="S.colf[\''+cat+'\'][\''+c.k+'\']=this.value;S.pg[\''+cat+'\']=1;render()"></div>'
+      :'';
+    return '<th data-c="'+cat+'" data-k="'+c.k+'" style="width:'+S.cw[cat][c.k]+'px">'
+      +'<div class="tht"><span class="thl">'+c.lb+'</span>'+sb+'</div>'
+      +fi
+      +'<div class="rh" onmousedown="startR(event,\''+cat+'\',\''+c.k+'\')"></div>'
+      +'</th>';
+  }).join('');
+
+  var td='<tbody>';
+  if(!pr.length){
+    td+='<tr class="empt"><td colspan="'+vc.length+'">'
+      +'<div style="font-size:26px;margin-bottom:5px">📭</div>'
+      +'<div style="font-size:13px;font-weight:600">No items match</div>'
+      +'<div style="font-size:12px;margin-top:3px">Adjust filters</div>'
+      +'</td></tr>';
+  } else {
+    pr.forEach(function(row){
+      td+='<tr>'+vc.map(function(c){return '<td title="'+String(row[c.k]||'')+'">'+mkCell(c,row)+'</td>';}).join('')+'</tr>';
+    });
+  }
+  td+='</tbody>';
+
+  /* pagination */
+  var from=(pg-1)*pp+1,to=Math.min(pg*pp,tot);
+  var pgs=[]; for(var i=1;i<=mx;i++){if(i===1||i===mx||Math.abs(i-pg)<=1)pgs.push(i);else if(pgs[pgs.length-1]!==0)pgs.push(0);}
+  var pbts=pgs.map(function(p){
+    if(p===0)return '<span class="pgell">…</span>';
+    return '<button class="pgb'+(p===pg?' cur':'')+'" onclick="S.pg[\''+cat+'\']='+p+';render()">'+p+'</button>';
+  }).join('');
+
+  var pag='<div class="pgn">'
+    +'<div class="pgi">'+from+'–'+to+' of '+tot+'</div>'
+    +'<div class="pgbs">'
+      +'<button class="pgb" onclick="if(S.pg[\''+cat+'\']>1){S.pg[\''+cat+'\']--;render();}" '+(pg<=1?'disabled':'')+'>‹</button>'
+      +pbts
+      +'<button class="pgb" onclick="if(S.pg[\''+cat+'\']<'+mx+'){S.pg[\''+cat+'\']++;render();}" '+(pg>=mx?'disabled':'')+'>›</button>'
+    +'</div>'
+    +'<div class="pgpp">Rows<select onchange="S.pp=+this.value;CATS.forEach(function(c){S.pg[c]=1;});render()">'
+      +[5,10,20,50].map(function(n){return '<option value="'+n+'"'+(S.pp===n?' selected':'')+'>'+n+'</option>';}).join('')
+    +'</select></div></div>';
+
+  return '<div class="tscroll"><table>'+cg+'<thead><tr>'+th+'</tr></thead>'+td+'</table></div>'+pag;
+}
+
+/* ---- CHIPS ---- */
+function renderChips(){
+  var el=document.getElementById('chips-row'),chips=[];
+  if(S.catF)chips.push({t:'Category: '+document.getElementById('ci').value,rm:clrCat});
+  S.tagS.forEach(function(t){chips.push({t:'Tag: '+t,rm:function(x){return function(){var i=S.tagS.indexOf(x);if(i>=0)S.tagS.splice(i,1);renderMChips();renderML('');render();};}(t)});});
+  CATS.forEach(function(cat){
+    Object.keys(S.colf[cat]||{}).forEach(function(k){
+      var v=(S.colf[cat][k]||'').trim();if(!v)return;
+      var lb=SCH[cat].cols.find(function(c){return c.k===k;})||{lb:k};
+      var _c=cat,_k=k;
+      chips.push({t:lb.lb+': "'+v+'"',rm:function(){S.colf[_c][_k]='';render();}});
+    });
+  });
+  if(!chips.length){el.innerHTML='';return;}
+  el.innerHTML=chips.map(function(ch){
+    return '<div class="fc"><span>'+ch.t+'</span><span class="x" onclick="('+ch.rm.toString()+')()">×</span></div>';
+  }).join('')+'<button class="clr-btn" onclick="clrAll()">Clear all</button>';
+}
+
+function clrAll(){
+  clrCat();S.tagS=[];renderMChips();
+  CATS.forEach(function(c){S.colf[c]={};});
+  render();
+}
+
+/* ---- STATS ---- */
+function renderStats(){
+  var tot=D.length,pcs=D.reduce(function(a,r){return a+r.stock;},0),val=D.reduce(function(a,r){return a+r.val;},0);
+  var low=D.filter(function(r){return r.stock>0&&r.stock<=3;}).length,out=D.filter(function(r){return r.stock===0;}).length;
+  document.getElementById('stats').innerHTML=[
+    {v:tot,  l:'Total variants', c:''},
+    {v:pcs,  l:'Total pieces',   c:''},
+    {v:inr(val),l:'Stock value (cost)',c:'var(--g700)'},
+    {v:low,  l:'Low stock',      c:'var(--amber)'},
+    {v:out,  l:'Out of stock',   c:'var(--red)'},
+  ].map(function(s){
+    return '<div class="qs"><div class="qs-v" style="color:'+s.c+'">'+s.v+'</div><div class="qs-l">'+s.l+'</div></div>';
+  }).join('');
+}
+
+/* ---- MAIN RENDER ---- */
+function render(){
+  renderStats();renderChips();
+  var vc=visCats(),html='';
+  vc.forEach(function(cat){
+    var r=rows(cat);
+    var low=r.filter(function(x){return x.stock>0&&x.stock<=3;}).length;
+    var out=r.filter(function(x){return x.stock===0;}).length;
+    var badge=out>0?'<span class="gbadge bout">'+out+' out</span>'
+      :low>0?'<span class="gbadge blow">'+low+' low</span>'
+      :'<span class="gbadge bok">All ok</span>';
+    var vcols=SCH[cat].cols.filter(function(c){return S.vis[cat][c.k];});
+    var isO=S.open[cat];
+    html+='<div class="grp">'
+      +'<div class="gh" onclick="S.open[\''+cat+'\']=!S.open[\''+cat+'\'];render()">'
+        +'<span class="gic">'+SCH[cat].icon+'</span>'
+        +'<span class="gn">'+cat+'</span>'
+        +'<span class="gm">'+r.length+' variant'+(r.length!==1?'s':'')+'</span>'
+        +badge
+        +'<span style="font-size:10px;color:var(--sl400);margin-left:auto">'+vcols.length+' cols</span>'
+        +'<span class="gchev'+(isO?' open':'')+'">▼</span>'
+      +'</div>'
+      +(isO?buildTable(cat):'')
+      +'</div>';
+  });
+  if(!vc.length)html='<div style="background:#fff;border:1px solid var(--sl200);border-radius:var(--r2);padding:44px;text-align:center;color:var(--sl400)">'
+    +'<div style="font-size:28px;margin-bottom:8px">🔍</div>'
+    +'<div style="font-size:13px;font-weight:700;color:var(--sl600)">No category matches</div>'
+    +'<div style="font-size:12px;margin-top:5px"><a href="#" onclick="clrCat();return false" style="color:var(--g600)">Clear filter</a></div></div>';
+  document.getElementById('groups').innerHTML=html;
+  document.getElementById('cpbadge').textContent=vc.reduce(function(a,c){return a+Object.values(S.vis[c]).filter(Boolean).length;},0);
+}
+
+render();
+</script>
+</body>
+</html>
