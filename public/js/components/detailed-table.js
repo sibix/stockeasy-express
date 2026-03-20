@@ -1,56 +1,56 @@
 /* ================================================================
    DetailedTable — public/js/components/detailed-table.js
-   Reusable grouped detailed table component.
+   Reusable single flat-table component.
+   Filter chips live inside the toolbar below the controls row.
+   No grouped / collapsible headers — one table for all rows.
 
    Usage:
      var tbl = new DetailedTable({
        statsEl:     '#cat-stats',
        toolbarEl:   '#cat-toolbar',
-       chipsEl:     '#cat-chips',
-       groupsEl:    '#cat-groups',
-       filterLabel: 'Search…',   // placeholder for main search input
+       tableEl:     '#cat-table',
+       filterLabel: 'Search categories…',
+       countLabel:  'categories',
        schema: {
          cols: [
            { k:'name', lb:'Category', t:'bold', w:180, srt:1, flt:1, vis:1 },
            ...
          ]
        },
-       onToggle: function(row, isEnabled, cb) { ... } // called on disable toggle
      });
      tbl.setStats([{ v:'12', l:'Total', c:'var(--g700)' }, ...]);
-     tbl.setData([{ name:'Group', icon:'🏷️', rows:[...] }, ...]);
+     tbl.setData([...]);   // flat array of row objects
 ================================================================ */
 
 function DetailedTable(cfg) {
-  this._cfg      = cfg;
-  this._statsEl  = document.querySelector(cfg.statsEl);
-  this._toolEl   = document.querySelector(cfg.toolbarEl);
-  this._chipsEl  = document.querySelector(cfg.chipsEl);
-  this._groupsEl = document.querySelector(cfg.groupsEl);
-  this._schema   = cfg.schema || { cols: [] };
-  this._groups   = [];
-  this._pp       = 10; // rows per page
+  this._cfg     = cfg;
+  this._statsEl = document.querySelector(cfg.statsEl);
+  this._toolEl  = document.querySelector(cfg.toolbarEl);
+  this._tableEl = document.querySelector(cfg.tableEl);
+  this._schema  = cfg.schema || { cols: [] };
+  this._data    = [];
+  this._pp      = 10;
 
-  // Per-group state
+  // Flat state — single table, no per-group keying
   this._S = {
-    colf:  {},  // column text filters per group
-    srt:   {},  // sort per group { k, d }
-    pg:    {},  // current page per group
-    open:  {},  // collapse state per group
-    vis:   {},  // column visibility (shared across all groups)
-    cw:    {},  // column widths (shared)
-    q:     '',  // global search/filter query
+    colf: {},                      // column text filters: { name: 'foo', hsn_code: '' }
+    srt:  { k: null, d: 'asc' },  // single sort state
+    pg:   1,                       // current page
+    vis:  {},                      // column visibility (shared)
+    cw:   {},                      // column widths (shared)
+    q:    '',                      // global search query
   };
 
-  // Initialize shared column state from schema
+  // Init column state from schema
   var self = this;
   this._schema.cols.forEach(function(col) {
     self._S.vis[col.k] = !!col.vis;
     self._S.cw[col.k]  = col.w || 120;
   });
 
-  this._cpOpen = false;
-  this._resize = null;
+  this._cpOpen  = false;
+  this._resize  = null;
+  this._chipsEl = null;   // set after toolbar is built
 
   this._buildToolbar();
   this._bindGlobal();
@@ -68,15 +68,11 @@ DetailedTable.prototype.setStats = function(items) {
   }).join('');
 };
 
-DetailedTable.prototype.setData = function(groups) {
-  var self = this;
-  this._groups = groups;
-  groups.forEach(function(g) {
-    if (self._S.srt[g.name]  === undefined) self._S.srt[g.name]  = { k: null, d: 'asc' };
-    if (self._S.pg[g.name]   === undefined) self._S.pg[g.name]   = 1;
-    if (self._S.open[g.name] === undefined) self._S.open[g.name] = true;
-    if (self._S.colf[g.name] === undefined) self._S.colf[g.name] = {};
-  });
+DetailedTable.prototype.setData = function(rows) {
+  this._data   = rows || [];
+  this._S.srt  = { k: null, d: 'asc' };
+  this._S.pg   = 1;
+  this._S.colf = {};
   this._render();
 };
 
@@ -84,27 +80,37 @@ DetailedTable.prototype.setData = function(groups) {
 
 DetailedTable.prototype._buildToolbar = function() {
   if (!this._toolEl) return;
-  var self = this;
-  var label = this._cfg.filterLabel || 'Search…';
+  var self      = this;
+  var label     = this._cfg.filterLabel || 'Search…';
+  var countWord = this._cfg.countLabel  || 'rows';
 
+  // Controls row + chips row (both inside toolbar)
   this._toolEl.innerHTML =
-    '<div class="dt-tf" style="flex:1;min-width:220px">'
-    +  '<div class="dt-tfl">Search</div>'
-    +  '<input class="dt-ti" type="text" id="dt-search-input" placeholder="' + label + '" autocomplete="off">'
+    '<div class="dt-toolbar-row">'
+    +  '<div class="dt-tf" style="flex:1;min-width:220px">'
+    +    '<div class="dt-tfl">Search</div>'
+    +    '<input class="dt-ti" type="text" id="dt-search-input" placeholder="' + label + '" autocomplete="off">'
+    +  '</div>'
+    +  '<div style="flex:1"></div>'
+    +  '<span class="dt-gm" id="dt-count-label">0 ' + countWord + '</span>'
+    +  '<div class="dt-tf">'
+    +    '<div class="dt-tfl" style="opacity:0">—</div>'
+    +    '<div class="dt-cpw" id="dt-cpw">'
+    +      '<button class="dt-cpb" id="dt-cpbtn">⊞ Columns <span id="dt-cpbadge" style="background:var(--slate100);padding:1px 6px;border-radius:4px;font-size:11px"></span></button>'
+    +      '<div class="dt-cpdrop" id="dt-cpdrop"><div class="dt-cplist" id="dt-cplist"></div></div>'
+    +    '</div>'
+    +  '</div>'
     + '</div>'
-    + '<div style="flex:1"></div>'
-    + '<div class="dt-tf">'
-    +   '<div class="dt-tfl" style="opacity:0">—</div>'
-    +   '<div class="dt-cpw" id="dt-cpw">'
-    +     '<button class="dt-cpb" id="dt-cpbtn">⊞ Columns <span id="dt-cpbadge" style="background:var(--slate100);padding:1px 6px;border-radius:4px;font-size:11px"></span></button>'
-    +     '<div class="dt-cpdrop" id="dt-cpdrop"><div class="dt-cplist" id="dt-cplist"></div></div>'
-    +   '</div>'
-    + '</div>';
+    // Chips row lives inside toolbar, below controls
+    + '<div class="dt-chips-row" id="dt-chips-inner"></div>';
+
+  // Store ref to chips container (now inside toolbar)
+  this._chipsEl = document.getElementById('dt-chips-inner');
 
   // Search input
   document.getElementById('dt-search-input').addEventListener('input', function() {
-    self._S.q = this.value.toLowerCase().trim();
-    Object.keys(self._S.pg).forEach(function(g) { self._S.pg[g] = 1; });
+    self._S.q  = this.value.toLowerCase().trim();
+    self._S.pg = 1;
     self._render();
   });
 
@@ -121,6 +127,7 @@ DetailedTable.prototype._renderCP = function() {
   var self = this;
   var list = document.getElementById('dt-cplist');
   if (!list) return;
+
   list.innerHTML = this._schema.cols.map(function(col) {
     var on = self._S.vis[col.k];
     return '<div class="dt-cpi ' + (on ? 'on' : 'off') + '" data-k="' + col.k + '">'
@@ -139,16 +146,14 @@ DetailedTable.prototype._renderCP = function() {
   });
 
   var badge = document.getElementById('dt-cpbadge');
-  if (badge) {
-    var n = Object.values(self._S.vis).filter(Boolean).length;
-    badge.textContent = n;
-  }
+  if (badge) badge.textContent = Object.values(self._S.vis).filter(Boolean).length;
 };
 
 /* ── COLUMN RESIZE ──────────────────────────────────────────────────── */
 
 DetailedTable.prototype._bindGlobal = function() {
   var self = this;
+
   document.addEventListener('mousemove', function(e) {
     if (!self._resize) return;
     var nw = Math.max(48, self._resize.sw + (e.clientX - self._resize.sx));
@@ -157,9 +162,10 @@ DetailedTable.prototype._bindGlobal = function() {
     if (th) th.style.width = nw + 'px';
     e.preventDefault();
   });
+
   document.addEventListener('mouseup', function() { self._resize = null; });
 
-  // Close dropdowns on outside click
+  // Close column picker on outside click
   document.addEventListener('click', function(e) {
     if (!e.target.closest('#dt-cpw') && self._cpOpen) {
       self._cpOpen = false;
@@ -171,24 +177,23 @@ DetailedTable.prototype._bindGlobal = function() {
 
 /* ── DATA FILTERING & SORTING ───────────────────────────────────────── */
 
-DetailedTable.prototype._filteredRows = function(group) {
+DetailedTable.prototype._filteredRows = function() {
   var self = this;
-  var rows = group.rows.slice();
+  var rows = (this._data || []).slice();
 
-  // Global search (matches name, hsn_code, attribute_names)
+  // Global search — checks name, hsn_code, attribute_names, tags
   if (self._S.q) {
     rows = rows.filter(function(r) {
-      return (r.name || '').toLowerCase().includes(self._S.q)
-          || (r.hsn_code || '').toLowerCase().includes(self._S.q)
+      return (r.name            || '').toLowerCase().includes(self._S.q)
+          || (r.hsn_code        || '').toLowerCase().includes(self._S.q)
           || (r.attribute_names || '').toLowerCase().includes(self._S.q)
-          || (r.tags || '').toLowerCase().includes(self._S.q);
+          || (r.tags            || '').toLowerCase().includes(self._S.q);
     });
   }
 
   // Per-column filters
-  var cf = self._S.colf[group.name] || {};
-  Object.keys(cf).forEach(function(k) {
-    var v = (cf[k] || '').toLowerCase().trim();
+  Object.keys(self._S.colf).forEach(function(k) {
+    var v = (self._S.colf[k] || '').toLowerCase().trim();
     if (!v) return;
     rows = rows.filter(function(r) {
       return String(r[k] || '').toLowerCase().includes(v);
@@ -196,8 +201,8 @@ DetailedTable.prototype._filteredRows = function(group) {
   });
 
   // Sort
-  var s = self._S.srt[group.name];
-  if (s && s.k) {
+  var s = self._S.srt;
+  if (s.k) {
     rows = rows.sort(function(a, b) {
       var av = a[s.k], bv = b[s.k];
       var isNum = typeof av === 'number' || (av !== null && !isNaN(Number(av)));
@@ -219,6 +224,7 @@ DetailedTable.prototype._cell = function(col, row) {
   if (empty) return '<span class="dt-cmut">—</span>';
 
   switch (col.t) {
+
     case 'bold':
       return '<span class="dt-cb">' + _esc(v) + '</span>';
 
@@ -228,19 +234,19 @@ DetailedTable.prototype._cell = function(col, row) {
     case 'num':
       return '<span class="dt-cm">' + v + '</span>';
 
-    case 'rate': // standard GST: cgst+sgst
+    case 'rate': // standard GST: cgst + sgst
       if (row.gst_type !== 'standard') return '<span class="dt-cmut">—</span>';
-      var rate = (Number(row.cgst_rate || 0) + Number(row.sgst_rate || 0));
-      return '<span class="dt-cm">' + rate + '%</span>'
+      var rateTotal = Number(row.cgst_rate || 0) + Number(row.sgst_rate || 0);
+      return '<span class="dt-cm">' + rateTotal + '%</span>'
            + '<span class="dt-mhint">(' + row.cgst_rate + '+' + row.sgst_rate + ')</span>';
 
     case 'var_rate': // variable GST: lower ↔ higher
       if (row.gst_type !== 'variable') return '<span class="dt-cmut">—</span>';
-      var lo = Number(row.lower_cgst || 0) + Number(row.lower_sgst || 0);
-      var hi = Number(row.higher_cgst || 0) + Number(row.higher_sgst || 0);
-      return '<span class="dt-cam">' + lo + '% ↔ ' + hi + '%</span>';
+      var loRate = Number(row.lower_cgst || 0) + Number(row.lower_sgst || 0);
+      var hiRate = Number(row.higher_cgst || 0) + Number(row.higher_sgst || 0);
+      return '<span class="dt-cam">' + loRate + '% ↔ ' + hiRate + '%</span>';
 
-    case 'threshold': // variable GST threshold amount
+    case 'threshold': // variable GST threshold
       if (row.gst_type !== 'variable') return '<span class="dt-cmut">—</span>';
       return '<span class="dt-cm">₹' + Number(v).toLocaleString('en-IN') + '</span>';
 
@@ -250,19 +256,19 @@ DetailedTable.prototype._cell = function(col, row) {
 
     case 'chips': // comma-separated string → chips
       if (!v) return '<span class="dt-cmut">—</span>';
-      var names = typeof v === 'string' ? v.split(',') : (Array.isArray(v) ? v : [String(v)]);
-      names = names.map(function(n) { return n.trim(); }).filter(Boolean);
-      if (!names.length) return '<span class="dt-cmut">—</span>';
+      var chipArr = typeof v === 'string' ? v.split(',') : (Array.isArray(v) ? v : [String(v)]);
+      chipArr = chipArr.map(function(n) { return n.trim(); }).filter(Boolean);
+      if (!chipArr.length) return '<span class="dt-cmut">—</span>';
       return '<div class="dt-chips">'
-        + names.map(function(n) { return '<span class="dt-chip">' + _esc(n) + '</span>'; }).join('')
+        + chipArr.map(function(n) { return '<span class="dt-chip">' + _esc(n) + '</span>'; }).join('')
         + '</div>';
 
     case 'json_chips': // JSON array string → chips
       try {
-        var arr = typeof v === 'string' ? JSON.parse(v) : (Array.isArray(v) ? v : []);
-        if (!arr.length) return '<span class="dt-cmut">—</span>';
+        var jsonArr = typeof v === 'string' ? JSON.parse(v) : (Array.isArray(v) ? v : []);
+        if (!jsonArr.length) return '<span class="dt-cmut">—</span>';
         return '<div class="dt-chips">'
-          + arr.map(function(n) { return '<span class="dt-chip">' + _esc(String(n)) + '</span>'; }).join('')
+          + jsonArr.map(function(n) { return '<span class="dt-chip">' + _esc(String(n)) + '</span>'; }).join('')
           + '</div>';
       } catch(e) {
         return '<span class="dt-cmut">—</span>';
@@ -271,8 +277,8 @@ DetailedTable.prototype._cell = function(col, row) {
     case 'mar': // margin value + type
       var mt = row.min_margin_type || 'none';
       if (mt === 'none' || !v || Number(v) === 0) return '<span class="dt-cmut">None</span>';
-      var suffix = mt === 'percentage' ? '%' : '₹';
-      return '<span class="dt-cm">' + Number(v).toFixed(1) + suffix + '</span>';
+      var marSuffix = mt === 'percentage' ? '%' : '₹';
+      return '<span class="dt-cm">' + Number(v).toFixed(1) + marSuffix + '</span>';
 
     case 'bool':
       return v ? '<span class="dt-bool-on">On</span>' : '<span class="dt-bool-off">Off</span>';
@@ -280,7 +286,7 @@ DetailedTable.prototype._cell = function(col, row) {
     case 'action': // Edit button
       return '<a class="dt-act-btn" href="/add-category.html?edit=' + row.id + '">✏️ Edit</a>';
 
-    case 'toggle': // Enable/Disable toggle
+    case 'toggle': // Enable / Disable toggle
       var enabled = row.status !== 'disabled';
       return '<label class="dt-tog" title="' + (enabled ? 'Enabled — click to disable' : 'Disabled — click to enable') + '">'
         + '<input type="checkbox" ' + (enabled ? 'checked' : '') + ' onchange="window._dtToggleCat(' + row.id + ', this)">'
@@ -294,18 +300,17 @@ DetailedTable.prototype._cell = function(col, row) {
 
 /* ── TABLE BUILDER ──────────────────────────────────────────────────── */
 
-DetailedTable.prototype._buildTable = function(group) {
-  var self = this;
-  var cols = this._schema.cols.filter(function(c) { return self._S.vis[c.k]; });
-  var allRows = this._filteredRows(group);
-  var tot = allRows.length;
-  var pp = self._pp;
-  var pg = self._S.pg[group.name] || 1;
-  var mx = Math.max(1, Math.ceil(tot / pp));
-  if (pg > mx) pg = self._S.pg[group.name] = mx;
-  var pRows = allRows.slice((pg - 1) * pp, pg * pp);
-  var s = self._S.srt[group.name] || { k: null, d: 'asc' };
-  var gn = group.name;
+DetailedTable.prototype._buildTable = function() {
+  var self    = this;
+  var cols    = this._schema.cols.filter(function(c) { return self._S.vis[c.k]; });
+  var allRows = this._filteredRows();
+  var tot     = allRows.length;
+  var pp      = self._pp;
+  var pg      = self._S.pg;
+  var mx      = Math.max(1, Math.ceil(tot / pp));
+  if (pg > mx) pg = self._S.pg = mx;
+  var pRows   = allRows.slice((pg - 1) * pp, pg * pp);
+  var s       = self._S.srt;
 
   // colgroup
   var cg = '<colgroup>' + cols.map(function(c) {
@@ -318,15 +323,15 @@ DetailedTable.prototype._buildTable = function(group) {
     if (c.srt) {
       var aa = s.k === c.k && s.d === 'asc'  ? ' on' : '';
       var da = s.k === c.k && s.d === 'desc' ? ' on' : '';
-      sb = '<span class="dt-srt" data-srt-g="' + _esc(gn) + '" data-srt-k="' + c.k + '">'
+      sb = '<span class="dt-srt" data-srt-k="' + c.k + '">'
          + '<span class="dt-sa' + aa + '">▲</span>'
          + '<span class="dt-sa' + da + '">▼</span>'
          + '</span>';
     }
     var fi = c.flt
       ? '<div class="dt-tfi"><input class="dt-cfi" type="text" placeholder="Filter…"'
-        + ' value="' + _esc(self._S.colf[gn][c.k] || '') + '"'
-        + ' data-flt-g="' + _esc(gn) + '" data-flt-k="' + c.k + '"></div>'
+        + ' value="' + _esc(self._S.colf[c.k] || '') + '"'
+        + ' data-flt-k="' + c.k + '"></div>'
       : '';
     return '<th data-k="' + c.k + '" style="width:' + self._S.cw[c.k] + 'px">'
       + '<div class="dt-tht"><span class="dt-thl">' + c.lb + '</span>' + sb + '</div>'
@@ -357,8 +362,8 @@ DetailedTable.prototype._buildTable = function(group) {
   tbody += '</tbody>';
 
   // pagination
-  var from = (pg - 1) * pp + 1;
-  var to   = Math.min(pg * pp, tot);
+  var from  = tot ? (pg - 1) * pp + 1 : 0;
+  var to    = Math.min(pg * pp, tot);
   var pages = [];
   for (var i = 1; i <= mx; i++) {
     if (i === 1 || i === mx || Math.abs(i - pg) <= 1) pages.push(i);
@@ -366,15 +371,15 @@ DetailedTable.prototype._buildTable = function(group) {
   }
   var pbtns = pages.map(function(p) {
     if (p === 0) return '<span class="dt-pgell">…</span>';
-    return '<button class="dt-pgb' + (p === pg ? ' cur' : '') + '" data-pg-g="' + _esc(gn) + '" data-pg-p="' + p + '">' + p + '</button>';
+    return '<button class="dt-pgb' + (p === pg ? ' cur' : '') + '" data-pg-p="' + p + '">' + p + '</button>';
   }).join('');
 
   var pag = '<div class="dt-pgn">'
-    + '<div class="dt-pgi">' + from + '–' + to + ' of ' + tot + '</div>'
+    + '<div class="dt-pgi">' + (tot ? from + '–' + to : '0') + ' of ' + tot + '</div>'
     + '<div class="dt-pgbs">'
-    +   '<button class="dt-pgb" data-pg-g="' + _esc(gn) + '" data-pg-p="' + (pg - 1) + '"' + (pg <= 1 ? ' disabled' : '') + '>‹</button>'
+    +   '<button class="dt-pgb" data-pg-p="' + (pg - 1) + '"' + (pg <= 1 ? ' disabled' : '') + '>‹</button>'
     +   pbtns
-    +   '<button class="dt-pgb" data-pg-g="' + _esc(gn) + '" data-pg-p="' + (pg + 1) + '"' + (pg >= mx ? ' disabled' : '') + '>›</button>'
+    +   '<button class="dt-pgb" data-pg-p="' + (pg + 1) + '"' + (pg >= mx ? ' disabled' : '') + '>›</button>'
     + '</div>'
     + '<div class="dt-pgpp">Rows<select data-pp="1">'
     +   [5, 10, 20, 50].map(function(n) { return '<option value="' + n + '"' + (self._pp === n ? ' selected' : '') + '>' + n + '</option>'; }).join('')
@@ -387,12 +392,13 @@ DetailedTable.prototype._buildTable = function(group) {
 
 DetailedTable.prototype._renderChips = function() {
   if (!this._chipsEl) return;
-  var self = this;
+  var self  = this;
   var chips = [];
 
+  // Global search chip
   if (self._S.q) {
     chips.push({
-      t: 'Search: "' + self._S.q + '"',
+      t:  'Search: "' + self._S.q + '"',
       rm: function() {
         self._S.q = '';
         var inp = document.getElementById('dt-search-input');
@@ -402,21 +408,20 @@ DetailedTable.prototype._renderChips = function() {
     });
   }
 
-  this._groups.forEach(function(group) {
-    var cf = self._S.colf[group.name] || {};
-    Object.keys(cf).forEach(function(k) {
-      var v = (cf[k] || '').trim();
-      if (!v) return;
-      var col = self._schema.cols.find(function(c) { return c.k === k; }) || { lb: k };
-      var _g = group.name, _k = k;
-      chips.push({
-        t: col.lb + ': "' + v + '"',
-        rm: function() { self._S.colf[_g][_k] = ''; self._render(); }
-      });
+  // Per-column filter chips (flat colf — no group name)
+  Object.keys(self._S.colf).forEach(function(k) {
+    var v = (self._S.colf[k] || '').trim();
+    if (!v) return;
+    var col = self._schema.cols.find(function(c) { return c.k === k; }) || { lb: k };
+    var _k  = k;
+    chips.push({
+      t:  col.lb + ': "' + v + '"',
+      rm: function() { self._S.colf[_k] = ''; self._render(); }
     });
   });
 
   if (!chips.length) { this._chipsEl.innerHTML = ''; return; }
+
   this._chipsEl.innerHTML = chips.map(function(ch, i) {
     return '<div class="dt-fc"><span>' + ch.t + '</span><span class="x" data-chip="' + i + '">×</span></div>';
   }).join('') + '<button class="dt-clr-btn" id="dt-clr-all">Clear all</button>';
@@ -427,13 +432,14 @@ DetailedTable.prototype._renderChips = function() {
       chips[idx].rm();
     });
   });
+
   var clrBtn = document.getElementById('dt-clr-all');
   if (clrBtn) {
     clrBtn.addEventListener('click', function() {
-      self._S.q = '';
+      self._S.q    = '';
+      self._S.colf = {};
       var inp = document.getElementById('dt-search-input');
       if (inp) inp.value = '';
-      self._groups.forEach(function(g) { self._S.colf[g.name] = {}; });
       self._render();
     });
   }
@@ -442,106 +448,89 @@ DetailedTable.prototype._renderChips = function() {
 /* ── MAIN RENDER ────────────────────────────────────────────────────── */
 
 DetailedTable.prototype._render = function() {
+  if (!this._tableEl) return;
   var self = this;
+
   this._renderChips();
 
-  var html = '';
-  this._groups.forEach(function(group) {
-    var allRows = self._filteredRows(group);
-    var tot = allRows.length;
-    var isOpen = self._S.open[group.name];
-
-    html += '<div class="dt-grp" data-grp="' + _esc(group.name) + '">'
-      + '<div class="dt-gh" data-gh="' + _esc(group.name) + '">'
-      +   '<span class="dt-gic">' + (group.icon || '') + '</span>'
-      +   '<span class="dt-gn">' + _esc(group.name) + '</span>'
-      +   '<span class="dt-gm">' + tot + ' ' + (tot === 1 ? 'category' : 'categories') + '</span>'
-      +   '<span class="dt-gchev ' + (isOpen ? 'open' : '') + '">▼</span>'
-      + '</div>'
-      + (isOpen ? self._buildTable(group) : '')
-      + '</div>';
-  });
-
-  if (!this._groups.length) {
-    html = '<div class="dt-no-results">'
+  // Empty data state
+  if (!this._data || !this._data.length) {
+    this._tableEl.innerHTML =
+      '<div style="padding:44px;text-align:center;color:var(--slate400)">'
       + '<div style="font-size:28px;margin-bottom:8px">🔍</div>'
       + '<div style="font-size:13px;font-weight:700;color:var(--slate600)">No categories found</div>'
       + '</div>';
+    return;
   }
 
-  this._groupsEl.innerHTML = html;
+  this._tableEl.innerHTML = this._buildTable();
   this._bindTableEvents();
+
+  // Update count label in toolbar
+  var countEl = document.getElementById('dt-count-label');
+  if (countEl) {
+    var total    = this._data.length;
+    var filtered = this._filteredRows().length;
+    var word     = this._cfg.countLabel || 'rows';
+    countEl.textContent = (filtered < total)
+      ? filtered + ' of ' + total + ' ' + word
+      : total + ' ' + word;
+  }
 
   // Update column picker badge
   var badge = document.getElementById('dt-cpbadge');
-  if (badge) {
-    badge.textContent = Object.values(self._S.vis).filter(Boolean).length;
-  }
+  if (badge) badge.textContent = Object.values(self._S.vis).filter(Boolean).length;
 };
 
-/* ── EVENT BINDING (after render) ───────────────────────────────────── */
+/* ── EVENT BINDING (runs after every render) ────────────────────────── */
 
 DetailedTable.prototype._bindTableEvents = function() {
   var self = this;
 
-  // Group header collapse/expand
-  this._groupsEl.querySelectorAll('[data-gh]').forEach(function(el) {
-    el.addEventListener('click', function() {
-      var gn = this.getAttribute('data-gh');
-      self._S.open[gn] = !self._S.open[gn];
-      self._render();
-    });
-  });
-
   // Sort buttons
-  this._groupsEl.querySelectorAll('[data-srt-g]').forEach(function(el) {
+  this._tableEl.querySelectorAll('[data-srt-k]').forEach(function(el) {
     el.addEventListener('click', function(e) {
       e.stopPropagation();
-      var gn = this.getAttribute('data-srt-g');
-      var k  = this.getAttribute('data-srt-k');
-      var s  = self._S.srt[gn];
+      var k = this.getAttribute('data-srt-k');
+      var s = self._S.srt;
       if (s.k === k) s.d = s.d === 'asc' ? 'desc' : 'asc';
       else { s.k = k; s.d = 'asc'; }
-      self._S.pg[gn] = 1;
+      self._S.pg = 1;
       self._render();
     });
   });
 
   // Column filters
-  this._groupsEl.querySelectorAll('[data-flt-g]').forEach(function(el) {
+  this._tableEl.querySelectorAll('[data-flt-k]').forEach(function(el) {
     el.addEventListener('input', function() {
-      var gn = this.getAttribute('data-flt-g');
-      var k  = this.getAttribute('data-flt-k');
-      self._S.colf[gn][k] = this.value;
-      self._S.pg[gn] = 1;
+      var k = this.getAttribute('data-flt-k');
+      self._S.colf[k] = this.value;
+      self._S.pg      = 1;
       self._render();
     });
-    // Prevent click from triggering group collapse
-    el.addEventListener('click', function(e) { e.stopPropagation(); });
   });
 
   // Pagination buttons
-  this._groupsEl.querySelectorAll('[data-pg-g]').forEach(function(el) {
+  this._tableEl.querySelectorAll('[data-pg-p]').forEach(function(el) {
     el.addEventListener('click', function() {
-      var gn = this.getAttribute('data-pg-g');
-      var p  = parseInt(this.getAttribute('data-pg-p'));
+      var p = parseInt(this.getAttribute('data-pg-p'));
       if (isNaN(p) || p < 1) return;
-      self._S.pg[gn] = p;
+      self._S.pg = p;
       self._render();
     });
   });
 
   // Rows per page
-  this._groupsEl.querySelectorAll('[data-pp]').forEach(function(el) {
+  this._tableEl.querySelectorAll('[data-pp]').forEach(function(el) {
     el.addEventListener('change', function() {
-      self._pp = parseInt(this.value) || 10;
-      Object.keys(self._S.pg).forEach(function(g) { self._S.pg[g] = 1; });
+      self._pp   = parseInt(this.value) || 10;
+      self._S.pg = 1;
       self._render();
     });
   });
 
   // Column resize handles
-  this._groupsEl.querySelectorAll('[data-rh-k]').forEach(function(el) {
+  this._tableEl.querySelectorAll('[data-rh-k]').forEach(function(el) {
     el.addEventListener('mousedown', function(e) {
       e.stopPropagation();
       e.preventDefault();

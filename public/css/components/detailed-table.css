@@ -39,18 +39,30 @@
 }
 
 /* ── TOOLBAR ────────────────────────────────────────────────────────── */
+/* Toolbar connects flush to the table below — no gap, square bottom corners */
 .dt-toolbar {
   background: #fff;
   border: 1px solid var(--slate200);
   border-radius: 10px;
-  padding: 12px 14px;
-  margin-bottom: 10px;
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+  border-bottom: none;           /* table top border acts as the dividing line */
+  padding: 12px 14px 10px;
+  margin-bottom: 0;              /* zero gap — table sits flush below */
+  display: flex;
+  flex-direction: column;        /* controls row on top, chips row below */
+  gap: 0;
+  box-shadow: var(--shadow);
+}
+
+/* Controls row inside toolbar (search / spacer / count / columns) */
+.dt-toolbar-row {
   display: flex;
   gap: 9px;
   flex-wrap: wrap;
   align-items: flex-end;
-  box-shadow: var(--shadow);
 }
+
 .dt-tf { display: flex; flex-direction: column; gap: 3px; }
 .dt-tfl {
   font-size: 10px;
@@ -134,8 +146,14 @@
 .dt-cpi.on .dt-cpck { background: var(--g600); border-color: var(--g600); color: #fff; }
 .dt-cpi.off { color: var(--slate400); }
 
-/* ── ACTIVE FILTER CHIPS ────────────────────────────────────────────── */
-.dt-chips-row { display: flex; gap: 5px; flex-wrap: wrap; margin-bottom: 10px; min-height: 4px; }
+/* ── ACTIVE FILTER CHIPS (inside toolbar, below controls row) ───────── */
+.dt-chips-row {
+  display: flex;
+  gap: 5px;
+  flex-wrap: wrap;
+  padding-top: 8px;              /* space between controls row and chips */
+}
+.dt-chips-row:empty { display: none; padding-top: 0; }
 .dt-fc {
   display: inline-flex;
   align-items: center;
@@ -162,36 +180,28 @@
 }
 .dt-clr-btn:hover { background: var(--slate100); }
 
-/* ── GROUP CARD ─────────────────────────────────────────────────────── */
+/* ── TABLE CARD ─────────────────────────────────────────────────────── */
+/* Sits flush below toolbar — top corners square, bottom corners rounded */
 .dt-grp {
   background: #fff;
   border: 1px solid var(--slate200);
   border-radius: 10px;
+  border-top-left-radius: 0;    /* flush join with toolbar */
+  border-top-right-radius: 0;
   overflow: hidden;
   margin-bottom: 12px;
   box-shadow: var(--shadow);
 }
-.dt-gh {
-  display: flex;
-  align-items: center;
-  gap: 9px;
-  padding: 9px 15px;
-  background: var(--slate50);
-  border-bottom: 1px solid var(--slate200);
-  cursor: pointer;
-  user-select: none;
-  transition: background .12s;
+
+/* Count label — shown left of Columns button in toolbar controls row */
+.dt-gm {
+  font-size: 11px;
+  color: var(--slate400);
+  font-family: var(--font-mono);
+  align-self: flex-end;
+  padding-bottom: 8px;          /* aligns baseline with Columns button */
+  white-space: nowrap;
 }
-.dt-gh:hover { background: var(--g50); }
-.dt-gic { font-size: 15px; width: 18px; text-align: center; flex-shrink: 0; }
-.dt-gn { font-size: 13px; font-weight: 800; color: var(--slate800); flex: 1; }
-.dt-gm { font-size: 11px; color: var(--slate400); font-family: var(--font-mono); }
-.dt-gbadge { font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 20px; }
-.dt-bok  { background: var(--g100);    color: var(--g800); }
-.dt-blow { background: var(--amberbg); color: #92400e; }
-.dt-bout { background: var(--redbg);   color: #991b1b; }
-.dt-gchev { font-size: 9px; color: var(--slate400); transition: transform .18s; flex-shrink: 0; }
-.dt-gchev.open { transform: rotate(180deg); }
 
 /* ── TABLE ──────────────────────────────────────────────────────────── */
 .dt-tscroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }

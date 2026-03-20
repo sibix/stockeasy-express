@@ -42,9 +42,11 @@ async function initCategoryList() {
   var result = await apiFetch('/categories', 'GET');
   if (!result.ok) {
     showToast('Failed to load categories', 'red');
-    document.getElementById('cat-groups').innerHTML =
-      '<div class="dt-no-results"><div style="font-size:28px;margin-bottom:8px">⚠️</div>'
-      + '<div style="font-size:13px;font-weight:700;color:var(--slate600)">Could not load categories</div></div>';
+    document.getElementById('cat-table').innerHTML =
+      '<div style="padding:44px;text-align:center;color:var(--slate400)">'
+      + '<div style="font-size:28px;margin-bottom:8px">⚠️</div>'
+      + '<div style="font-size:13px;font-weight:700;color:var(--slate600)">Could not load categories</div>'
+      + '</div>';
     return;
   }
 
@@ -75,25 +77,18 @@ async function initCategoryList() {
       l: 'Standard GST' },
   ];
 
-  // Group by gst_type
-  var groups = [
-    { name: 'Standard Rate', icon: '🏷️', rows: data.filter(function(r) { return r.gst_type === 'standard'; }) },
-    { name: 'Variable Rate', icon: '📊', rows: data.filter(function(r) { return r.gst_type === 'variable'; }) },
-    { name: 'Exempt / None', icon: '🚫', rows: data.filter(function(r) { return r.gst_type === 'none'; }) },
-  ].filter(function(g) { return g.rows.length > 0; });
-
-  // Init DetailedTable component
+  // Init DetailedTable component (flat — no grouping)
   window._catTable = new DetailedTable({
     statsEl:     '#cat-stats',
     toolbarEl:   '#cat-toolbar',
-    chipsEl:     '#cat-chips',
-    groupsEl:    '#cat-groups',
+    tableEl:     '#cat-table',
     filterLabel: 'Search by name, HSN, or attribute…',
+    countLabel:  'categories',
     schema:      CAT_SCHEMA,
   });
 
   window._catTable.setStats(stats);
-  window._catTable.setData(groups);
+  window._catTable.setData(data);  // flat array — no grouping
 
   // Expose toggle handler for the table's toggle cells
   window._dtToggleCat = toggleCategoryStatus;
