@@ -27,6 +27,11 @@ async function initializeDatabase() {
       );
     } catch(e) { /* already migrated */ }
 
+    // Add tags column to categories if not present
+    try {
+      await db.execute("ALTER TABLE categories ADD COLUMN tags TEXT NULL");
+    } catch(e) { /* already exists */ }
+
     // app_settings — key/value store for product & system configuration
     await db.execute(`
       CREATE TABLE IF NOT EXISTS app_settings (

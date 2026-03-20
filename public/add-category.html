@@ -67,7 +67,6 @@
                 <div class="form-group">
                   <label class="form-label">HSN Code</label>
                   <input class="form-input" type="text" id="cat-hsn"
-                    list="hsn-suggestions"
                     placeholder="e.g. 6204" maxlength="8" />
                   <span class="form-hint">Harmonised System of Nomenclature</span>
                 </div>
@@ -203,8 +202,7 @@
               <label class="form-label">Tags</label>
               <div class="tag-input-wrap" onclick="document.getElementById('tag-input').focus()">
                 <input class="tag-text-input" id="tag-input" type="text"
-                  list="tag-suggestions"
-                  placeholder="Add tags, press Enter…"
+                  placeholder="Type to search or add a tag…"
                   onkeydown="tagKeydown(event,this)" />
               </div>
               <span class="form-hint mt-2" style="margin-top:var(--space-2)">
@@ -258,6 +256,9 @@
             <div class="form-group mb-4">
               <label class="form-label">Allowed Units for Purchase</label>
               <span class="form-hint" style="margin-bottom:var(--gap-sm)">Units in which you buy from suppliers</span>
+              <input class="form-input" type="text" placeholder="Filter units…"
+                style="max-width:200px;margin-bottom:var(--space-2)"
+                oninput="filterUnits('buy-units', this.value)" />
               <div class="unit-picker" id="buy-units">
                 <!-- pills built dynamically from allowed_units in product-config settings -->
               </div>
@@ -265,6 +266,9 @@
             <div class="form-group">
               <label class="form-label">Allowed Units for Selling</label>
               <span class="form-hint" style="margin-bottom:var(--gap-sm)">Units in which you sell to customers</span>
+              <input class="form-input" type="text" placeholder="Filter units…"
+                style="max-width:200px;margin-bottom:var(--space-2)"
+                oninput="filterUnits('sell-units', this.value)" />
               <div class="unit-picker" id="sell-units">
                 <!-- pills built dynamically from allowed_units in product-config settings -->
               </div>
@@ -280,7 +284,7 @@
               <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:var(--space-3)">
                 <label class="form-label" style="margin-bottom:0">Minimum Margin</label>
                 <div class="seg-control" id="margin-toggle">
-                  <button class="seg-btn active" onclick="setMarginMode('percent')">% Percent</button>
+                  <button class="seg-btn active" onclick="setMarginMode('percentage')">% Percent</button>
                   <button class="seg-btn"        onclick="setMarginMode('amount')">₹ Amount</button>
                 </div>
               </div>
@@ -435,11 +439,6 @@
 
     <!-- TEMPLATE LIBRARY COMPONENT -->
     <div id="template-library-container"></div>
-
-    <!-- DATALISTS — populated by add-category.js from product-config settings -->
-    <datalist id="hsn-suggestions"></datalist>
-    <datalist id="attr-name-suggestions"></datalist>
-    <datalist id="tag-suggestions"></datalist>
 
     <!-- TOAST -->
     <div id="toast" class="toast toast-green" style="display:none">

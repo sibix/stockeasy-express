@@ -779,3 +779,30 @@ tr:hover td{background:var(--g50)}
   color: var(--green-600);
   background: var(--green-50);
 }
+
+/* ── Autocomplete dropdown (shared component) ──────────────── */
+.ac-dropdown {
+  display: none;
+  position: absolute;
+  top: calc(100% + 2px);
+  left: 0;
+  right: 0;
+  background: #fff;
+  border: 1.5px solid var(--slate-200);
+  border-radius: var(--radius-md);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+  z-index: 500;
+  max-height: 220px;
+  overflow-y: auto;
+}
+.ac-item {
+  padding: 8px 12px;
+  font-size: var(--text-sm);
+  color: var(--slate-700);
+  cursor: pointer;
+  transition: background 0.1s;
+}
+.ac-item:hover {
+  background: var(--green-50);
+  color: var(--green-700);
+}
