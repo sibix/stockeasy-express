@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Product Category — StockEasy</title>
+    <title>All Categories — StockEasy</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=DM+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="/css/styles.css" />
     <link rel="stylesheet" href="/css/pages/categories.css" />
@@ -22,481 +22,161 @@
 
         <!-- MODULE TABS -->
         <div class="module-tabs visible">
-          <a href="/items.html"      class="mtab">Catalogue</a>
-          <a href="/categories.html" class="mtab active">Categories</a>
-          <a href="/pricelists.html" class="mtab">Price Lists</a>
-          <a href="/setdefs.html"    class="mtab">Set Definitions</a>
+          <a href="/categories.html" class="mtab active">📚 All Categories</a>
+          <a href="/add-category.html" class="mtab">➕ Add New Category</a>
+          
         </div>
 
         <!-- PAGE CONTENT -->
         <div class="page-content">
 
-          <!-- Page header -->
-          <div class="page-header">
+          
+          <!-- Category list page -->
+      <div class="page" id="page-sales">
+        <div class="page-content">
+          <div class="quick-stats">
+            <div class="qs-item"><div class="qs-val" style="color:var(--g600)">152</div><div class="qs-lbl">Total Categories</div></div>
+            <div class="qs-item"><div class="qs-val">1251</div><div class="qs-lbl">Total Products</div></div>
+            <!-- <div class="qs-item"><div class="qs-val" style="color:var(--amber)">Churidar</div><div class="qs-lbl">Top Category</div></div> -->
+            <div class="qs-item"><div class="qs-val" style="color:var(--amber)">Churidar<sup style="color:var(--g600) !important; font-size:0.6em; margin-left:2px;">30k</sup></div>
+            <div class="qs-lbl">Top Category</div>
+            </div>
+
+
+
+            <div class="qs-item"><div class="qs-val" style="color:var(--red)">5</div><div class="qs-lbl">Low Stock Categories</div></div>
+          </div>
+          <div class="sec-header">
             <div>
-              <div class="page-header-title">Product Category</div>
-              <div class="page-header-sub">
-                Define how products in this category behave — GST, variants, pricing, stock rules.
-              </div>
+              <!-- search bar -->
+              <div class="tb-search">
+        <span>🔍</span><span>Search Category</span><span style="margin-left:auto;font-size:11px;background:var(--slate200);padding:1px 6px;border-radius:4px;color:var(--g600)"></span>
+      </div>
+              
             </div>
-            <div class="flex gap-3">
-              <button class="btn btn-outline" onclick="showToast('Changes discarded', 'amber')">
-                Discard
-              </button>
-              <button class="btn btn-primary" id="save-btn-top" onclick="saveCategory()">
-                Save Category
-              </button>
+            <div class="sec-actions">
+             <a href="/add-category.html" class="mtab"><button class="btn btn-primary">+ New Category</button></a>
+              
             </div>
           </div>
-
-          <!-- ══════════════════════════════════════════
-               CARD 1 — Basic Information + GST
-          ══════════════════════════════════════════ -->
-          <div class="card card-padded mb-4">
-            <div class="section-title">Basic Information</div>
-            <div class="form-row mb-4">
-              <div class="form-col" style="max-width:380px">
-                <div class="form-group">
-                  <label class="form-label">Category Name *</label>
-                  <input class="form-input" type="text" id="cat-name"
-                    placeholder="e.g. Churidars, Kurtis, Sarees" />
-                  <span class="form-hint">Appears on item cards and reports</span>
-                </div>
-              </div>
-              <div class="form-col" style="max-width:200px">
-                <div class="form-group">
-                  <label class="form-label">HSN Code</label>
-                  <input class="form-input" type="text" id="cat-hsn"
-                    placeholder="e.g. 6204" maxlength="8" />
-                  <span class="form-hint">Harmonised System of Nomenclature</span>
-                </div>
-              </div>
-            </div>
-
-            <div class="divider"></div>
-
-            <div class="section-title mt-4" style="margin-top:var(--space-4)">
-              GST Configuration
-            </div>
-            <div class="form-group mb-4">
-              <label class="form-label">GST Mode</label>
-              <div class="seg-control mt-2" style="margin-top:var(--space-2)">
-                <button class="seg-btn active" id="gst-standard" onclick="setGST('standard')">Standard GST</button>
-                <button class="seg-btn"        id="gst-variable" onclick="setGST('variable')">Variable GST</button>
-                <button class="seg-btn"        id="gst-exempt"   onclick="setGST('exempt')">Exempt / 0%</button>
-              </div>
-              <span class="form-hint mt-2" style="margin-top:var(--space-2)">
-                Variable GST applies different rates based on selling price — e.g. garments ≤ ₹1,000 → 5%, above → 12%
-              </span>
-            </div>
-
-            <!-- Standard GST block -->
-            <div id="block-standard">
-              <div class="form-group" style="max-width:180px">
-                <label class="form-label">GST Rate</label>
-                <select class="form-input form-select" id="gst-standard-rate">
-                  <option value="0">0%</option>
-                  <option value="5" selected>5%</option>
-                  <option value="12">12%</option>
-                  <option value="18">18%</option>
-                  <option value="28">28%</option>
-                </select>
-              </div>
-            </div>
-
-            <!-- Variable GST block -->
-            <div id="block-variable" style="display:none">
-              <div class="variable-gst-panel">
-                <div class="section-title">Variable GST Rules</div>
-                <div class="form-row">
-                  <div class="form-col">
-                    <div class="form-group">
-                      <label class="form-label">Lower GST Rate</label>
-                      <select class="form-input form-select" id="gst-lower-rate">
-                        <option value="0">0%</option>
-                        <option value="5" selected>5%</option>
-                        <option value="12">12%</option>
-                      </select>
-                      <span class="form-hint">When price ≤ threshold</span>
-                    </div>
-                  </div>
-                  <div class="form-col">
-                    <div class="form-group">
-                      <label class="form-label">Higher GST Rate</label>
-                      <select class="form-input form-select" id="gst-higher-rate">
-                        <option value="5">5%</option>
-                        <option value="12" selected>12%</option>
-                        <option value="18">18%</option>
-                      </select>
-                      <span class="form-hint">When price &gt; threshold</span>
-                    </div>
-                  </div>
-                  <div class="form-col">
-                    <div class="form-group">
-                      <label class="form-label">Threshold Amount</label>
-                      <div class="prefix-input-wrap">
-                        <span class="prefix-symbol">₹</span>
-                        <input class="form-input" type="number" id="gst-threshold" placeholder="1000" />
-                      </div>
-                      <span class="form-hint">e.g. ₹1,000 for garments</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- Exempt block -->
-            <div id="block-exempt" style="display:none">
-              <div class="info-panel">
-                &#x2705; All items in this category will be billed at 0% GST and excluded from GSTR filings.
-              </div>
-            </div>
-          </div>
-
-          <!-- ══════════════════════════════════════════
-               CARD 2 — Variant Attributes + Packaging Sets
-          ══════════════════════════════════════════ -->
-          <div class="card card-padded mb-4">
-
-            <!-- Attributes subsection -->
-            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:var(--space-1)">
-              <div class="section-title" style="margin-bottom:0">Product Attributes</div>
-              <span class="text-muted">Press Enter or comma to add values</span>
-            </div>
-            <span class="form-hint" style="display:block;margin-bottom:var(--space-4)">
-              Each attribute with values generates separate stock entries.
-              e.g. Size × Color → Churidar · Red · M is one variant with its own stock.
-            </span>
-            <div class="attr-list" id="attr-list">
-              <!-- Attribute row 1 -->
-              <div class="attr-row" id="attr-0">
-                <div class="attr-num">1</div>
-                <div class="attr-fields">
-                  <div class="form-group" style="max-width:260px">
-                    <label class="form-label">Attribute Name</label>
-                    <input class="form-input" type="text" value="Size"
-                      placeholder="e.g. Size, Color, Material" />
-                  </div>
-                  <div class="form-group">
-                    <label class="form-label">Attribute Values</label>
-                    <div class="chip-input-wrap" onclick="focusLast(this)">
-                      <span class="value-chip">S<span class="value-chip-x" onclick="removeChip(this)">×</span></span>
-                      <span class="value-chip">M<span class="value-chip-x" onclick="removeChip(this)">×</span></span>
-                      <span class="value-chip">L<span class="value-chip-x" onclick="removeChip(this)">×</span></span>
-                      <span class="value-chip">XL<span class="value-chip-x" onclick="removeChip(this)">×</span></span>
-                      <span class="value-chip">XXL<span class="value-chip-x" onclick="removeChip(this)">×</span></span>
-                      <input class="chip-text-input" type="text"
-                        placeholder="Type and press Enter…"
-                        onkeydown="chipKeydown(event,this)" />
-                    </div>
-                    <span class="form-hint">Values selectable when adding items in this category</span>
-                  </div>
-                </div>
-                <button class="attr-del-btn" onclick="deleteAttr('attr-0')">×</button>
-              </div>
-              <!-- Attribute row 2 -->
-              <div class="attr-row" id="attr-1">
-                <div class="attr-num">2</div>
-                <div class="attr-fields">
-                  <div class="form-group" style="max-width:260px">
-                    <label class="form-label">Attribute Name</label>
-                    <input class="form-input" type="text" value="Color"
-                      placeholder="e.g. Size, Color, Material" />
-                  </div>
-                  <div class="form-group">
-                    <label class="form-label">Attribute Values</label>
-                    <div class="chip-input-wrap" onclick="focusLast(this)">
-                      <span class="value-chip">Red<span class="value-chip-x" onclick="removeChip(this)">×</span></span>
-                      <span class="value-chip">Blue<span class="value-chip-x" onclick="removeChip(this)">×</span></span>
-                      <span class="value-chip">Black<span class="value-chip-x" onclick="removeChip(this)">×</span></span>
-                      <input class="chip-text-input" type="text"
-                        placeholder="Type and press Enter…"
-                        onkeydown="chipKeydown(event,this)" />
-                    </div>
-                  </div>
-                </div>
-                <button class="attr-del-btn" onclick="deleteAttr('attr-1')">×</button>
-              </div>
-            </div>
-            <button class="add-attr-btn" onclick="addAttribute()">+ Add Attribute</button>
-
-            <!-- Packaging Sets subsection -->
-            <div class="divider" style="margin:var(--space-6) 0 var(--space-4)"></div>
-            <div class="set-def-header">
-              <div>
-                <div class="section-title" style="margin-bottom:var(--space-1)">Packaging Sets</div>
-                <span class="form-hint">
-                  Define how this product arrives from suppliers — Full Set, Half Set, Ratio pack.
-                  Set definitions use the Size attribute above.
-                </span>
-              </div>
-              <div class="set-def-actions">
-                <button class="btn btn-sm btn-outline" onclick="openSetTemplateLibrary()">
-                  Browse templates
+          <div class="card">
+            <div class="tbl-wrap">
+    <table>
+        <tr>
+            <th>Bill #</th>
+            <th>Date</th>
+            <th>Customer</th>
+            <th>Items</th>
+            <th>Amount</th>
+            <th>GST</th>
+            <th>Status</th>
+            <th>Action</th>
+        </tr>
+        <tr onclick="showModal('view-invoice')" style="cursor: pointer">
+            <td class="td-bold td-mono">INV-0142</td>
+            <td>15 Mar</td>
+            <td>Priya Stores</td>
+            <td>5 items</td>
+            <td class="td-mono">₹4,250</td>
+            <td class="td-mono">₹203</td>
+            <td><span class="badge badge-green">Paid</span></td>
+            <td>
+                <button
+                    class="btn btn-ghost"
+                    style="padding: 4px 10px; font-size: 11px"
+                    onclick="event.stopPropagation();showToast('📤 Sharing on WhatsApp...')"
+                >
+                    📤 Share
                 </button>
-                <button class="btn btn-sm" onclick="addCustomSetDef()">+ Custom set</button>
-              </div>
-            </div>
-            <div id="set-defs-container"></div>
+            </td>
+        </tr>
+        <tr onclick="showModal('view-invoice')" style="cursor: pointer">
+            <td class="td-bold td-mono">INV-0141</td>
+            <td>15 Mar</td>
+            <td>Mohan Traders</td>
+            <td>12 items</td>
+            <td class="td-mono">₹11,800</td>
+            <td class="td-mono">₹563</td>
+            <td><span class="badge badge-amber">Pending</span></td>
+            <td>
+                <button
+                    class="btn btn-primary"
+                    style="padding: 4px 10px; font-size: 11px"
+                    onclick="event.stopPropagation();showModal('receive-payment')"
+                >
+                    💰 Collect
+                </button>
+            </td>
+        </tr>
+        <tr onclick="showModal('view-invoice')" style="cursor: pointer">
+            <td class="td-bold td-mono">INV-0140</td>
+            <td>14 Mar</td>
+            <td>Walk-in</td>
+            <td>2 items</td>
+            <td class="td-mono">₹620</td>
+            <td class="td-mono">₹30</td>
+            <td><span class="badge badge-green">Paid</span></td>
+            <td>
+                <button
+                    class="btn btn-ghost"
+                    style="padding: 4px 10px; font-size: 11px"
+                    onclick="event.stopPropagation();showToast('🖨️ Printing...')"
+                >
+                    🖨️ Print
+                </button>
+            </td>
+        </tr>
+        <tr onclick="showModal('view-invoice')" style="cursor: pointer">
+            <td class="td-bold td-mono">INV-0139</td>
+            <td>10 Mar</td>
+            <td>Kavitha Fashion</td>
+            <td>8 items</td>
+            <td class="td-mono">₹8,400</td>
+            <td class="td-mono">₹400</td>
+            <td><span class="badge badge-red">Overdue</span></td>
+            <td>
+                <button
+                    class="btn btn-amber"
+                    style="padding: 4px 10px; font-size: 11px"
+                    onclick="event.stopPropagation();showToast('📲 Reminder sent on WhatsApp!')"
+                >
+                    🔔 Remind
+                </button>
+            </td>
+        </tr>
+        <tr onclick="showModal('view-invoice')" style="cursor: pointer">
+            <td class="td-bold td-mono">INV-0138</td>
+            <td>9 Mar</td>
+            <td>Sunita Boutique</td>
+            <td>3 items</td>
+            <td class="td-mono">₹2,100</td>
+            <td class="td-mono">₹100</td>
+            <td><span class="badge badge-green">Paid</span></td>
+            <td>
+                <button
+                    class="btn btn-ghost"
+                    style="padding: 4px 10px; font-size: 11px"
+                    onclick="event.stopPropagation();showToast('📤 Sharing on WhatsApp...')"
+                >
+                    📤 Share
+                </button>
+            </td>
+        </tr>
+    </table>
+</div>
 
           </div>
+         
+        </div>
+      </div>
+          
 
-          <!-- ══════════════════════════════════════════
-               CARD 3 — Product Tags
-          ══════════════════════════════════════════ -->
-          <div class="card card-padded mb-4">
-            <div class="section-title">Product Tags</div>
-            <div class="form-group">
-              <label class="form-label">Tags</label>
-              <div class="tag-input-wrap" onclick="document.getElementById('tag-input').focus()">
-                <span class="tag-chip">ethnic<span class="tag-chip-x" onclick="removeTag(this)">×</span></span>
-                <span class="tag-chip">women<span class="tag-chip-x" onclick="removeTag(this)">×</span></span>
-                <input class="tag-text-input" id="tag-input" type="text"
-                  placeholder="Add tags, press Enter…"
-                  onkeydown="tagKeydown(event,this)" />
-              </div>
-              <span class="form-hint mt-2" style="margin-top:var(--space-2)">
-                Tags help with search and filtering. Press Enter or comma to add.
-              </span>
-            </div>
-          </div>
 
-          <!-- ══════════════════════════════════════════
-               CARD 4 — Packaging (Premium)
-          ══════════════════════════════════════════ -->
-          <div class="card card-padded mb-4">
-            <div class="section-title">Packaging</div>
-            <div class="form-group mb-4">
-              <label class="form-label" style="display:flex;align-items:center;gap:var(--gap-sm)">
-                Buying Package <span class="premium-badge">⭐ Premium</span>
-              </label>
-              <div class="field-locked">
-                <select class="form-input form-select">
-                  <option>Full Set (S, M, L, XL, XXL)</option>
-                  <option>Half Set (M, L, XL)</option>
-                  <option>Dozen (12 pcs)</option>
-                  <option>Custom</option>
-                </select>
-                <div class="field-locked-overlay"></div>
-              </div>
-              <span class="form-hint">How stock arrives from suppliers — set sizes, ratio packs, dozen lots</span>
-            </div>
-            <div class="form-group">
-              <label class="form-label" style="display:flex;align-items:center;gap:var(--gap-sm)">
-                Sellable Packages <span class="premium-badge">⭐ Premium</span>
-              </label>
-              <div class="field-locked">
-                <select class="form-input form-select">
-                  <option>Single piece</option>
-                  <option>Half dozen (6 pcs)</option>
-                  <option>Full dozen (12 pcs)</option>
-                  <option>Custom</option>
-                </select>
-                <div class="field-locked-overlay"></div>
-              </div>
-              <span class="form-hint">How this item is sold — single, pack of 6, dozen, case lot</span>
-            </div>
-          </div>
-
-          <!-- ══════════════════════════════════════════
-               CARD 5 — Units of Measurement
-          ══════════════════════════════════════════ -->
-          <div class="card card-padded mb-4">
-            <div class="section-title">Units of Measurement</div>
-            <div class="form-group mb-4">
-              <label class="form-label">Allowed Units for Purchase</label>
-              <span class="form-hint" style="margin-bottom:var(--gap-sm)">Units in which you buy from suppliers</span>
-              <div class="unit-picker" id="buy-units">
-                <div class="unit-pill selected" onclick="toggleUnit(this)">Pcs</div>
-                <div class="unit-pill selected" onclick="toggleUnit(this)">Dozen</div>
-                <div class="unit-pill selected" onclick="toggleUnit(this)">Set</div>
-                <div class="unit-pill" onclick="toggleUnit(this)">Box</div>
-                <div class="unit-pill" onclick="toggleUnit(this)">Kg</div>
-                <div class="unit-pill" onclick="toggleUnit(this)">g</div>
-                <div class="unit-pill" onclick="toggleUnit(this)">Litre</div>
-                <div class="unit-pill" onclick="toggleUnit(this)">ml</div>
-                <div class="unit-pill" onclick="toggleUnit(this)">Metre</div>
-                <div class="unit-pill" onclick="toggleUnit(this)">Pair</div>
-                <div class="unit-pill" onclick="toggleUnit(this)">Crate</div>
-                <div class="unit-pill" onclick="toggleUnit(this)">Roll</div>
-              </div>
-            </div>
-            <div class="form-group">
-              <label class="form-label">Allowed Units for Selling</label>
-              <span class="form-hint" style="margin-bottom:var(--gap-sm)">Units in which you sell to customers</span>
-              <div class="unit-picker" id="sell-units">
-                <div class="unit-pill selected" onclick="toggleUnit(this)">Pcs</div>
-                <div class="unit-pill" onclick="toggleUnit(this)">Dozen</div>
-                <div class="unit-pill" onclick="toggleUnit(this)">Set</div>
-                <div class="unit-pill" onclick="toggleUnit(this)">Box</div>
-                <div class="unit-pill" onclick="toggleUnit(this)">Kg</div>
-                <div class="unit-pill" onclick="toggleUnit(this)">g</div>
-                <div class="unit-pill" onclick="toggleUnit(this)">Litre</div>
-                <div class="unit-pill" onclick="toggleUnit(this)">ml</div>
-                <div class="unit-pill" onclick="toggleUnit(this)">Metre</div>
-                <div class="unit-pill" onclick="toggleUnit(this)">Pair</div>
-                <div class="unit-pill" onclick="toggleUnit(this)">Crate</div>
-                <div class="unit-pill" onclick="toggleUnit(this)">Roll</div>
-              </div>
-            </div>
-          </div>
-
-          <!-- ══════════════════════════════════════════
-               CARD 6 — Margin Settings
-          ══════════════════════════════════════════ -->
-          <div class="card card-padded mb-4">
-            <div class="section-title">Margin Settings</div>
-            <div class="form-group mb-4">
-              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:var(--space-3)">
-                <label class="form-label" style="margin-bottom:0">Minimum Margin</label>
-                <div class="seg-control" id="margin-toggle">
-                  <button class="seg-btn active" onclick="setMarginMode('percent')">% Percent</button>
-                  <button class="seg-btn"        onclick="setMarginMode('amount')">₹ Amount</button>
-                </div>
-              </div>
-              <div class="margin-input-wrap">
-                <input class="form-input" type="number" id="margin-input" placeholder="0" min="0" />
-                <span class="margin-suffix" id="margin-suffix">%</span>
-              </div>
-              <span class="form-hint mt-2" style="margin-top:var(--space-2)">
-                Selling below this margin triggers an underprice warning at checkout
-              </span>
-            </div>
-            <div class="form-group">
-              <label class="form-label" style="display:flex;align-items:center;gap:var(--gap-sm)">
-                Suggested Margin <span class="premium-badge">⭐ Premium</span>
-              </label>
-              <div class="field-locked" style="max-width:200px">
-                <div class="margin-input-wrap">
-                  <input class="form-input" type="number" placeholder="20" />
-                  <span class="margin-suffix">%</span>
-                </div>
-                <div class="field-locked-overlay"></div>
-              </div>
-              <span class="form-hint mt-2" style="margin-top:var(--space-2)">
-                Auto-suggests selling price when adding new items in this category
-              </span>
-            </div>
-          </div>
-
-          <!-- ══════════════════════════════════════════
-               CARD 7 — Pricing Behaviour
-          ══════════════════════════════════════════ -->
-          <div class="card card-padded mb-4">
-            <div class="section-title">Pricing Behaviour</div>
-            <div class="toggle-row">
-              <div class="toggle-info">
-                <div class="toggle-label">Dynamic Price Item</div>
-                <div class="toggle-desc">
-                  Price changes per sale — typical for fresh produce, vegetables, metals.
-                  Disabling fixes the price from the item master.
-                </div>
-              </div>
-              <label class="toggle-switch">
-                <input type="checkbox" id="toggle-dynamic-price"
-                  onchange="onToggle(this,'Dynamic price')" />
-                <span class="toggle-track"></span>
-              </label>
-            </div>
-            <div class="toggle-row">
-              <div class="toggle-info">
-                <div class="toggle-label">Allow Price Edit at Checkout</div>
-                <div class="toggle-desc">
-                  Billing staff can manually override the selling price at POS.
-                  Turn off to enforce the price list strictly.
-                </div>
-              </div>
-              <label class="toggle-switch">
-                <input type="checkbox" id="toggle-price-edit" checked
-                  onchange="onToggle(this,'Price edit at checkout')" />
-                <span class="toggle-track"></span>
-              </label>
-            </div>
-            <div class="toggle-row">
-              <div class="toggle-info">
-                <div class="toggle-label">Underprice Selling Safety</div>
-                <div class="toggle-desc">
-                  Warns or blocks a sale when the entered price falls below the minimum margin set above.
-                  Prevents accidental below-cost selling.
-                </div>
-              </div>
-              <label class="toggle-switch">
-                <input type="checkbox" id="toggle-underprice" checked
-                  onchange="onToggle(this,'Underprice safety')" />
-                <span class="toggle-track"></span>
-              </label>
-            </div>
-          </div>
-
-          <!-- ══════════════════════════════════════════
-               CARD 8 — Stock & Tracking
-          ══════════════════════════════════════════ -->
-          <div class="card card-padded mb-4">
-            <div class="section-title">Stock &amp; Tracking</div>
-            <div class="toggle-row">
-              <div class="toggle-info">
-                <div class="toggle-label">Serial Number Tracking</div>
-                <div class="toggle-desc">
-                  Assign a unique serial number to each unit. Required for electronics,
-                  machinery, high-value items. Adds a serial field to every purchase and sale entry.
-                </div>
-              </div>
-              <label class="toggle-switch">
-                <input type="checkbox" id="toggle-serial"
-                  onchange="onToggle(this,'Serial number tracking')" />
-                <span class="toggle-track"></span>
-              </label>
-            </div>
-            <div style="margin-top:var(--space-4);padding-top:var(--space-4);border-top:1px solid var(--slate-100)">
-              <div class="form-group">
-                <label class="form-label">Minimum Stock Alert Level</label>
-                <div style="display:flex;align-items:center;gap:var(--space-3);margin-top:var(--gap-sm);flex-wrap:wrap">
-                  <div style="position:relative;max-width:160px">
-                    <input class="form-input" type="number" id="min-stock-input"
-                      placeholder="0" min="0" value="5"
-                      style="padding-right:var(--space-8)" />
-                    <span style="position:absolute;right:var(--space-3);top:50%;transform:translateY(-50%);font-size:var(--text-xs);font-weight:var(--weight-semibold);color:var(--slate-400);pointer-events:none">pcs</span>
-                  </div>
-                  <span class="form-hint" style="margin-top:0">
-                    Alert fires when any variant drops to or below this number
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- ══════════════════════════════════════════
-               CARD 9 — Clone
-          ══════════════════════════════════════════ -->
-          <div class="clone-card" style="margin-bottom:var(--space-12)">
-            <div class="clone-icon">&#x1F4CB;</div>
-            <div style="flex:1">
-              <div style="font-size:var(--text-base);font-weight:var(--weight-bold);color:var(--green-800);margin-bottom:var(--space-1)">
-                Clone this Category
-              </div>
-              <div style="font-size:var(--text-sm);color:var(--green-700)">
-                Create an exact copy with all settings intact.
-                Useful for similar categories like Kurtis from Churidars.
-              </div>
-            </div>
-            <button class="btn btn-outline" onclick="cloneCategory()" style="flex-shrink:0">
-              &#x1F4CB; Clone Category
-            </button>
-          </div>
-
+     
         </div>
         <!-- end se-page-content -->
 
-        <!-- STICKY SAVE FOOTER -->
-        <div class="save-footer">
-          <span class="text-muted">Changes apply to this category only</span>
-          <button class="btn btn-outline" onclick="showToast('Changes discarded','amber')">
-            Discard
-          </button>
-          <button class="btn btn-primary" id="save-btn-footer" onclick="saveCategory()">
-            Save Category
-          </button>
-        </div>
+   
 
       </div>
       <!-- end main -->

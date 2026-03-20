@@ -1,0 +1,91 @@
+﻿<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Base Template — StockEasy</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=DM+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="/css/styles.css" />
+    <link rel="stylesheet" href="/css/pages/categories.css" />
+  </head>
+  <body>
+    <div class="shell">
+
+      <!-- SIDEBAR — loaded by app.js loadComponent() -->
+      <div id="sidebar-container"></div>
+
+      <!-- MAIN -->
+      <div class="main">
+
+        <!-- TOPBAR — loaded by app.js loadComponent() -->
+        <div id="topbar-container"></div>
+
+        <!-- MODULE TABS -->
+        <div class="module-tabs visible">
+          <a href="/items.html"      class="mtab">Catalogue</a>
+          <a href="/categories.html" class="mtab active">Categories</a>
+          <a href="/pricelists.html" class="mtab">Price Lists</a>
+          <a href="/setdefs.html"    class="mtab">Set Definitions</a>
+        </div>
+
+        <!-- PAGE CONTENT -->
+        <div class="page-content">
+
+          <!-- Page header -->
+          <div class="page-header">
+            <div>
+              <div class="page-header-title">Base Template</div>
+              <div class="page-header-sub">
+                Define how products in this category behave — GST, variants, pricing, stock rules.
+              </div>
+            </div>
+            <div class="flex gap-3">
+              <button class="btn btn-outline" onclick="showToast('Changes discarded', 'amber')">
+                Discard
+              </button>
+              <button class="btn btn-primary" id="save-btn-top" onclick="saveCategory()">
+                Save Category
+              </button>
+            </div>
+          </div>
+
+          
+
+          
+
+
+     
+        </div>
+        <!-- end se-page-content -->
+
+        <!-- STICKY SAVE FOOTER -->
+        <div class="save-footer">
+          <span class="text-muted">Changes apply to this category only</span>
+          <button class="btn btn-outline" onclick="showToast('Changes discarded','amber')">
+            Discard
+          </button>
+          <button class="btn btn-primary" id="save-btn-footer" onclick="saveCategory()">
+            Save Category
+          </button>
+        </div>
+
+      </div>
+      <!-- end main -->
+    </div>
+    <!-- end shell -->
+
+    <!-- TEMPLATE LIBRARY COMPONENT -->
+    <div id="template-library-container"></div>
+
+    <!-- TOAST -->
+    <div id="toast" class="toast toast-green" style="display:none">
+      <span id="toast-icon" style="font-size:var(--text-xl)">&#x2705;</span>
+      <span id="toast-msg"></span>
+    </div>
+
+    <!-- SCRIPTS — app.js first, then page script -->
+    <script src="/js/app.js"></script>
+    <script src="/js/components/template-library.js"></script>
+    <script src="/js/pages/categories.js"></script>
+  </body>
+</html>
