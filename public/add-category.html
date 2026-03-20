@@ -255,22 +255,22 @@
             <div class="section-title">Units of Measurement</div>
             <div class="form-group mb-4">
               <label class="form-label">Allowed Units for Purchase</label>
-              <span class="form-hint" style="margin-bottom:var(--gap-sm)">Units in which you buy from suppliers</span>
-              <input class="form-input" type="text" placeholder="Filter units…"
-                style="max-width:200px;margin-bottom:var(--space-2)"
-                oninput="filterUnits('buy-units', this.value)" />
-              <div class="unit-picker" id="buy-units">
-                <!-- pills built dynamically from allowed_units in product-config settings -->
+              <span class="form-hint" style="display:block;margin-bottom:var(--gap-sm)">Units in which you buy from suppliers</span>
+              <div class="tag-input-wrap" id="buy-units"
+                onclick="document.getElementById('buy-unit-input').focus()">
+                <input class="tag-text-input" id="buy-unit-input" type="text"
+                  placeholder="Type to search or add a unit…"
+                  onkeydown="unitKeydown(event,this,'buy-units')" />
               </div>
             </div>
             <div class="form-group">
               <label class="form-label">Allowed Units for Selling</label>
-              <span class="form-hint" style="margin-bottom:var(--gap-sm)">Units in which you sell to customers</span>
-              <input class="form-input" type="text" placeholder="Filter units…"
-                style="max-width:200px;margin-bottom:var(--space-2)"
-                oninput="filterUnits('sell-units', this.value)" />
-              <div class="unit-picker" id="sell-units">
-                <!-- pills built dynamically from allowed_units in product-config settings -->
+              <span class="form-hint" style="display:block;margin-bottom:var(--gap-sm)">Units in which you sell to customers</span>
+              <div class="tag-input-wrap" id="sell-units"
+                onclick="document.getElementById('sell-unit-input').focus()">
+                <input class="tag-text-input" id="sell-unit-input" type="text"
+                  placeholder="Type to search or add a unit…"
+                  onkeydown="unitKeydown(event,this,'sell-units')" />
               </div>
             </div>
           </div>
