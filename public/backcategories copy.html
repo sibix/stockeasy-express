@@ -1,0 +1,200 @@
+﻿<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>All Categories — StockEasy</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=DM+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="/css/styles.css" />
+    <link rel="stylesheet" href="/css/pages/categories.css" />
+  </head>
+  <body>
+    <div class="shell">
+
+      <!-- SIDEBAR — loaded by app.js loadComponent() -->
+      <div id="sidebar-container"></div>
+
+      <!-- MAIN -->
+      <div class="main">
+
+        <!-- TOPBAR — loaded by app.js loadComponent() -->
+        <div id="topbar-container"></div>
+
+        <!-- MODULE TABS -->
+        <div class="module-tabs visible">
+          <a href="/categories.html" class="mtab active">📚 All Categories</a>
+          <a href="/add-category.html" class="mtab">➕ Add New Category</a>
+          
+        </div>
+
+        <!-- PAGE CONTENT -->
+        <div class="page-content">
+
+          
+          <!-- Category list page -->
+      <div class="page" id="page-sales">
+        <div class="page-content">
+          <div class="quick-stats">
+            <div class="qs-item"><div class="qs-val" style="color:var(--g600)">152</div><div class="qs-lbl">Total Categories</div></div>
+            <div class="qs-item"><div class="qs-val">1251</div><div class="qs-lbl">Total Products</div></div>
+            <!-- <div class="qs-item"><div class="qs-val" style="color:var(--amber)">Churidar</div><div class="qs-lbl">Top Category</div></div> -->
+            <div class="qs-item"><div class="qs-val" style="color:var(--amber)">Churidar<sup style="color:var(--g600) !important; font-size:0.6em; margin-left:2px;">30k</sup></div>
+            <div class="qs-lbl">Top Category</div>
+            </div>
+
+
+
+            <div class="qs-item"><div class="qs-val" style="color:var(--red)">5</div><div class="qs-lbl">Low Stock Categories</div></div>
+          </div>
+          <div class="sec-header">
+            <div>
+              <!-- search bar -->
+              <div class="tb-search">
+        <span>🔍</span><span>Search Category</span><span style="margin-left:auto;font-size:11px;background:var(--slate200);padding:1px 6px;border-radius:4px;color:var(--g600)"></span>
+      </div>
+              
+            </div>
+            <div class="sec-actions">
+             <a href="/add-category.html" class="mtab"><button class="btn btn-primary">+ New Category</button></a>
+              
+            </div>
+          </div>
+          <div class="card">
+            <div class="tbl-wrap">
+    <table>
+        <tr>
+            <th>Category Name</th>
+            <th>HSN/SAC</th>
+            <th>GST </th>
+            <th>Variable GST</th>
+            <th>Threshold</th>
+            <th>Min Margin</th>
+            <th></th>
+            <th>Action</th>
+        </tr>
+        <tr onclick="showModal('view-invoice')" style="cursor: pointer">
+            <td class="td-bold td-mono">INV-0142</td>
+            <td>15 Mar</td>
+            <td>Priya Stores</td>
+            <td>5 items</td>
+            <td class="td-mono">₹4,250</td>
+            <td class="td-mono">₹203</td>
+            <td><span class="badge badge-green">Paid</span></td>
+            <td>
+                <button
+                    class="btn btn-ghost"
+                    style="padding: 4px 10px; font-size: 11px"
+                    onclick="event.stopPropagation();showToast('📤 Sharing on WhatsApp...')"
+                >
+                    📤 Share
+                </button>
+            </td>
+        </tr>
+        <tr onclick="showModal('view-invoice')" style="cursor: pointer">
+            <td class="td-bold td-mono">INV-0141</td>
+            <td>15 Mar</td>
+            <td>Mohan Traders</td>
+            <td>12 items</td>
+            <td class="td-mono">₹11,800</td>
+            <td class="td-mono">₹563</td>
+            <td><span class="badge badge-amber">Pending</span></td>
+            <td>
+                <button
+                    class="btn btn-primary"
+                    style="padding: 4px 10px; font-size: 11px"
+                    onclick="event.stopPropagation();showModal('receive-payment')"
+                >
+                    💰 Collect
+                </button>
+            </td>
+        </tr>
+        <tr onclick="showModal('view-invoice')" style="cursor: pointer">
+            <td class="td-bold td-mono">INV-0140</td>
+            <td>14 Mar</td>
+            <td>Walk-in</td>
+            <td>2 items</td>
+            <td class="td-mono">₹620</td>
+            <td class="td-mono">₹30</td>
+            <td><span class="badge badge-green">Paid</span></td>
+            <td>
+                <button
+                    class="btn btn-ghost"
+                    style="padding: 4px 10px; font-size: 11px"
+                    onclick="event.stopPropagation();showToast('🖨️ Printing...')"
+                >
+                    🖨️ Print
+                </button>
+            </td>
+        </tr>
+        <tr onclick="showModal('view-invoice')" style="cursor: pointer">
+            <td class="td-bold td-mono">INV-0139</td>
+            <td>10 Mar</td>
+            <td>Kavitha Fashion</td>
+            <td>8 items</td>
+            <td class="td-mono">₹8,400</td>
+            <td class="td-mono">₹400</td>
+            <td><span class="badge badge-red">Overdue</span></td>
+            <td>
+                <button
+                    class="btn btn-amber"
+                    style="padding: 4px 10px; font-size: 11px"
+                    onclick="event.stopPropagation();showToast('📲 Reminder sent on WhatsApp!')"
+                >
+                    🔔 Remind
+                </button>
+            </td>
+        </tr>
+        <tr onclick="showModal('view-invoice')" style="cursor: pointer">
+            <td class="td-bold td-mono">INV-0138</td>
+            <td>9 Mar</td>
+            <td>Sunita Boutique</td>
+            <td>3 items</td>
+            <td class="td-mono">₹2,100</td>
+            <td class="td-mono">₹100</td>
+            <td><span class="badge badge-green">Paid</span></td>
+            <td>
+                <button
+                    class="btn btn-ghost"
+                    style="padding: 4px 10px; font-size: 11px"
+                    onclick="event.stopPropagation();showToast('📤 Sharing on WhatsApp...')"
+                >
+                    📤 Share
+                </button>
+            </td>
+        </tr>
+    </table>
+</div>
+
+          </div>
+         
+        </div>
+      </div>
+          
+
+
+     
+        </div>
+        <!-- end se-page-content -->
+
+   
+
+      </div>
+      <!-- end main -->
+    </div>
+    <!-- end shell -->
+
+    <!-- TEMPLATE LIBRARY COMPONENT -->
+    <div id="template-library-container"></div>
+
+    <!-- TOAST -->
+    <div id="toast" class="toast toast-green" style="display:none">
+      <span id="toast-icon" style="font-size:var(--text-xl)">&#x2705;</span>
+      <span id="toast-msg"></span>
+    </div>
+
+    <!-- SCRIPTS — app.js first, then page script -->
+    <script src="/js/app.js"></script>
+    <script src="/js/components/template-library.js"></script>
+    <script src="/js/pages/categories.js"></script>
+  </body>
+</html>

@@ -21,10 +21,12 @@ router.get("/", async (req, res) => {
   try {
     const [categories] = await db.execute(
       `SELECT c.*,
-              COUNT(i.id) AS item_count
+              COUNT(DISTINCT i.id) AS item_count,
+              GROUP_CONCAT(DISTINCT ca.attribute_name ORDER BY ca.sort_order SEPARATOR ',') AS attribute_names
        FROM categories c
        LEFT JOIN items i ON i.category_id = c.id AND i.status = 'active'
-       WHERE c.status = 'active'
+       LEFT JOIN category_attributes ca ON ca.category_id = c.id
+       WHERE c.status != 'deleted'
        GROUP BY c.id
        ORDER BY c.name ASC`,
     );
@@ -32,6 +34,29 @@ router.get("/", async (req, res) => {
   } catch (error) {
     console.error("Error fetching categories:", error);
     res.status(500).json({ error: "Could not fetch categories." });
+  }
+});
+
+// ── PATCH — Toggle category active/disabled ─────────────────
+router.patch("/:id/toggle", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const [rows] = await db.execute(
+      "SELECT id, status FROM categories WHERE id = ? AND status != 'deleted'",
+      [id]
+    );
+    if (rows.length === 0) {
+      return res.status(404).json({ error: "Category not found" });
+    }
+    const newStatus = rows[0].status === 'active' ? 'disabled' : 'active';
+    await db.execute(
+      "UPDATE categories SET status = ? WHERE id = ?",
+      [newStatus, id]
+    );
+    res.json({ id: Number(id), status: newStatus });
+  } catch (error) {
+    console.error("Error toggling category:", error);
+    res.status(500).json({ error: "Could not toggle category." });
   }
 });
 
