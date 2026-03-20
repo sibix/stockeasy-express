@@ -119,15 +119,16 @@
         </div>
         <!-- end page-content -->
 
-      </div>
-    </div>
+        <!-- Save footer — inside .main, outside .page-content -->
+        <div class="save-footer">
+          <div></div>
+          <div style="display:flex;align-items:center;gap:var(--space-3)">
+            <span id="save-status" style="color:var(--g600);font-size:var(--text-sm);display:none">Saved ✓</span>
+            <button class="btn btn-outline" onclick="location.href='/settings.html'">Discard</button>
+            <button class="btn btn-primary" id="save-btn" onclick="saveSettings()">Save Settings</button>
+          </div>
+        </div>
 
-    <!-- Save footer -->
-    <div class="save-footer">
-      <div></div>
-      <div style="display:flex;align-items:center;gap:var(--space-3)">
-        <span id="save-status" style="color:var(--g600);font-size:var(--text-sm);display:none">Saved ✓</span>
-        <button class="btn btn-primary" id="save-btn" onclick="saveSettings()">Save Settings</button>
       </div>
     </div>
 
