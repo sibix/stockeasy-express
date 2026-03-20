@@ -49,7 +49,30 @@
             </div>
           </div>
 
-          <!-- ── 2. SKU Format ──────────────────────────────── -->
+          <!-- ── 2. Product Code Configuration ───────────────── -->
+          <div class="card card-padded mb-4">
+            <div class="section-title">Product Code Configuration</div>
+            <div class="form-row">
+              <div class="form-col" style="max-width:200px">
+                <div class="form-group">
+                  <label class="form-label">Product / Design Code Prefix</label>
+                  <input class="form-input" type="text" id="product-code-prefix"
+                    placeholder="e.g. PC" maxlength="10" />
+                  <span class="form-hint">Prepended to every generated product code.</span>
+                </div>
+              </div>
+              <div class="form-col" style="max-width:180px">
+                <div class="form-group">
+                  <label class="form-label">Code Length</label>
+                  <input class="form-input" type="number" id="product-code-length"
+                    min="4" max="20" placeholder="10" />
+                  <span class="form-hint">Total characters including prefix.</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ── 3. SKU Format ──────────────────────────────── -->
           <div class="card card-padded mb-4">
             <div class="section-title">SKU Format</div>
             <p style="color:var(--slate400);font-size:var(--text-sm);margin-bottom:var(--space-4)">

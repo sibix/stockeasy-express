@@ -47,8 +47,10 @@ async function loadSettings() {
   }
   var d = result.data.data;
 
-  document.getElementById('barcode-prefix').value  = d.barcode_prefix  || '';
-  document.getElementById('barcode-length').value  = d.barcode_length  || '';
+  document.getElementById('barcode-prefix').value       = d.barcode_prefix       || '';
+  document.getElementById('barcode-length').value       = d.barcode_length       || '';
+  document.getElementById('product-code-prefix').value  = d.product_code_prefix  || '';
+  document.getElementById('product-code-length').value  = d.product_code_length  || '';
   document.getElementById('allowed-units').value   = d.allowed_units   || '';
   document.getElementById('rec-margin').value      = d.recommended_margin   || '';
   document.getElementById('low-margin').value      = d.low_margin_warning   || '';
@@ -160,8 +162,10 @@ async function saveSettings() {
   statusEl.style.display = 'none';
 
   var payload = {
-    barcode_prefix:     val('barcode-prefix').trim(),
-    barcode_length:     val('barcode-length'),
+    barcode_prefix:      val('barcode-prefix').trim(),
+    barcode_length:      val('barcode-length'),
+    product_code_prefix: val('product-code-prefix').trim(),
+    product_code_length: val('product-code-length'),
     sku_format:         JSON.stringify(_skuRows),
     allowed_units:      sanitizeCommaList(val('allowed-units')),
     recommended_margin: val('rec-margin'),

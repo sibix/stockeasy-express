@@ -44,6 +44,8 @@ async function initializeDatabase() {
       INSERT IGNORE INTO app_settings (\`key\`, value) VALUES
         ('barcode_prefix',       'SE'),
         ('barcode_length',       '13'),
+        ('product_code_prefix',  'PC'),
+        ('product_code_length',  '10'),
         ('sku_format',           '[]'),
         ('allowed_units',        'pcs,box,kg,g,litre,ml,pair,set,dozen'),
         ('recommended_margin',   '30'),

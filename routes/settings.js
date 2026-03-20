@@ -38,6 +38,7 @@ router.put('/product-config', async (req, res) => {
 
   const allowed = [
     'barcode_prefix', 'barcode_length', 'sku_format',
+    'product_code_prefix', 'product_code_length',
     'allowed_units', 'recommended_margin', 'low_margin_warning',
     'hsn_codes', 'global_attributes', 'global_tags'
   ];
