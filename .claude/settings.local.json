@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(node -e \"require\\(''''./database.js''''\\)\")",
+      "Bash(node -e \":*)",
+      "Bash(timeout 10 head -5)"
+    ]
+  }
+}

@@ -32,6 +32,21 @@ function generateSKU(itemName, attributes) {
   return parts.join('-');
 }
 
+// ── Generate product code ──────────────────────────────────
+async function generateProductCode(connection, itemId) {
+  const [settings] = await connection.execute(
+    "SELECT `key`, value FROM app_settings WHERE `key` IN ('product_code_prefix','product_code_length')"
+  );
+  let prefix = 'PC';
+  let length = 10;
+  settings.forEach(s => {
+    if (s.key === 'product_code_prefix') prefix = s.value || 'PC';
+    if (s.key === 'product_code_length') length = parseInt(s.value) || 10;
+  });
+  const numLen = Math.max(4, length - prefix.length);
+  return prefix + String(itemId).padStart(numLen, '0');
+}
+
 // ══════════════════════════════════════════════════════════
 // GET — All purchases
 // ══════════════════════════════════════════════════════════
@@ -123,6 +138,8 @@ router.post('/', async (req, res) => {
       supplier_bill_total,  // entered by user for validation
       save_as,              // 'draft' | undefined (confirmed)
       line_items            // array of line items
+      // Each line: { item_id, item_name, category_id, uom_id, cgst_rate, sgst_rate,
+      //   variants: [{ attributes, quantity, expected_qty, unit_price, sell_price, mrp, ean_upc }] }
     } = req.body;
 
     // ── Validation ─────────────────────────────────────────
@@ -209,18 +226,19 @@ router.post('/', async (req, res) => {
         for (const variant of (line.variants || [])) {
           const qty = parseFloat(variant.quantity || 0);
           if (qty <= 0) continue;
+          const expectedQty = variant.expected_qty != null ? parseFloat(variant.expected_qty) : qty;
           await connection.execute(`
             INSERT INTO purchase_items (
               purchase_id, item_id, variant_id, uom_id,
-              quantity, conversion_factor, base_qty,
+              quantity, expected_qty, conversion_factor, base_qty,
               unit_price, cgst_amount, sgst_amount, total_price
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
             [
               purchaseId,
               line.item_id || null,
               variant.variant_id || null,
               line.uom_id || 1,
-              qty, 1, qty,
+              qty, expectedQty, 1, qty,
               parseFloat(variant.unit_price || 0).toFixed(2),
               '0.00', '0.00',
               (qty * parseFloat(variant.unit_price || 0)).toFixed(2)
@@ -270,6 +288,14 @@ router.post('/', async (req, res) => {
             [category_id, item_name.trim(), req.session.userId]
           );
           actualItemId = newItem.insertId;
+          // Generate and save product code
+          try {
+            const productCode = await generateProductCode(connection, actualItemId);
+            await connection.execute(
+              'UPDATE items SET product_code = ? WHERE id = ?',
+              [productCode, actualItemId]
+            );
+          } catch(e) { /* non-critical, continue */ }
         }
       }
 
@@ -278,11 +304,18 @@ router.post('/', async (req, res) => {
         const {
           attributes,   // { Size: 'M', Color: 'Red' }
           quantity,
-          unit_price
+          expected_qty: varExpectedQty,
+          unit_price,
+          sell_price:   varSellPrice,
+          mrp:          varMrp,
+          ean_upc:      varEanUpc
         } = variant;
 
         const qty        = parseFloat(quantity   || 0);
         const unitPrice  = parseFloat(unit_price || 0);
+        const sellPrice  = parseFloat(varSellPrice || line.sell_price || 0);
+        const mrpPrice   = parseFloat(varMrp || line.mrp || 0);
+        const expectedQty = varExpectedQty != null ? parseFloat(varExpectedQty) : qty;
         const totalPrice = (qty * unitPrice).toFixed(2);
         const lineCgst   = (qty * unitPrice * (parseFloat(cgst_rate || 0) / 100)).toFixed(2);
         const lineSgst   = (qty * unitPrice * (parseFloat(sgst_rate || 0) / 100)).toFixed(2);
@@ -307,8 +340,13 @@ router.post('/', async (req, res) => {
           stockBefore = parseFloat(existingVariant[0].stock);
 
           await connection.execute(
-            'UPDATE item_variants SET stock = stock + ? WHERE id = ?',
-            [qty, variantId]
+            `UPDATE item_variants SET stock = stock + ?,
+              buy_price = ?,
+              sell_price = COALESCE(?, sell_price),
+              mrp = COALESCE(?, mrp),
+              ean_upc = COALESCE(NULLIF(?, ''), ean_upc)
+            WHERE id = ?`,
+            [qty, unitPrice, sellPrice || null, mrpPrice || null, varEanUpc || null, variantId]
           );
           variantsUpdated++;
 
@@ -320,9 +358,11 @@ router.post('/', async (req, res) => {
 
           const [newVariant] = await connection.execute(`
             INSERT INTO item_variants
-            (item_id, sku, attributes, buy_price, stock, barcode, status)
-            VALUES (?, ?, ?, ?, ?, ?, 'active')`,
-            [actualItemId, sku, attributesJson, unitPrice, qty, barcode]
+            (item_id, sku, attributes, buy_price, sell_price, mrp, ean_upc, stock, barcode, status)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'active')`,
+            [actualItemId, sku, attributesJson, unitPrice,
+             sellPrice || null, mrpPrice || null, varEanUpc || null,
+             qty, barcode]
           );
           variantId = newVariant.insertId;
           variantsCreated++;
@@ -333,15 +373,16 @@ router.post('/', async (req, res) => {
         await connection.execute(`
           INSERT INTO purchase_items (
             purchase_id, item_id, variant_id, uom_id,
-            quantity, conversion_factor, base_qty,
+            quantity, expected_qty, conversion_factor, base_qty,
             unit_price, cgst_amount, sgst_amount, total_price
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
           [
             purchaseId,
             actualItemId,
             variantId,
             uom_id || 1,
             qty,
+            expectedQty,
             convFactor,
             qty * convFactor,
             unitPrice.toFixed(2),

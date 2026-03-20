@@ -32,6 +32,19 @@ async function initializeDatabase() {
       await db.execute("ALTER TABLE categories ADD COLUMN tags TEXT NULL");
     } catch(e) { /* already exists */ }
 
+    // ── Purchase entry migrations ────────────────────────────
+    // Product code on items
+    try { await db.execute("ALTER TABLE items ADD COLUMN product_code VARCHAR(30) NULL"); } catch(e) {}
+    // Expected qty on purchase_items (for excess/short recording)
+    try { await db.execute("ALTER TABLE purchase_items ADD COLUMN expected_qty DECIMAL(15,4) NULL"); } catch(e) {}
+    // varies_by on set_definitions (which attribute changes per variant in a set)
+    try { await db.execute("ALTER TABLE set_definitions ADD COLUMN varies_by VARCHAR(50) NULL"); } catch(e) {}
+    // sell_price and mrp on item_variants
+    try { await db.execute("ALTER TABLE item_variants ADD COLUMN sell_price DECIMAL(15,4) NULL"); } catch(e) {}
+    try { await db.execute("ALTER TABLE item_variants ADD COLUMN mrp DECIMAL(15,4) NULL"); } catch(e) {}
+    // ean_upc on item_variants
+    try { await db.execute("ALTER TABLE item_variants ADD COLUMN ean_upc VARCHAR(50) NULL"); } catch(e) {}
+
     // app_settings — key/value store for product & system configuration
     await db.execute(`
       CREATE TABLE IF NOT EXISTS app_settings (

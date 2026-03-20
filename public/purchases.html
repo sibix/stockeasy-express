@@ -46,7 +46,7 @@
               <div class="pur-stat"><div class="pur-stat-label">Suppliers</div><div class="pur-stat-val" id="stat-suppliers">—</div></div>
             </div>
 
-            <!-- Table -->
+            <!-- History table -->
             <div class="card" style="overflow:hidden">
               <table class="pur-table">
                 <thead>
@@ -77,14 +77,12 @@
             <div class="page-header">
               <div>
                 <div class="page-header-title" id="bill-form-title">New Purchase Bill</div>
-                <div class="page-header-sub">Enter items from the supplier's invoice.</div>
+                <div class="page-header-sub">Enter items received from the supplier.</div>
               </div>
-              <div class="flex gap-3">
-                <button class="btn btn-outline" onclick="resetBillForm()">Reset</button>
-              </div>
+              <button class="btn btn-outline" onclick="resetBillForm()">Reset</button>
             </div>
 
-            <!-- SECTION 1: Bill Header -->
+            <!-- ── Bill Header ──────────────────────────────── -->
             <div class="card card-padded mb-4">
               <div class="section-title">Bill Details</div>
               <div class="form-row">
@@ -115,8 +113,8 @@
                   <div class="form-group">
                     <label class="form-label">Supplier Bill Total ₹</label>
                     <input class="form-input" type="number" id="supplier-bill-total"
-                      placeholder="0" min="0" oninput="checkTotalMatch()" />
-                    <span class="form-hint">Enter total from paper bill</span>
+                      placeholder="0.00" min="0" oninput="checkTotalMatch()" />
+                    <span class="form-hint">Total from supplier's paper bill</span>
                   </div>
                 </div>
                 <div class="form-col">
@@ -129,85 +127,175 @@
               </div>
             </div>
 
-            <!-- SECTION 2: How many items -->
-            <div class="card card-padded mb-4" id="row-count-section">
-              <div class="section-title">Line Items</div>
-              <div style="display:flex;align-items:center;gap:var(--space-3)">
-                <span class="form-label" style="margin-bottom:0">How many items in this bill?</span>
-                <input class="form-input" type="number" id="row-count-input"
-                  min="1" max="50" placeholder="5" style="width:80px" />
-                <button class="btn btn-outline" onclick="initRows()">Go</button>
-                <button class="btn btn-sm" onclick="addOneRow()" id="add-row-btn" style="display:none">+ Add Row</button>
-              </div>
-            </div>
+            <!-- ── Entry Section ──────────────────────────── -->
+            <div class="card" id="entry-card" style="overflow:hidden;margin-bottom:var(--space-4)">
 
-            <!-- SECTION 3: Simple view table -->
-            <div class="card" id="simple-view-card" style="display:none;overflow:hidden;margin-bottom:var(--space-4)">
+              <!-- Sub-tab bar + Add Row button -->
               <div class="pur-view-header">
-                <div class="section-title" style="margin-bottom:0">Simple View</div>
-                <div style="display:flex;gap:var(--space-2);align-items:center">
-                  <button class="btn btn-sm btn-outline" onclick="toggleDetailView()">Show Detail View</button>
-                  <button class="btn btn-sm" onclick="addOneRow()">+ Row</button>
+                <div class="bill-subtabs">
+                  <button class="bill-stab active" id="stab-simple" onclick="showSubTab('simple')">Simple Entry</button>
+                  <button class="bill-stab" id="stab-detail" onclick="showSubTab('detail')">Detail View</button>
                 </div>
+                <button class="btn btn-sm btn-outline" onclick="addOneRow()">+ Add Row</button>
               </div>
-              <div style="overflow-x:auto">
-                <table class="pur-simple-table" id="simple-table">
+
+              <!-- ══ SIMPLE ENTRY TABLE ══ -->
+              <div id="simple-entry-wrap" style="overflow-x:auto">
+                <table class="pur-entry-tbl" id="simple-tbl">
                   <thead>
-                    <tr>
-                      <th style="width:32px">#</th>
-                      <th style="min-width:160px">Category</th>
-                      <th style="min-width:180px">Item Name</th>
-                      <th style="min-width:140px">Set Def</th>
-                      <th style="min-width:120px" id="col-attr2-header">Colour / Attr2</th>
-                      <th style="min-width:100px" id="col-attr3-header">Attr3</th>
-                      <th style="min-width:130px">Qty</th>
-                      <th style="min-width:110px">Buy ₹</th>
-                      <th style="min-width:110px">Sell ₹</th>
-                      <th style="min-width:110px">MRP ₹</th>
+                    <!-- Row 1: Column labels -->
+                    <tr class="pur-th-labels">
+                      <th style="width:36px">#</th>
+                      <th style="min-width:150px">Category</th>
+                      <th style="min-width:100px">Design Code</th>
+                      <th style="min-width:160px">Item Name</th>
+                      <th style="min-width:140px">Packaging</th>
+                      <th style="min-width:130px">Attr 1</th>
+                      <th style="min-width:130px">Attr 2</th>
+                      <th style="width:72px">Qty</th>
+                      <th style="width:82px"></th>
+                      <th style="min-width:80px">Buy ₹</th>
+                      <th style="min-width:96px">Sell ₹</th>
+                      <th style="min-width:96px">MRP ₹</th>
+                      <th style="width:58px">GST%</th>
+                      <th style="min-width:90px">Amount</th>
+                      <th style="min-width:90px">Total</th>
                       <th style="width:36px"></th>
+                      <th style="width:32px"></th>
+                    </tr>
+                    <!-- Row 2: Apply-to-all controls -->
+                    <tr class="pur-th-apply">
+                      <td></td>
+                      <td>
+                        <select class="pur-apply-sel" id="apply-cat" onchange="onApplyAllCatChange(this.value)">
+                          <option value="">Apply category…</option>
+                        </select>
+                      </td>
+                      <td></td>
+                      <td></td>
+                      <td>
+                        <select class="pur-apply-sel" id="apply-pkg" onchange="onApplyAllPkgChange(this.value)">
+                          <option value="">Apply packaging…</option>
+                        </select>
+                      </td>
+                      <td>
+                        <select class="pur-apply-sel" id="apply-attr1" onchange="onApplyAllAttrChange(0, this.value)">
+                          <option value="">Apply Attr 1…</option>
+                        </select>
+                      </td>
+                      <td>
+                        <select class="pur-apply-sel" id="apply-attr2" onchange="onApplyAllAttrChange(1, this.value)">
+                          <option value="">Apply Attr 2…</option>
+                        </select>
+                      </td>
+                      <td>
+                        <input class="pur-apply-inp" type="number" id="apply-qty" min="0"
+                          placeholder="Qty all" onchange="applyToAllField('qty', this.value)" />
+                      </td>
+                      <td>
+                        <div class="pur-qty-toggle">
+                          <button class="seg-btn" onclick="applyToAllField('qty_mode','pcs')">Pcs</button>
+                          <button class="seg-btn" onclick="applyToAllField('qty_mode','sets')">Sets</button>
+                        </div>
+                      </td>
+                      <td>
+                        <input class="pur-apply-inp" type="number" id="apply-buy" min="0"
+                          placeholder="Buy ₹" onchange="applyToAllField('buy_price', this.value)" />
+                      </td>
+                      <td>
+                        <input class="pur-apply-inp" type="number" id="apply-sell" min="0"
+                          placeholder="Sell ₹" onchange="applyToAllField('sell_price', this.value)" />
+                      </td>
+                      <td>
+                        <input class="pur-apply-inp" type="number" id="apply-mrp" min="0"
+                          placeholder="MRP ₹" onchange="applyToAllField('mrp', this.value)" />
+                      </td>
+                      <td colspan="5"></td>
                     </tr>
                   </thead>
-                  <tbody id="simple-tbody"></tbody>
+                  <tbody id="simple-tbody">
+                    <tr class="pur-empty-row">
+                      <td colspan="17">Click <strong>+ Add Row</strong> to begin entering items.</td>
+                    </tr>
+                  </tbody>
                 </table>
               </div>
 
-              <!-- Running total -->
+              <!-- ══ DETAIL VIEW TABLE ══ -->
+              <div id="detail-view-wrap" style="overflow-x:auto;display:none">
+                <!-- Filter chips -->
+                <div style="padding:var(--space-3) var(--space-4);border-bottom:1px solid var(--slate-100);display:flex;gap:var(--space-2);flex-wrap:wrap;align-items:center">
+                  <span style="font-size:var(--text-xs);color:var(--slate-400);margin-right:var(--space-1)">Filter:</span>
+                  <div id="detail-filter-chips" style="display:flex;gap:var(--space-2);flex-wrap:wrap">
+                    <span class="pur-filter-chip active" onclick="setDetailFilter(null)">All</span>
+                  </div>
+                </div>
+                <table class="pur-entry-tbl" id="detail-tbl">
+                  <thead>
+                    <tr class="pur-th-labels">
+                      <th style="min-width:100px">Code</th>
+                      <th style="min-width:140px">Item</th>
+                      <th style="min-width:170px">Variant Attrs</th>
+                      <th style="width:78px">Expected</th>
+                      <th style="width:78px">Actual</th>
+                      <th style="width:82px">Variance</th>
+                      <th style="min-width:80px">Buy ₹</th>
+                      <th style="min-width:96px">Sell ₹</th>
+                      <th style="min-width:96px">MRP ₹</th>
+                      <th style="width:55px">GST%</th>
+                      <th style="min-width:90px">Amount</th>
+                      <th style="min-width:100px">Set Def</th>
+                      <th style="min-width:90px">SKU</th>
+                      <th style="min-width:120px">Barcode</th>
+                      <th style="min-width:130px">EAN / UPC</th>
+                    </tr>
+                  </thead>
+                  <tbody id="detail-tbody">
+                    <tr class="pur-empty-row">
+                      <td colspan="15">No items yet. Add rows in Simple Entry first.</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+
+              <!-- Running total bar -->
               <div class="pur-total-bar" id="total-bar">
-                <span id="total-match-msg">Enter items above</span>
+                <div style="display:flex;align-items:center;gap:var(--space-3)">
+                  <span id="total-match-msg" style="font-size:var(--text-sm);font-weight:var(--weight-semibold);color:var(--slate-400)">
+                    Add items above
+                  </span>
+                  <span id="bill-pcs-count" style="font-size:var(--text-xs);color:var(--slate-400)"></span>
+                </div>
                 <span class="pur-running-total">
                   Calculated: <strong id="calc-total">₹0.00</strong>
-                  <span id="entered-total-display"></span>
+                  <span id="entered-total-display" style="color:var(--slate-500);font-size:var(--text-sm)"></span>
                 </span>
               </div>
-            </div>
 
-            <!-- SECTION 4: Detailed view (hidden by default) -->
-            <div id="detail-view-card" style="display:none;margin-bottom:var(--space-4)">
-              <div class="card card-padded">
-                <div class="pur-view-header">
-                  <div class="section-title" style="margin-bottom:0">Detailed View</div>
-                  <button class="btn btn-sm btn-outline" onclick="toggleDetailView()">Back to Simple</button>
-                </div>
-                <div id="detail-view-body"></div>
-              </div>
             </div>
+            <!-- end entry-card -->
 
           </div>
           <!-- end content-new -->
 
         </div>
-        <!-- Save footer — outside .page-content so it sits at bottom of .main flex column -->
-      <div class="save-footer" id="save-footer" style="display:none">
-        <div class="pur-save-summary" id="save-summary">
-          <span id="save-items-count">0 items</span>
-          <span id="save-total-display">₹0.00</span>
-        </div>
-        <button class="btn btn-outline" onclick="saveBill('draft')" id="btn-save-draft">Save as Draft</button>
-        <button class="btn btn-primary" onclick="saveBill('confirm')" id="btn-confirm" disabled>Confirm Bill</button>
-      </div>
-      </div>
+        <!-- end page-content -->
 
-      
+        <!-- Save footer -->
+        <div class="save-footer" id="save-footer" style="display:none">
+          <div class="pur-save-summary">
+            <span id="save-items-count">0 rows</span>
+            <span id="save-pcs-count" style="color:var(--slate-400)"></span>
+            <span id="save-total-display" style="font-family:var(--font-mono);color:var(--slate-700)">₹0.00</span>
+          </div>
+          <div class="pur-footer-right">
+            <button class="btn btn-outline" onclick="saveBill('draft')" id="btn-save-draft">Save Draft</button>
+            <button class="btn btn-primary" onclick="saveBill('confirm')" id="btn-confirm" disabled>Confirm Bill</button>
+          </div>
+        </div>
+
+      </div>
+      <!-- end .main -->
 
     </div>
 

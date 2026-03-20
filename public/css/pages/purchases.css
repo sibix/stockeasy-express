@@ -548,3 +548,360 @@
   color: var(--slate-400);
   font-size: var(--text-sm);
 }
+
+/* ════════════════════════════════════════════════════════════
+   NEW PURCHASE ENTRY STYLES
+════════════════════════════════════════════════════════════ */
+
+/* ── Bill sub-tabs ─────────────────────────────────────────── */
+.bill-subtabs {
+  display: flex;
+  gap: 2px;
+  background: var(--slate-100);
+  border-radius: var(--radius-md);
+  padding: 3px;
+}
+
+.bill-stab {
+  padding: 5px 16px;
+  border: none;
+  border-radius: 6px;
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semibold);
+  color: var(--slate-500);
+  cursor: pointer;
+  background: transparent;
+  transition: background 0.15s, color 0.15s;
+}
+
+.bill-stab:hover { color: var(--slate-800); }
+
+.bill-stab.active {
+  background: var(--white);
+  color: var(--slate-800);
+  box-shadow: var(--shadow-sm);
+}
+
+/* ── Entry table (shared by simple + detail) ───────────────── */
+.pur-entry-tbl {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--text-sm);
+}
+
+/* ── Table header rows ─────────────────────────────────────── */
+.pur-th-labels th {
+  padding: var(--space-2) var(--space-3);
+  text-align: left;
+  font-size: var(--text-xs);
+  font-weight: var(--weight-bold);
+  color: var(--slate-500);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+  background: var(--slate-50);
+  border-bottom: 1px solid var(--slate-100);
+}
+
+.pur-th-apply td {
+  padding: var(--space-1) var(--space-2);
+  background: var(--white);
+  border-bottom: 2px solid var(--slate-100);
+  vertical-align: middle;
+}
+
+/* ── Apply-to-all controls ─────────────────────────────────── */
+.pur-apply-sel {
+  width: 100%;
+  padding: 0 var(--space-2);
+  border: 1px solid var(--slate-200);
+  border-radius: var(--radius-md);
+  font-size: var(--text-xs);
+  color: var(--slate-600);
+  height: 26px;
+  background: var(--slate-50);
+  cursor: pointer;
+}
+
+.pur-apply-inp {
+  width: 100%;
+  padding: 0 var(--space-2);
+  border: 1px solid var(--slate-200);
+  border-radius: var(--radius-md);
+  font-size: var(--text-xs);
+  color: var(--slate-600);
+  height: 26px;
+  background: var(--slate-50);
+  -moz-appearance: textfield;
+}
+
+.pur-apply-inp::-webkit-outer-spin-button,
+.pur-apply-inp::-webkit-inner-spin-button { -webkit-appearance: none; }
+
+/* ── Data rows ─────────────────────────────────────────────── */
+.pur-entry-tbl tbody tr.pur-data-row td {
+  padding: var(--space-2) var(--space-2);
+  border-bottom: 1px solid var(--slate-50);
+  vertical-align: middle;
+}
+
+.pur-entry-tbl tbody tr.pur-data-row:hover td {
+  background: var(--slate-50);
+}
+
+/* ── Product code chip ─────────────────────────────────────── */
+.pur-code-chip {
+  display: inline-block;
+  padding: 2px 7px;
+  background: var(--slate-100);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--slate-600);
+  white-space: nowrap;
+  letter-spacing: 0.02em;
+}
+
+/* ── Price cell ────────────────────────────────────────────── */
+.pur-price-cell {
+  vertical-align: top;
+  padding-top: var(--space-2) !important;
+}
+
+.pur-margin-sub {
+  display: block;
+  font-size: 10px;
+  color: var(--slate-400);
+  font-family: var(--font-mono);
+  margin-top: 2px;
+  line-height: 1;
+}
+
+.pur-margin-sub.warn {
+  color: var(--amber-600, #d97706);
+  font-weight: var(--weight-bold);
+}
+
+/* ── Mono value cells ──────────────────────────────────────── */
+.pur-mono-val {
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  color: var(--slate-600);
+  text-align: right;
+  white-space: nowrap;
+}
+
+.pur-total-val {
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  color: var(--slate-800);
+  font-weight: var(--weight-semibold);
+  text-align: right;
+  white-space: nowrap;
+}
+
+/* ── GST label cell ────────────────────────────────────────── */
+.pur-gst-label {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--slate-500);
+  text-align: center;
+}
+
+/* ── Expand breakdown button ───────────────────────────────── */
+.pur-expand-btn {
+  width: 26px;
+  height: 26px;
+  border: 1px solid var(--slate-200);
+  background: var(--white);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  color: var(--slate-400);
+  transition: background 0.1s, color 0.1s, transform 0.15s;
+  flex-shrink: 0;
+}
+
+.pur-expand-btn:hover {
+  background: var(--slate-50);
+  color: var(--slate-700);
+}
+
+.pur-expand-btn.open {
+  background: var(--color-primary);
+  color: var(--white);
+  border-color: var(--color-primary);
+  transform: rotate(180deg);
+}
+
+/* ── Breakdown row & panel ─────────────────────────────────── */
+.pur-breakdown-tr td {
+  padding: 0 !important;
+  border-bottom: 3px solid var(--slate-100) !important;
+  background: var(--slate-50) !important;
+}
+
+.pur-breakdown-panel {
+  padding: var(--space-3) var(--space-4);
+}
+
+.pur-breakdown-tbl {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--text-sm);
+  background: var(--white);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  border: 1px solid var(--slate-100);
+}
+
+.pur-breakdown-tbl th {
+  padding: var(--space-1) var(--space-3);
+  background: var(--slate-50);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-bold);
+  color: var(--slate-500);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  border-bottom: 1px solid var(--slate-100);
+  text-align: left;
+  white-space: nowrap;
+}
+
+.pur-breakdown-tbl td {
+  padding: var(--space-2) var(--space-3);
+  border-bottom: 1px solid var(--slate-50);
+  vertical-align: middle;
+}
+
+.pur-breakdown-tbl tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.pur-bd-attr {
+  color: var(--slate-700);
+  font-size: var(--text-sm);
+}
+
+.pur-bd-exp {
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  color: var(--slate-500);
+  text-align: right;
+}
+
+/* ── Variance badges ───────────────────────────────────────── */
+.pur-var-excess {
+  display: inline-block;
+  padding: 1px 7px;
+  border-radius: var(--radius-sm);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-bold);
+  background: var(--green-50, #f0fdf4);
+  color: var(--green-700, #15803d);
+  border: 1px solid var(--green-200, #bbf7d0);
+  white-space: nowrap;
+}
+
+.pur-var-short {
+  display: inline-block;
+  padding: 1px 7px;
+  border-radius: var(--radius-sm);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-bold);
+  background: var(--amber-50, #fffbeb);
+  color: var(--amber-700, #b45309);
+  border: 1px solid var(--amber-200, #fde68a);
+  white-space: nowrap;
+}
+
+/* ── Attribute cell in Simple Entry ────────────────────────── */
+.pur-attr-cell {
+  vertical-align: middle;
+}
+
+.pur-attr-name {
+  font-size: 10px;
+  color: var(--slate-400);
+  line-height: 1;
+  margin-bottom: 2px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.pur-attr-sel {
+  width: 100%;
+  padding: var(--space-1) var(--space-2);
+  border: 1px solid var(--slate-200);
+  border-radius: var(--radius-md);
+  font-size: var(--text-sm);
+  color: var(--slate-700);
+  height: 30px;
+  background: var(--white);
+  cursor: pointer;
+}
+
+.pur-attr-sel:focus {
+  outline: none;
+  border-color: var(--color-primary);
+}
+
+/* ── Filter chips (Detail View) ────────────────────────────── */
+.pur-filter-chip {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: var(--radius-md);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-semibold);
+  color: var(--slate-500);
+  background: var(--slate-100);
+  border: 1px solid var(--slate-200);
+  cursor: pointer;
+  transition: background 0.1s, color 0.1s;
+  white-space: nowrap;
+  user-select: none;
+}
+
+.pur-filter-chip:hover {
+  background: var(--slate-200);
+  color: var(--slate-800);
+}
+
+.pur-filter-chip.active {
+  background: var(--color-primary);
+  color: var(--white);
+  border-color: var(--color-primary);
+}
+
+/* ── Empty row ─────────────────────────────────────────────── */
+.pur-empty-row td {
+  padding: var(--space-8) var(--space-4) !important;
+  text-align: center;
+  color: var(--slate-400);
+  font-size: var(--text-sm);
+}
+
+/* ── Save footer extensions ────────────────────────────────── */
+.pur-footer-right {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+/* ── Variant attr tags in Detail View ──────────────────────── */
+.pur-attr-tag {
+  display: inline-block;
+  padding: 1px 6px;
+  background: var(--slate-100);
+  border-radius: var(--radius-sm);
+  font-size: var(--text-xs);
+  color: var(--slate-600);
+  margin-right: 3px;
+  margin-bottom: 2px;
+  white-space: nowrap;
+}
