@@ -9,7 +9,7 @@ router.get('/product-config', async (req, res) => {
     const [rows] = await db.execute('SELECT `key`, value FROM app_settings');
     const config = {};
     rows.forEach(r => {
-      if (r.key === 'sku_format') {
+      if (r.key === 'sku_format' || r.key === 'global_attributes') {
         try { config[r.key] = JSON.parse(r.value) || []; }
         catch(e) { config[r.key] = []; }
       } else {
@@ -38,7 +38,8 @@ router.put('/product-config', async (req, res) => {
 
   const allowed = [
     'barcode_prefix', 'barcode_length', 'sku_format',
-    'allowed_units', 'recommended_margin', 'low_margin_warning', 'hsn_codes'
+    'allowed_units', 'recommended_margin', 'low_margin_warning',
+    'hsn_codes', 'global_attributes', 'global_tags'
   ];
 
   try {

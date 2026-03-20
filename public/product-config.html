@@ -116,6 +116,36 @@
             </div>
           </div>
 
+          <!-- ── 6. Tags Library ───────────────────────────────── -->
+          <div class="card card-padded mb-4">
+            <div class="section-title">Tags Library</div>
+            <p style="color:var(--slate400);font-size:var(--text-sm);margin-bottom:var(--space-3)">
+              Global tags available when configuring categories and items.
+            </p>
+            <div class="form-group">
+              <input class="form-input" type="text" id="global-tags"
+                placeholder="e.g. ethnic,women,cotton,premium,export"
+                onblur="sanitizeField('global-tags')" />
+              <span class="form-hint">Comma separated. Paste or type tags.</span>
+            </div>
+          </div>
+
+          <!-- ── 7. Attribute Library ────────────────────────── -->
+          <div class="card card-padded mb-4">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:var(--space-1)">
+              <div class="section-title" style="margin-bottom:0">Attribute Library</div>
+              <span style="font-size:var(--text-sm);color:var(--slate400)">Comma separated values</span>
+            </div>
+            <p style="color:var(--slate400);font-size:var(--text-sm);margin-bottom:var(--space-4)">
+              Global attribute templates — reusable across categories.
+              These will appear as suggestions when creating a new category.
+            </p>
+            <div class="attr-list" id="ga-attr-list">
+              <p style="color:var(--slate400);font-size:var(--text-sm)">No attributes yet. Click "+ Add Attribute" to begin.</p>
+            </div>
+            <button class="add-attr-btn" style="margin-top:var(--space-3)" onclick="addGaAttr()">+ Add Attribute</button>
+          </div>
+
         </div>
         <!-- end page-content -->
 
