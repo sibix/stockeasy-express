@@ -115,7 +115,7 @@ async function initStockTab() {
   await applyFilters();
 }
 
-// ── Render filter panel — 2-row layout ─────────────────────
+// ── Render filter panel ─────────────────────────────────────
 function renderFilterPanel() {
   var statusDefs = [
     { v: 'all',      l: 'All' },
@@ -135,94 +135,71 @@ function renderFilterPanel() {
     if (sc) selCatName = sc.name;
   }
 
-  var catCombo =
-    '<div class="sf-cat-wrap" id="sf-cat-wrap">'
-    + '<input class="sf-cat-input" id="sf-cat-input" type="text" autocomplete="off" '
-      + 'placeholder="All categories…" value="' + _esc(selCatName) + '" '
-      + 'oninput="onCatSearchInput(this.value)" onfocus="showCatDropdown()" />'
-    + '<button class="sf-cat-clear" id="sf-cat-clear" type="button" onclick="clearCategoryFilter()" '
-      + 'style="display:' + (selCatName ? 'flex' : 'none') + '">×</button>'
-    + '<div class="sf-cat-dropdown" id="sf-cat-dropdown" style="display:none"></div>'
-    + '</div>';
-
-  var sellRange =
-    '<div class="sf-range">'
-    + '<input class="sf-range-input" type="number" id="sf-min-sell" placeholder="0" min="0" '
-      + 'value="' + (_activeFilters.min_sell || '') + '">'
-    + '<span class="sf-range-sep">–</span>'
-    + '<input class="sf-range-input" type="number" id="sf-max-sell" placeholder="∞" min="0" '
-      + 'value="' + (_activeFilters.max_sell || '') + '">'
-    + '</div>';
-
-  var buyRange =
-    '<div class="sf-range">'
-    + '<input class="sf-range-input" type="number" id="sf-min-buy" placeholder="0" min="0" '
-      + 'value="' + (_activeFilters.min_buy || '') + '">'
-    + '<span class="sf-range-sep">–</span>'
-    + '<input class="sf-range-input" type="number" id="sf-max-buy" placeholder="∞" min="0" '
-      + 'value="' + (_activeFilters.max_buy || '') + '">'
-    + '</div>';
-
-  var stockRange =
-    '<div class="sf-range">'
-    + '<input class="sf-range-input" type="number" id="sf-min-stock" placeholder="Min" min="0" '
-      + 'value="' + (_activeFilters.min_stock || '') + '">'
-    + '<span class="sf-range-sep">–</span>'
-    + '<input class="sf-range-input" type="number" id="sf-max-stock" placeholder="Max" min="0" '
-      + 'value="' + (_activeFilters.max_stock || '') + '">'
-    + '</div>';
-
   var html =
-    // ── Row 1: [Apply/Clear] | [Category + Status] | [Sell Price] ─
-    '<div class="sf-panel-row sf-panel-row-1">'
-
-    + '<div class="sf-actions-left">'
-      + '<span class="sf-actions-label">Filters</span>'
-      + '<button class="btn btn-primary sf-btn" onclick="applyFilters()">Apply</button>'
-      + '<button class="btn btn-outline sf-btn" onclick="clearFilters()">Clear</button>'
-    + '</div>'
-
-    + '<div class="sf-group sf-group-main">'
+    // ── Left column: Category search + Apply/Clear ──────────
+    '<div class="sf-left">'
       + '<div class="sf-col">'
         + '<div class="sf-label">Category</div>'
-        + catCombo
+        + '<div class="sf-cat-wrap" id="sf-cat-wrap">'
+          + '<input class="sf-cat-input" id="sf-cat-input" type="text" autocomplete="off" '
+            + 'placeholder="All categories…" value="' + _esc(selCatName) + '" '
+            + 'oninput="onCatSearchInput(this.value)" onfocus="showCatDropdown()" />'
+          + '<button class="sf-cat-clear" id="sf-cat-clear" type="button" onclick="clearCategoryFilter()" '
+            + 'style="display:' + (selCatName ? 'flex' : 'none') + '">×</button>'
+          + '<div class="sf-cat-dropdown" id="sf-cat-dropdown" style="display:none"></div>'
+        + '</div>'
+      + '</div>'
+      + '<div class="sf-actions-row">'
+        + '<button class="btn btn-primary sf-btn" onclick="applyFilters()">Apply Filters</button>'
+        + '<button class="btn btn-outline sf-btn" onclick="clearFilters()">Clear</button>'
+      + '</div>'
+    + '</div>'
+
+    // ── Middle: Status (top) + Stock Qty + Attributes (bottom) ─
+    + '<div class="sf-middle">'
+      + '<div class="sf-middle-top">'
+        + '<div class="sf-col">'
+          + '<div class="sf-label">Stock Status</div>'
+          + '<div class="sf-chips">' + statusChips + '</div>'
+        + '</div>'
+      + '</div>'
+      + '<div class="sf-middle-bottom">'
+        + '<div class="sf-col">'
+          + '<div class="sf-label">Stock Qty</div>'
+          + '<div class="sf-range">'
+            + '<input class="sf-range-input" type="number" id="sf-min-stock" placeholder="Min" min="0" '
+              + 'value="' + (_activeFilters.min_stock || '') + '">'
+            + '<span class="sf-range-sep">–</span>'
+            + '<input class="sf-range-input" type="number" id="sf-max-stock" placeholder="Max" min="0" '
+              + 'value="' + (_activeFilters.max_stock || '') + '">'
+          + '</div>'
+        + '</div>'
+        + '<div id="sf-attr-rows" class="sf-attr-inline"></div>'
+      + '</div>'
+    + '</div>'
+
+    // ── Right column: Sell + Buy price (primary bg) ─────────
+    + '<div class="sf-price-panel">'
+      + '<div class="sf-col">'
+        + '<div class="sf-label sf-label-inv">Sell Price ₹</div>'
+        + '<div class="sf-range">'
+          + '<input class="sf-range-input sf-range-inv" type="number" id="sf-min-sell" placeholder="0" min="0" '
+            + 'value="' + (_activeFilters.min_sell || '') + '">'
+          + '<span class="sf-range-sep sf-range-sep-inv">–</span>'
+          + '<input class="sf-range-input sf-range-inv" type="number" id="sf-max-sell" placeholder="∞" min="0" '
+            + 'value="' + (_activeFilters.max_sell || '') + '">'
+        + '</div>'
       + '</div>'
       + '<div class="sf-col">'
-        + '<div class="sf-label">Stock Status</div>'
-        + '<div class="sf-chips">' + statusChips + '</div>'
+        + '<div class="sf-label sf-label-inv">Buy Price ₹</div>'
+        + '<div class="sf-range">'
+          + '<input class="sf-range-input sf-range-inv" type="number" id="sf-min-buy" placeholder="0" min="0" '
+            + 'value="' + (_activeFilters.min_buy || '') + '">'
+          + '<span class="sf-range-sep sf-range-sep-inv">–</span>'
+          + '<input class="sf-range-input sf-range-inv" type="number" id="sf-max-buy" placeholder="∞" min="0" '
+            + 'value="' + (_activeFilters.max_buy || '') + '">'
+        + '</div>'
       + '</div>'
-    + '</div>'
-
-    + '<div class="sf-group sf-group-price">'
-      + '<div class="sf-col">'
-        + '<div class="sf-label">Sell Price ₹</div>'
-        + sellRange
-      + '</div>'
-    + '</div>'
-
-    + '</div>'
-
-    // ── Row 2: (spacer) | [Stock Qty + Attrs inline] | [Buy Price] ─
-    + '<div class="sf-panel-row sf-panel-row-2">'
-
-    + '<div class="sf-spacer-left"></div>'
-
-    + '<div class="sf-group sf-group-stock">'
-      + '<div class="sf-col">'
-        + '<div class="sf-label">Stock Qty</div>'
-        + stockRange
-      + '</div>'
-      // Attribute multi-selects injected here as flex siblings
-      + '<div id="sf-attr-rows" class="sf-attr-inline"></div>'
-    + '</div>'
-
-    + '<div class="sf-group sf-group-price">'
-      + '<div class="sf-col">'
-        + '<div class="sf-label">Buy Price ₹</div>'
-        + buyRange
-      + '</div>'
-    + '</div>'
-
     + '</div>';
 
   var panel = document.getElementById('sv-filter-panel');
