@@ -1,0 +1,224 @@
+/* ================================================================
+   sales.css — Sales & Invoices page styles
+================================================================ */
+
+/* Payment filter chips */
+.pay-filter-bar {
+  display: flex;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+  margin-bottom: var(--space-3);
+}
+
+.pay-filter-chip {
+  padding: var(--space-1) var(--space-4);
+  border: 1.5px solid var(--slate-200);
+  border-radius: var(--radius-full);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semibold);
+  color: var(--slate-600);
+  background: var(--white);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.pay-filter-chip:hover {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+.pay-filter-chip.active {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+  color: var(--white);
+}
+
+/* ── Sale detail modal ──────────────────────────────────── */
+.sale-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  z-index: 500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-4);
+}
+
+.sale-modal {
+  background: var(--white);
+  border-radius: var(--radius-xl, 16px);
+  width: 100%;
+  max-width: 680px;
+  max-height: 85vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
+  overflow: hidden;
+}
+
+.sale-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-5) var(--space-6);
+  border-bottom: 1px solid var(--slate-100);
+}
+
+.sale-modal-title {
+  font-size: var(--text-lg);
+  font-weight: var(--weight-bold);
+  color: var(--slate-800);
+}
+
+.sale-modal-close {
+  width: 32px;
+  height: 32px;
+  border: none;
+  background: var(--slate-100);
+  border-radius: var(--radius-full);
+  font-size: var(--text-base);
+  cursor: pointer;
+  color: var(--slate-500);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.sale-modal-close:hover {
+  background: var(--slate-200);
+  color: var(--slate-700);
+}
+
+.sale-modal-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--space-5) var(--space-6);
+}
+
+.sale-modal-footer {
+  padding: var(--space-4) var(--space-6);
+  border-top: 1px solid var(--slate-100);
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-3);
+}
+
+/* Meta row in modal */
+.sale-meta-row {
+  display: flex;
+  gap: var(--space-6);
+  flex-wrap: wrap;
+  margin-bottom: var(--space-5);
+}
+
+.sale-meta-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.sale-meta-label {
+  font-size: var(--text-xs);
+  font-weight: var(--weight-semibold);
+  color: var(--slate-400);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.sale-meta-value {
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semibold);
+  color: var(--slate-800);
+}
+
+/* Line items table in modal */
+.sale-items-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--text-sm);
+}
+
+.sale-items-table th {
+  text-align: left;
+  padding: var(--space-2) var(--space-3);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-semibold);
+  color: var(--slate-500);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  background: var(--slate-50);
+  border-bottom: 1px solid var(--slate-100);
+}
+
+.sale-items-table td {
+  padding: var(--space-3);
+  border-bottom: 1px solid var(--slate-50);
+  color: var(--slate-700);
+  vertical-align: middle;
+}
+
+.sale-items-table tbody tr:last-child td { border-bottom: none; }
+
+.sale-items-table .num {
+  text-align: right;
+  font-family: var(--font-mono);
+}
+
+/* Total row in modal */
+.sale-modal-totals {
+  margin-top: var(--space-4);
+  padding: var(--space-4);
+  background: var(--slate-50);
+  border-radius: var(--radius-lg);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.sale-total-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: var(--text-sm);
+  color: var(--slate-600);
+}
+
+.sale-total-divider {
+  height: 1px;
+  background: var(--slate-200);
+  margin: var(--space-1) 0;
+}
+
+.sale-total-net {
+  font-size: var(--text-base);
+  font-weight: var(--weight-bold);
+  color: var(--slate-800);
+}
+
+.sale-total-net span:last-child {
+  font-family: var(--font-mono);
+}
+
+/* Status badge */
+.sale-status-completed {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: var(--radius-full);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-semibold);
+  background: var(--green-50, #f0fdf4);
+  color: var(--green-700);
+  border: 1px solid var(--green-200, #bbf7d0);
+}
+
+.sale-status-refunded {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: var(--radius-full);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-semibold);
+  background: var(--amber-50, #fffbeb);
+  color: var(--amber-700, #b45309);
+  border: 1px solid var(--amber-200, #fde68a);
+}

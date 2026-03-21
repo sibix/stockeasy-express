@@ -1,0 +1,200 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Suppliers — StockEasy</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=DM+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="/css/styles.css" />
+    <link rel="stylesheet" href="/css/pages/categories.css" />
+    <link rel="stylesheet" href="/css/components/detailed-table.css" />
+    <link rel="stylesheet" href="/css/pages/suppliers.css" />
+  </head>
+  <body>
+    <div class="shell">
+
+      <!-- SIDEBAR -->
+      <div id="sidebar-container"></div>
+
+      <!-- MAIN -->
+      <div class="main">
+
+        <!-- TOPBAR -->
+        <div id="topbar-container"></div>
+
+        <!-- MODULE TABS -->
+        <div class="module-tabs visible">
+          <a href="#" class="mtab active" id="tab-list"
+             onclick="switchTab('list'); return false">🏭 All Suppliers</a>
+          <a href="#" class="mtab" id="tab-form"
+             onclick="startNew(); return false">➕ Add Supplier</a>
+        </div>
+
+        <!-- PAGE CONTENT -->
+        <div class="page-content">
+
+          <!-- ── ALL SUPPLIERS PANEL ─────────────────────────── -->
+          <div id="content-list">
+
+            <div class="page-header">
+              <div>
+                <div class="page-header-title">Suppliers</div>
+                <div class="page-header-sub">Manage your suppliers and their packaging sets</div>
+              </div>
+              <div style="display:flex;gap:var(--space-3);align-items:center">
+                <button class="btn btn-primary" onclick="startNew()">+ Add Supplier</button>
+              </div>
+            </div>
+
+            <!-- Stats bar -->
+            <div class="dt-stats" id="sup-stats">
+              <div class="dt-qs">
+                <div class="dt-qs-v" id="sup-stat-count">—</div>
+                <div class="dt-qs-l">Total Suppliers</div>
+              </div>
+            </div>
+
+            <!-- Search -->
+            <div style="padding: var(--space-4) 0 var(--space-2)">
+              <input
+                class="form-input"
+                type="text"
+                placeholder="Search by name, location or contact…"
+                style="max-width:360px"
+                oninput="filterSuppliers(this.value)"
+              />
+            </div>
+
+            <!-- Table -->
+            <div class="card" style="margin-top:var(--space-3);overflow-x:auto">
+              <table class="sup-table">
+                <thead>
+                  <tr>
+                    <th>Supplier Name</th>
+                    <th>Contact / Phone</th>
+                    <th>Location</th>
+                    <th>Bills</th>
+                    <th style="text-align:right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="suppliers-tbody">
+                  <tr>
+                    <td colspan="5" style="text-align:center;padding:var(--space-8);color:var(--slate-400)">
+                      <div style="font-size:24px;margin-bottom:6px">⏳</div>
+                      <div style="font-size:13px;font-weight:700;color:var(--slate-600)">Loading suppliers…</div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+          </div>
+          <!-- end content-list -->
+
+          <!-- ── ADD / EDIT SUPPLIER PANEL ──────────────────── -->
+          <div id="content-form" style="display:none">
+
+            <div class="page-header">
+              <div>
+                <div class="page-header-title" id="form-title">Add Supplier</div>
+                <div class="page-header-sub">Fill in supplier details and packaging sets</div>
+              </div>
+            </div>
+
+            <!-- Supplier details card -->
+            <div class="card card-padded mb-4">
+              <div class="section-title">Supplier Details</div>
+
+              <div class="form-row">
+                <div class="form-col">
+                  <div class="form-group">
+                    <label class="form-label">Supplier Name <span style="color:var(--red-500)">*</span></label>
+                    <input class="form-input" type="text" id="sup-name"
+                      placeholder="e.g. Ravi Textiles" autocomplete="off" />
+                  </div>
+                </div>
+                <div class="form-col">
+                  <div class="form-group">
+                    <label class="form-label">Phone / Contact</label>
+                    <input class="form-input" type="text" id="sup-contact"
+                      placeholder="e.g. 9876543210" />
+                  </div>
+                </div>
+              </div>
+
+              <div class="form-row">
+                <div class="form-col">
+                  <div class="form-group">
+                    <label class="form-label">Location / City</label>
+                    <input class="form-input" type="text" id="sup-location"
+                      placeholder="e.g. Surat, Gujarat" />
+                  </div>
+                </div>
+                <div class="form-col">
+                  <!-- spacer -->
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">Notes</label>
+                <textarea class="form-input" id="sup-notes" rows="2"
+                  placeholder="Any notes about this supplier (optional)"
+                  style="resize:vertical"></textarea>
+              </div>
+            </div>
+
+            <!-- Packaging Sets card -->
+            <div class="card card-padded mb-4">
+              <div class="section-title">Packaging Sets</div>
+              <div class="form-hint" style="margin-bottom:var(--space-4)">
+                Define the set configurations this supplier uses for each category.
+                Sets are used during purchase entry to auto-expand quantities.
+              </div>
+
+              <!-- Category selector + Add button -->
+              <div style="display:flex;gap:var(--space-3);align-items:flex-end;margin-bottom:var(--space-4)">
+                <div class="form-group" style="flex:1;max-width:300px;margin-bottom:0">
+                  <label class="form-label">Category</label>
+                  <select class="form-select" id="sup-setdef-category">
+                    <option value="">Select category...</option>
+                  </select>
+                </div>
+                <button class="btn btn-outline" onclick="addSupplierSetDef()">+ Add Set</button>
+              </div>
+
+              <!-- Set def cards rendered here -->
+              <div id="sup-set-defs-container">
+                <div class="set-defs-empty" style="color:var(--slate-400);font-size:var(--text-sm);padding:var(--space-4) 0">
+                  No set definitions yet. Select a category and click "Add Set".
+                </div>
+              </div>
+            </div>
+
+            <!-- Save footer -->
+            <div class="save-footer">
+              <button class="btn btn-outline" onclick="switchTab('list')">Cancel</button>
+              <button class="btn btn-primary" id="save-btn" onclick="saveSupplier()">Save Supplier</button>
+            </div>
+
+          </div>
+          <!-- end content-form -->
+
+        </div>
+        <!-- end page-content -->
+
+      </div>
+      <!-- end main -->
+    </div>
+    <!-- end shell -->
+
+    <!-- TOAST -->
+    <div id="toast" class="toast toast-green" style="display:none">
+      <span id="toast-icon" style="font-size:var(--text-xl)">&#x2705;</span>
+      <span id="toast-msg"></span>
+    </div>
+
+    <!-- SCRIPTS -->
+    <script src="/js/app.js"></script>
+    <script src="/js/pages/suppliers.js"></script>
+  </body>
+</html>

@@ -32,6 +32,8 @@ async function loadSuppliers() {
     if (result.ok) {
       _suppliers = result.data;
       renderSupplierTable(_suppliers);
+      var statEl = document.getElementById('sup-stat-count');
+      if (statEl) statEl.textContent = _suppliers.length;
     }
   } catch(e) { await handleFetchError(e); }
 }

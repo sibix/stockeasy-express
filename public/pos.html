@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Quick Billing — StockEasy</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=DM+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="/css/styles.css" />
+    <link rel="stylesheet" href="/css/pages/pos.css" />
+  </head>
+  <body>
+    <div class="shell">
+
+      <!-- SIDEBAR -->
+      <div id="sidebar-container"></div>
+
+      <!-- MAIN -->
+      <div class="main">
+
+        <!-- TOPBAR -->
+        <div id="topbar-container"></div>
+
+        <!-- POS FULL-HEIGHT CONTENT (no module-tabs) -->
+        <div class="pos-page-content">
+
+          <div class="pos-screen">
+
+            <!-- ── LEFT PANEL: Search & Cart ─────────────── -->
+            <div class="pos-left">
+
+              <!-- Search input -->
+              <div class="pos-search-wrap">
+                <input
+                  class="form-input pos-search-input"
+                  type="text"
+                  id="item-search"
+                  placeholder="🔍  Search items by name, SKU or barcode…"
+                  autocomplete="off"
+                  oninput="onSearchInput(this.value)"
+                />
+                <!-- Search results dropdown -->
+                <div class="pos-search-results" id="search-results" style="display:none"></div>
+              </div>
+
+              <!-- Cart header -->
+              <div class="pos-cart-header">
+                <span class="pos-cart-title">🛒 Bill Items</span>
+                <button class="btn btn-sm btn-outline" id="clear-cart-btn"
+                  onclick="clearCart()" style="display:none">Clear All</button>
+              </div>
+
+              <!-- Cart body -->
+              <div class="pos-cart-body">
+                <!-- Empty state -->
+                <div class="pos-cart-empty" id="cart-empty">
+                  <div style="font-size:36px;margin-bottom:8px">🛍️</div>
+                  <div style="font-weight:600;color:var(--slate-600);margin-bottom:4px">No items yet</div>
+                  <div style="font-size:12px">Search for an item above to add it to the bill</div>
+                </div>
+                <!-- Cart rows rendered here -->
+                <div id="cart-body"></div>
+              </div>
+
+            </div>
+            <!-- end pos-left -->
+
+            <!-- ── RIGHT PANEL: Totals & Payment ─────────── -->
+            <div class="pos-right">
+
+              <!-- Customer name (optional) -->
+              <div class="form-group pos-customer">
+                <label class="form-label">Customer Name</label>
+                <input class="form-input" type="text" id="customer-name"
+                  placeholder="Walk-in Customer (optional)" />
+              </div>
+
+              <!-- Totals breakdown -->
+              <div class="pos-totals">
+                <div class="pos-total-row">
+                  <span>Subtotal</span>
+                  <span id="bill-subtotal">₹0.00</span>
+                </div>
+                <div class="pos-total-row">
+                  <span>CGST</span>
+                  <span id="bill-cgst">₹0.00</span>
+                </div>
+                <div class="pos-total-row">
+                  <span>SGST</span>
+                  <span id="bill-sgst">₹0.00</span>
+                </div>
+                <div class="pos-divider"></div>
+                <div class="pos-total-row">
+                  <span>Discount (₹)</span>
+                  <div class="pos-discount-wrap">
+                    <span>−</span>
+                    <input class="pos-discount-input" type="number" id="discount-input"
+                      min="0" value="" placeholder="0"
+                      oninput="updateBillTotals()" />
+                  </div>
+                </div>
+                <div class="pos-divider"></div>
+                <div class="pos-total-row pos-net-row">
+                  <span>Total</span>
+                  <span id="bill-net">₹0.00</span>
+                </div>
+              </div>
+
+              <!-- Payment method -->
+              <div>
+                <div class="form-label" style="margin-bottom:var(--space-2)">Payment Method</div>
+                <div class="pay-methods">
+                  <button class="pay-method" data-method="cash" onclick="selectPayment('cash')">
+                    <span class="pay-method-icon">💵</span>
+                    <span class="pay-method-label">Cash</span>
+                  </button>
+                  <button class="pay-method" data-method="upi" onclick="selectPayment('upi')">
+                    <span class="pay-method-icon">📱</span>
+                    <span class="pay-method-label">UPI</span>
+                  </button>
+                  <button class="pay-method" data-method="card" onclick="selectPayment('card')">
+                    <span class="pay-method-icon">💳</span>
+                    <span class="pay-method-label">Card</span>
+                  </button>
+                  <button class="pay-method" data-method="credit" onclick="selectPayment('credit')">
+                    <span class="pay-method-icon">📒</span>
+                    <span class="pay-method-label">Credit</span>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Action buttons -->
+              <button class="btn btn-primary pos-charge-btn" id="charge-btn"
+                onclick="saveSale()" disabled>
+                Charge ₹0.00
+              </button>
+
+              <button class="btn btn-outline pos-new-btn" id="new-bill-btn"
+                onclick="newBill()" style="display:none">
+                ✚ New Bill
+              </button>
+
+            </div>
+            <!-- end pos-right -->
+
+          </div>
+          <!-- end pos-screen -->
+
+        </div>
+        <!-- end pos-page-content -->
+
+      </div>
+      <!-- end main -->
+    </div>
+    <!-- end shell -->
+
+    <!-- TOAST -->
+    <div id="toast" class="toast toast-green" style="display:none">
+      <span id="toast-icon" style="font-size:var(--text-xl)">&#x2705;</span>
+      <span id="toast-msg"></span>
+    </div>
+
+    <!-- SCRIPTS -->
+    <script src="/js/app.js"></script>
+    <script src="/js/pages/pos.js"></script>
+  </body>
+</html>

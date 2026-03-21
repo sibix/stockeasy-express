@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Sales — StockEasy</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=DM+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="/css/styles.css" />
+    <link rel="stylesheet" href="/css/pages/categories.css" />
+    <link rel="stylesheet" href="/css/components/detailed-table.css" />
+    <link rel="stylesheet" href="/css/pages/sales.css" />
+  </head>
+  <body>
+    <div class="shell">
+
+      <!-- SIDEBAR -->
+      <div id="sidebar-container"></div>
+
+      <!-- MAIN -->
+      <div class="main">
+
+        <!-- TOPBAR -->
+        <div id="topbar-container"></div>
+
+        <!-- PAGE CONTENT (no module-tabs — single view) -->
+        <div class="page-content">
+
+          <div class="page-header">
+            <div>
+              <div class="page-header-title">Sales & Invoices</div>
+              <div class="page-header-sub">All completed bills — search, filter and view details</div>
+            </div>
+            <div>
+              <a class="btn btn-primary" href="/pos.html">+ New Bill</a>
+            </div>
+          </div>
+
+          <!-- Stats bar -->
+          <div class="dt-stats" id="sal-stats">
+            <div class="dt-qs">
+              <div class="dt-qs-v">—</div>
+              <div class="dt-qs-l">Loading…</div>
+            </div>
+          </div>
+
+          <!-- Payment filter chips -->
+          <div class="pay-filter-bar" id="pay-filter-bar">
+            <button class="pay-filter-chip active" data-pay="all"   onclick="filterByPayment('all')">All</button>
+            <button class="pay-filter-chip"         data-pay="cash"  onclick="filterByPayment('cash')">💵 Cash</button>
+            <button class="pay-filter-chip"         data-pay="upi"   onclick="filterByPayment('upi')">📱 UPI</button>
+            <button class="pay-filter-chip"         data-pay="card"  onclick="filterByPayment('card')">💳 Card</button>
+          </div>
+
+          <!-- Table toolbar & table -->
+          <div class="dt-toolbar" id="sal-toolbar"></div>
+          <div class="dt-grp" id="sal-table">
+            <div style="padding:44px;text-align:center;color:var(--slate400)">
+              <div style="font-size:28px;margin-bottom:8px">⏳</div>
+              <div style="font-size:13px;font-weight:700;color:var(--slate600)">Loading sales…</div>
+            </div>
+          </div>
+
+        </div>
+        <!-- end page-content -->
+
+      </div>
+      <!-- end main -->
+    </div>
+    <!-- end shell -->
+
+    <!-- ── SALE DETAIL MODAL ──────────────────────────────── -->
+    <div class="sale-modal-overlay" id="sale-modal" style="display:none" onclick="closeSaleModal(event)">
+      <div class="sale-modal" onclick="event.stopPropagation()">
+        <div class="sale-modal-header">
+          <div class="sale-modal-title" id="modal-title">Bill Details</div>
+          <button class="sale-modal-close" onclick="closeSaleModal()">✕</button>
+        </div>
+        <div class="sale-modal-body" id="modal-body">
+          <!-- filled by viewSale() -->
+        </div>
+        <div class="sale-modal-footer">
+          <button class="btn btn-danger" id="modal-cancel-btn" onclick="cancelSaleFromModal()">
+            Cancel Bill
+          </button>
+          <button class="btn btn-outline" onclick="closeSaleModal()">Close</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- TOAST -->
+    <div id="toast" class="toast toast-green" style="display:none">
+      <span id="toast-icon" style="font-size:var(--text-xl)">&#x2705;</span>
+      <span id="toast-msg"></span>
+    </div>
+
+    <!-- SCRIPTS -->
+    <script src="/js/app.js"></script>
+    <script src="/js/components/detailed-table.js"></script>
+    <script src="/js/pages/sales.js"></script>
+  </body>
+</html>
