@@ -417,19 +417,30 @@ router.get("/search/query", async (req, res) => {
     const { q } = req.query;
     if (!q) return res.status(400).json({ error: "Search query required" });
 
+    const like = `%${q}%`;
     const [results] = await db.execute(
       `
       SELECT i.id, i.name, i.internal_barcode, c.name AS category_name,
              COUNT(iv.id) AS variant_count
       FROM items i
       LEFT JOIN categories   c  ON i.category_id  = c.id
-      LEFT JOIN item_variants iv ON iv.item_id     = i.id
+      LEFT JOIN item_variants iv ON iv.item_id     = i.id AND iv.status = 'active'
       WHERE i.status = 'active'
-        AND (i.name LIKE ? OR i.internal_barcode LIKE ?)
+        AND (
+          i.name             LIKE ? OR
+          i.internal_barcode LIKE ? OR
+          i.ean_upc          LIKE ? OR
+          EXISTS (
+            SELECT 1 FROM item_variants iv2
+            WHERE iv2.item_id = i.id
+              AND iv2.status  = 'active'
+              AND (iv2.sku LIKE ? OR iv2.barcode LIKE ?)
+          )
+        )
       GROUP BY i.id
       ORDER BY i.name ASC
       LIMIT 20`,
-      [`%${q}%`, `%${q}%`],
+      [like, like, like, like, like],
     );
     res.json(results);
   } catch (error) {
