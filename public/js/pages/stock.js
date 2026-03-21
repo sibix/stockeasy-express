@@ -10,6 +10,17 @@ var _stockTabLoaded = false;
 var _itemsTabLoaded = false;
 var _editingItem    = null;   // full item object loaded for editing
 
+// ── Filter state (Stock tab) ────────────────────────────────
+var _filterCategories = [];
+var _activeFilters = {
+  category_id:  '',
+  min_sell: '', max_sell: '',
+  min_buy:  '', max_buy:  '',
+  min_stock:'', max_stock:'',
+  stock_status: 'all',
+  attrs: {}           // { Size: 'M', Color: 'Red' }
+};
+
 // ── Page init ──────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', async function() {
   await loadComponent('sidebar-container', '/components/sidebar.html');
@@ -64,46 +75,11 @@ var STOCK_SCHEMA = {
 };
 
 async function initStockTab() {
-  var result = await apiFetch('/items/stock/view', 'GET');
-  if (!result.ok) {
-    showToast('Failed to load stock data', 'red');
-    document.getElementById('sv-table').innerHTML =
-      '<div style="padding:44px;text-align:center;color:var(--slate400)">'
-      + '<div style="font-size:28px;margin-bottom:8px">⚠️</div>'
-      + '<div style="font-size:13px;font-weight:700;color:var(--slate600)">Could not load stock</div>'
-      + '</div>';
-    return;
-  }
+  // Load categories for the filter dropdown
+  var catResult = await apiFetch('/categories');
+  if (catResult.ok) _filterCategories = catResult.data;
 
-  var data = result.data;
-
-  // Compute stats
-  var totalSkus  = data.length;
-  var outOfStock = data.filter(function(r) { return (parseFloat(r.stock) || 0) <= 0; }).length;
-  var lowStock   = data.filter(function(r) {
-    var s = parseFloat(r.stock) || 0;
-    var a = parseFloat(r.min_stock_alert) || 5;
-    return s > 0 && s <= a;
-  }).length;
-  var totalUnits = data.reduce(function(sum, r) { return sum + (parseFloat(r.stock) || 0); }, 0);
-  var totalValue = data.reduce(function(sum, r) { return sum + (parseFloat(r.val)   || 0); }, 0);
-
-  var stats = [
-    { v: totalSkus,
-      l: 'Total SKUs' },
-    { v: totalUnits.toLocaleString('en-IN'),
-      l: 'Units in Stock' },
-    { v: '₹' + totalValue.toLocaleString('en-IN', { maximumFractionDigits: 0 }),
-      l: 'Stock Value',
-      c: 'var(--g700)' },
-    { v: lowStock,
-      l: 'Low Stock',
-      c: lowStock > 0 ? 'var(--amber)' : '' },
-    { v: outOfStock,
-      l: 'Out of Stock',
-      c: outOfStock > 0 ? 'var(--red)' : '' },
-  ];
-
+  // Create the table instance first (empty)
   _stockTableInst = new DetailedTable({
     statsEl:      '#sv-stats',
     toolbarEl:    '#sv-toolbar',
@@ -117,8 +93,255 @@ async function initStockTab() {
     schema:       STOCK_SCHEMA,
   });
 
-  _stockTableInst.setStats(stats);
+  // Render filter panel
+  renderFilterPanel();
+
+  // Load data with current (empty) filters
+  await applyFilters();
+}
+
+// ── Render filter panel HTML into #sv-filter-panel ─────────
+function renderFilterPanel() {
+  var catOptions = '<option value="">All Categories</option>' +
+    _filterCategories.map(function(c) {
+      return '<option value="' + c.id + '"'
+        + (String(c.id) === String(_activeFilters.category_id) ? ' selected' : '') + '>'
+        + _esc(c.name) + '</option>';
+    }).join('');
+
+  var statusDefs = [
+    { v: 'all',      l: 'All' },
+    { v: 'in_stock', l: 'In Stock' },
+    { v: 'low',      l: 'Low Stock' },
+    { v: 'out',      l: 'Out of Stock' },
+  ];
+
+  var statusChips = statusDefs.map(function(s) {
+    var active = _activeFilters.stock_status === s.v;
+    return '<button class="sf-chip' + (active ? ' active' : '') + '" '
+      + 'onclick="setStockStatusFilter(\'' + s.v + '\')">' + s.l + '</button>';
+  }).join('');
+
+  var html =
+    '<div class="sf-row">'
+    + '<div class="sf-col sf-col-wide">'
+      + '<div class="sf-label">Category</div>'
+      + '<select class="form-select sf-select" id="sf-category" onchange="onCategoryFilterChange(this.value)">'
+        + catOptions
+      + '</select>'
+    + '</div>'
+    + '<div class="sf-col">'
+      + '<div class="sf-label">Stock Status</div>'
+      + '<div class="sf-chips">' + statusChips + '</div>'
+    + '</div>'
+    + '</div>'
+
+    + '<div class="sf-row">'
+    + '<div class="sf-col">'
+      + '<div class="sf-label">Stock Qty</div>'
+      + '<div class="sf-range">'
+        + '<input class="sf-range-input" type="number" id="sf-min-stock" placeholder="Min" min="0" '
+          + 'value="' + (_activeFilters.min_stock || '') + '">'
+        + '<span class="sf-range-sep">to</span>'
+        + '<input class="sf-range-input" type="number" id="sf-max-stock" placeholder="Max" min="0" '
+          + 'value="' + (_activeFilters.max_stock || '') + '">'
+      + '</div>'
+    + '</div>'
+    + '<div class="sf-col">'
+      + '<div class="sf-label">Sell Price ₹</div>'
+      + '<div class="sf-range">'
+        + '<input class="sf-range-input" type="number" id="sf-min-sell" placeholder="0" min="0" '
+          + 'value="' + (_activeFilters.min_sell || '') + '">'
+        + '<span class="sf-range-sep">to</span>'
+        + '<input class="sf-range-input" type="number" id="sf-max-sell" placeholder="∞" min="0" '
+          + 'value="' + (_activeFilters.max_sell || '') + '">'
+      + '</div>'
+    + '</div>'
+    + '<div class="sf-col">'
+      + '<div class="sf-label">Buy Price ₹</div>'
+      + '<div class="sf-range">'
+        + '<input class="sf-range-input" type="number" id="sf-min-buy" placeholder="0" min="0" '
+          + 'value="' + (_activeFilters.min_buy || '') + '">'
+        + '<span class="sf-range-sep">to</span>'
+        + '<input class="sf-range-input" type="number" id="sf-max-buy" placeholder="∞" min="0" '
+          + 'value="' + (_activeFilters.max_buy || '') + '">'
+      + '</div>'
+    + '</div>'
+    + '</div>'
+
+    // Dynamic attribute rows rendered here by onCategoryFilterChange
+    + '<div id="sf-attr-rows"></div>'
+
+    + '<div class="sf-actions">'
+      + '<button class="btn btn-primary" onclick="applyFilters()">Apply Filters</button>'
+      + '<button class="btn btn-outline" onclick="clearFilters()">Clear</button>'
+    + '</div>';
+
+  var panel = document.getElementById('sv-filter-panel');
+  if (panel) panel.innerHTML = html;
+
+  // If a category was already selected, reload its attribute rows
+  if (_activeFilters.category_id) {
+    onCategoryFilterChange(_activeFilters.category_id, true);
+  }
+}
+
+// ── Category filter changed ─────────────────────────────────
+async function onCategoryFilterChange(id, keepAttrs) {
+  _activeFilters.category_id = id;
+  if (!keepAttrs) _activeFilters.attrs = {};
+
+  var attrRowsEl = document.getElementById('sf-attr-rows');
+  if (!attrRowsEl) return;
+
+  if (!id) { attrRowsEl.innerHTML = ''; return; }
+
+  // Load category attributes
+  var result = await apiFetch('/categories/' + id);
+  if (!result.ok || !result.data.attributes) { attrRowsEl.innerHTML = ''; return; }
+
+  var attributes = result.data.attributes;
+  if (!attributes.length) { attrRowsEl.innerHTML = ''; return; }
+
+  var html = '<div class="sf-row sf-attr-section">';
+  attributes.forEach(function(attr) {
+    var attrName = attr.attribute_name;
+    var values = [];
+    try { values = JSON.parse(attr.attribute_values || '[]'); } catch(e) {}
+
+    var currentVal = _activeFilters.attrs[attrName] || '';
+    var chips = '<button class="sf-chip' + (!currentVal ? ' active' : '') + '" '
+      + 'onclick="toggleAttrFilter(\'' + _esc(attrName) + '\', \'\')">All</button>';
+
+    chips += values.map(function(v) {
+      var active = currentVal === v;
+      return '<button class="sf-chip' + (active ? ' active' : '') + '" '
+        + 'onclick="toggleAttrFilter(\'' + _esc(attrName) + '\', \'' + _esc(v) + '\')">'
+        + _esc(v) + '</button>';
+    }).join('');
+
+    html += '<div class="sf-col">'
+      + '<div class="sf-label">' + _esc(attrName) + '</div>'
+      + '<div class="sf-chips">' + chips + '</div>'
+      + '</div>';
+  });
+
+  html += '</div>';
+  attrRowsEl.innerHTML = html;
+}
+
+// ── Status chip clicked ─────────────────────────────────────
+function setStockStatusFilter(status) {
+  _activeFilters.stock_status = status;
+  // Update chip active state without re-rendering everything
+  document.querySelectorAll('#sv-filter-panel .sf-chips:first-of-type .sf-chip').forEach(function(el) {
+    // Find the status chips row (not attr chips) and update
+  });
+  // Re-render the status chips only
+  var chipEls = document.querySelectorAll('#sv-filter-panel .sf-chip[onclick*="setStockStatusFilter"]');
+  chipEls.forEach(function(el) {
+    var m = el.getAttribute('onclick').match(/'([^']+)'/);
+    if (m) el.classList.toggle('active', m[1] === status);
+  });
+}
+
+// ── Attribute chip clicked ──────────────────────────────────
+function toggleAttrFilter(attrName, value) {
+  if (!value) {
+    delete _activeFilters.attrs[attrName];
+  } else {
+    _activeFilters.attrs[attrName] = value;
+  }
+  // Update chip active state inline (no full re-render)
+  var allChips = document.querySelectorAll(
+    '#sf-attr-rows .sf-chip[onclick*="toggleAttrFilter(\'' + attrName.replace(/'/g, "\\'") + '\'"]'
+  );
+  allChips.forEach(function(el) {
+    var m = el.getAttribute('onclick').match(/,\s*'([^']*)'\)/);
+    var chipVal = m ? m[1] : '';
+    var activeVal = _activeFilters.attrs[attrName] || '';
+    el.classList.toggle('active', chipVal === activeVal);
+  });
+}
+
+// ── Collect range inputs + fire query ──────────────────────
+async function applyFilters() {
+  // Read range inputs from DOM
+  function gv(id) {
+    var el = document.getElementById(id);
+    return el ? el.value.trim() : '';
+  }
+  _activeFilters.min_stock = gv('sf-min-stock');
+  _activeFilters.max_stock = gv('sf-max-stock');
+  _activeFilters.min_sell  = gv('sf-min-sell');
+  _activeFilters.max_sell  = gv('sf-max-sell');
+  _activeFilters.min_buy   = gv('sf-min-buy');
+  _activeFilters.max_buy   = gv('sf-max-buy');
+
+  // Build query string
+  var qs = [];
+  if (_activeFilters.category_id) qs.push('category_id=' + encodeURIComponent(_activeFilters.category_id));
+  if (_activeFilters.min_sell)    qs.push('min_sell='    + encodeURIComponent(_activeFilters.min_sell));
+  if (_activeFilters.max_sell)    qs.push('max_sell='    + encodeURIComponent(_activeFilters.max_sell));
+  if (_activeFilters.min_buy)     qs.push('min_buy='     + encodeURIComponent(_activeFilters.min_buy));
+  if (_activeFilters.max_buy)     qs.push('max_buy='     + encodeURIComponent(_activeFilters.max_buy));
+  if (_activeFilters.min_stock)   qs.push('min_stock='   + encodeURIComponent(_activeFilters.min_stock));
+  if (_activeFilters.max_stock)   qs.push('max_stock='   + encodeURIComponent(_activeFilters.max_stock));
+  if (_activeFilters.stock_status && _activeFilters.stock_status !== 'all') {
+    qs.push('stock_status=' + encodeURIComponent(_activeFilters.stock_status));
+  }
+  Object.keys(_activeFilters.attrs).forEach(function(k) {
+    if (_activeFilters.attrs[k]) {
+      qs.push('attr_' + encodeURIComponent(k) + '=' + encodeURIComponent(_activeFilters.attrs[k]));
+    }
+  });
+
+  var url = '/items/stock/view' + (qs.length ? '?' + qs.join('&') : '');
+
+  // Show loading
+  document.getElementById('sv-table').innerHTML =
+    '<div style="padding:44px;text-align:center;color:var(--slate400)">'
+    + '<div style="font-size:28px;margin-bottom:8px">⏳</div>'
+    + '<div style="font-size:13px;font-weight:700;color:var(--slate600)">Loading…</div>'
+    + '</div>';
+
+  var result = await apiFetch(url, 'GET');
+  if (!result.ok) {
+    showToast('Failed to load stock data', 'red');
+    return;
+  }
+
+  var data = result.data;
+
+  // Update stats from returned data
+  var totalSkus  = data.length;
+  var outOfStock = data.filter(function(r) { return (parseFloat(r.stock) || 0) <= 0; }).length;
+  var lowStock   = data.filter(function(r) {
+    var s = parseFloat(r.stock) || 0, a = parseFloat(r.min_stock_alert) || 5;
+    return s > 0 && s <= a;
+  }).length;
+  var totalUnits = data.reduce(function(sum, r) { return sum + (parseFloat(r.stock) || 0); }, 0);
+  var totalValue = data.reduce(function(sum, r) { return sum + (parseFloat(r.val)   || 0); }, 0);
+
+  _stockTableInst.setStats([
+    { v: totalSkus,   l: 'Matching SKUs' },
+    { v: totalUnits.toLocaleString('en-IN'), l: 'Units in Stock' },
+    { v: '₹' + totalValue.toLocaleString('en-IN', { maximumFractionDigits: 0 }), l: 'Stock Value', c: 'var(--g700)' },
+    { v: lowStock,    l: 'Low Stock',    c: lowStock   > 0 ? 'var(--amber)' : '' },
+    { v: outOfStock,  l: 'Out of Stock', c: outOfStock > 0 ? 'var(--red)'   : '' },
+  ]);
   _stockTableInst.setData(data);
+}
+
+// ── Clear all filters ───────────────────────────────────────
+function clearFilters() {
+  _activeFilters = {
+    category_id: '', min_sell: '', max_sell: '',
+    min_buy: '', max_buy: '', min_stock: '', max_stock: '',
+    stock_status: 'all', attrs: {}
+  };
+  renderFilterPanel();
+  applyFilters();
 }
 
 // ══════════════════════════════════════════════════════════

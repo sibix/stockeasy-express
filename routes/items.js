@@ -520,6 +520,10 @@ router.post("/generate-variants", async (req, res) => {
 });
 
 // ── GET — Items for stock view (formatted for StockTable) ──
+// Supports query params for server-side filtering:
+//   category_id, min_sell, max_sell, min_buy, max_buy,
+//   min_stock, max_stock, stock_status (in_stock|low|out),
+//   attr_<AttrName>=<Value>  (e.g. attr_Size=M&attr_Color=Red)
 router.get("/stock/view", async (req, res) => {
   try {
     // Backfill missing internal barcodes on-the-fly (items created via purchases lack one)
@@ -527,6 +531,55 @@ router.get("/stock/view", async (req, res) => {
       `UPDATE items SET internal_barcode = CONCAT('SE-', UPPER(CONV(FLOOR(RAND()*999999999),10,36)), '-', UPPER(CONV(FLOOR(RAND()*9999),10,36)))
        WHERE internal_barcode IS NULL AND status = 'active'`
     );
+
+    // ── Build dynamic WHERE clause from query params ──────────
+    const { category_id, min_sell, max_sell, min_buy, max_buy,
+            min_stock, max_stock, stock_status } = req.query;
+
+    const conditions = ["iv.status = 'active'", "i.status = 'active'"];
+    const params = [];
+
+    if (category_id) {
+      conditions.push('i.category_id = ?');
+      params.push(parseInt(category_id));
+    }
+    if (min_sell !== undefined && min_sell !== '') {
+      conditions.push('iv.sell_price >= ?'); params.push(parseFloat(min_sell));
+    }
+    if (max_sell !== undefined && max_sell !== '') {
+      conditions.push('iv.sell_price <= ?'); params.push(parseFloat(max_sell));
+    }
+    if (min_buy !== undefined && min_buy !== '') {
+      conditions.push('iv.buy_price >= ?');  params.push(parseFloat(min_buy));
+    }
+    if (max_buy !== undefined && max_buy !== '') {
+      conditions.push('iv.buy_price <= ?');  params.push(parseFloat(max_buy));
+    }
+    if (min_stock !== undefined && min_stock !== '') {
+      conditions.push('iv.stock >= ?'); params.push(parseFloat(min_stock));
+    }
+    if (max_stock !== undefined && max_stock !== '') {
+      conditions.push('iv.stock <= ?'); params.push(parseFloat(max_stock));
+    }
+    if (stock_status === 'in_stock') {
+      conditions.push('iv.stock > 0');
+    } else if (stock_status === 'low') {
+      conditions.push('iv.stock > 0 AND iv.stock <= i.min_stock_alert');
+    } else if (stock_status === 'out') {
+      conditions.push('iv.stock <= 0');
+    }
+
+    // Dynamic attribute filters: ?attr_Size=M&attr_Color=Red
+    Object.keys(req.query).forEach(function(key) {
+      if (key.startsWith('attr_') && req.query[key]) {
+        const attrName = key.slice(5);  // e.g. "Size"
+        conditions.push('JSON_EXTRACT(iv.attributes, ?) = ?');
+        params.push('$."' + attrName + '"');
+        params.push(req.query[key]);
+      }
+    });
+
+    const whereClause = conditions.join(' AND ');
 
     const [variants] = await db.execute(`
       SELECT
@@ -543,10 +596,9 @@ router.get("/stock/view", async (req, res) => {
       FROM item_variants iv
       JOIN items      i ON iv.item_id     = i.id
       JOIN categories c ON i.category_id  = c.id
-      WHERE iv.status = 'active'
-        AND i.status  = 'active'
+      WHERE ${whereClause}
       ORDER BY c.name ASC, i.name ASC
-    `);
+    `, params);
 
     // Parse attributes and tags
     const rows = variants.map(function (v) {
@@ -565,8 +617,8 @@ router.get("/stock/view", async (req, res) => {
       var row = Object.assign({}, v, attrs, { tags });
       row.attributes = attrs;
       row.attrs_text = Object.values(attrs).join(' · ');
-      // Use variant barcode for stock view (always generated); item barcode shown as fallback
-      row.barcode = v.variant_barcode || v.internal_barcode || '';
+      // Use variant barcode (always generated); item internal barcode as fallback
+      row.barcode = v.barcode || v.internal_barcode || '';
       return row;
     });
 
