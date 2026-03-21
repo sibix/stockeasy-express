@@ -410,16 +410,212 @@
 /* Apply / Clear action buttons */
 .sf-actions {
   display: flex;
-  align-items: center;
+  align-items: flex-end;
   gap: var(--space-2);
-  padding-top: var(--space-1);
+  padding-bottom: 0;
   margin-left: auto;
-  flex-wrap: wrap;
-  justify-content: flex-end;
+  flex-shrink: 0;
 }
 
 .sf-actions .btn {
   height: 32px;
   padding: 0 var(--space-4);
   font-size: var(--text-sm);
+}
+
+/* ── Category searchable combobox ──────────────────────────── */
+.sf-cat-wrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  width: 100%;
+  max-width: 220px;
+}
+
+.sf-cat-input {
+  width: 100%;
+  height: 32px;
+  padding: 0 28px 0 var(--space-3);
+  border: 1px solid var(--slate-200);
+  border-radius: var(--radius-md);
+  background: var(--white);
+  font-size: var(--text-sm);
+  color: var(--slate-700);
+  cursor: text;
+}
+
+.sf-cat-input:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 2px rgba(34, 197, 94, 0.15);
+}
+
+.sf-cat-clear {
+  position: absolute;
+  right: 6px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 18px;
+  height: 18px;
+  border: none;
+  background: var(--slate-300);
+  border-radius: var(--radius-full);
+  color: var(--white);
+  font-size: 11px;
+  font-weight: var(--weight-bold);
+  cursor: pointer;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  padding: 0;
+  display: none;  /* shown via JS when category selected */
+}
+
+.sf-cat-clear:hover {
+  background: var(--slate-500);
+}
+
+.sf-cat-dropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  min-width: 220px;
+  max-width: 300px;
+  max-height: 220px;
+  overflow-y: auto;
+  background: var(--white);
+  border: 1px solid var(--slate-200);
+  border-radius: var(--radius-md);
+  box-shadow: 0 6px 24px rgba(0,0,0,0.10);
+  z-index: 200;
+}
+
+.sf-cat-opt {
+  padding: var(--space-2) var(--space-3);
+  font-size: var(--text-sm);
+  color: var(--slate-700);
+  cursor: pointer;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sf-cat-opt:hover {
+  background: var(--slate-50);
+  color: var(--slate-900);
+}
+
+.sf-cat-opt-empty {
+  padding: var(--space-3);
+  font-size: var(--text-sm);
+  color: var(--slate-400);
+  text-align: center;
+}
+
+/* ── Attribute multi-select dropdown ───────────────────────── */
+.sf-ms-wrap {
+  position: relative;
+  display: inline-block;
+}
+
+.sf-ms-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  height: 32px;
+  padding: 0 var(--space-3);
+  border: 1px solid var(--slate-200);
+  border-radius: var(--radius-md);
+  background: var(--white);
+  font-size: var(--text-sm);
+  color: var(--slate-700);
+  cursor: pointer;
+  white-space: nowrap;
+  min-width: 100px;
+  max-width: 160px;
+  text-align: left;
+}
+
+.sf-ms-btn:hover {
+  background: var(--slate-50);
+  border-color: var(--slate-300);
+}
+
+.sf-ms-lbl {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sf-ms-arrow {
+  font-size: 10px;
+  color: var(--slate-400);
+  flex-shrink: 0;
+}
+
+.sf-ms-dropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  min-width: 160px;
+  max-width: 220px;
+  background: var(--white);
+  border: 1px solid var(--slate-200);
+  border-radius: var(--radius-md);
+  box-shadow: 0 6px 24px rgba(0,0,0,0.10);
+  z-index: 200;
+  display: flex;
+  flex-direction: column;
+}
+
+.sf-ms-search {
+  width: 100%;
+  height: 32px;
+  padding: 0 var(--space-3);
+  border: none;
+  border-bottom: 1px solid var(--slate-100);
+  font-size: var(--text-sm);
+  background: var(--slate-50);
+  border-radius: var(--radius-md) var(--radius-md) 0 0;
+  box-sizing: border-box;
+}
+
+.sf-ms-search:focus {
+  outline: none;
+  background: var(--white);
+}
+
+.sf-ms-opts {
+  max-height: 180px;
+  overflow-y: auto;
+  padding: var(--space-1) 0;
+}
+
+.sf-ms-opt {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  font-size: var(--text-sm);
+  color: var(--slate-700);
+  cursor: pointer;
+  user-select: none;
+}
+
+.sf-ms-opt:hover {
+  background: var(--slate-50);
+}
+
+.sf-ms-opt input[type="checkbox"] {
+  width: 14px;
+  height: 14px;
+  accent-color: var(--color-primary);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+/* Row 2 aligns range cols + actions to baseline */
+.sf-row-ranges {
+  align-items: flex-end;
 }

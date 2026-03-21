@@ -18,8 +18,9 @@ var _activeFilters = {
   min_buy:  '', max_buy:  '',
   min_stock:'', max_stock:'',
   stock_status: 'all',
-  attrs: {}           // { Size: 'M', Color: 'Red' }
+  attrs: {}           // { Size: ['M','L'], Color: ['Red'] }  ← arrays
 };
+var _filterEvtBound = false;
 
 // ── Page init ──────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', async function() {
@@ -61,21 +62,21 @@ function switchStockTab(tab) {
 var STOCK_SCHEMA = {
   cols: [
     // item_sub shows item name (bold) + "Size · Color" sub-label via attrs_text
-    { k:'item',             lb:'Item',           t:'item_sub',    subKey:'attrs_text', w:210, srt:1, flt:1, vis:1 },
-    { k:'cat',              lb:'Category',        t:'text',        w:150, srt:1, flt:1, vis:1 },
-    { k:'sku',              lb:'SKU',             t:'mono',        w:160, srt:1, flt:1, vis:1 },
-    { k:'attributes',       lb:'Attributes',      t:'attrs_json',  w:220, srt:0, flt:0, vis:1 },
-    { k:'stock',            lb:'Stock',           t:'stock_badge', w:110, srt:1, flt:0, vis:1 },
-    { k:'cost',             lb:'Buy ₹',           t:'inr',         w:100, srt:1, flt:0, vis:1 },
-    { k:'sell',             lb:'Sell ₹',          t:'inr',         w:100, srt:1, flt:0, vis:1 },
-    { k:'mrp',              lb:'MRP ₹',           t:'inr',         w:100, srt:0, flt:0, vis:0 },
-    { k:'val',              lb:'Stock Value ₹',   t:'inr',         w:130, srt:1, flt:0, vis:1 },
-    { k:'barcode',          lb:'Barcode',         t:'mono',        w:160, srt:0, flt:1, vis:1 },
+    { k:'item',       lb:'Item',          t:'item_sub',   subKey:'attrs_text', w:210, srt:1, flt:0, vis:1 },
+    { k:'cat',        lb:'Category',      t:'text',       w:150, srt:1, flt:0, vis:1 },
+    { k:'sku',        lb:'SKU',           t:'mono',       w:160, srt:1, flt:0, vis:1 },
+    { k:'attributes', lb:'Attributes',    t:'attrs_json', w:220, srt:0, flt:0, vis:1 },
+    { k:'stock',      lb:'Stock',         t:'stock_badge',w:110, srt:1, flt:0, vis:1 },
+    { k:'cost',       lb:'Buy ₹',         t:'inr',        w:100, srt:1, flt:0, vis:1 },
+    { k:'sell',       lb:'Sell ₹',        t:'inr',        w:100, srt:1, flt:0, vis:1 },
+    { k:'mrp',        lb:'MRP ₹',         t:'inr',        w:100, srt:0, flt:0, vis:0 },
+    { k:'val',        lb:'Stock Value ₹', t:'inr',        w:130, srt:1, flt:0, vis:1 },
+    { k:'barcode',    lb:'Barcode',       t:'mono',       w:160, srt:0, flt:0, vis:1 },
   ]
 };
 
 async function initStockTab() {
-  // Load categories for the filter dropdown
+  // Load categories for the filter combobox
   var catResult = await apiFetch('/categories');
   if (catResult.ok) _filterCategories = catResult.data;
 
@@ -93,6 +94,20 @@ async function initStockTab() {
     schema:       STOCK_SCHEMA,
   });
 
+  // Bind once: close filter dropdowns on outside click
+  if (!_filterEvtBound) {
+    _filterEvtBound = true;
+    document.addEventListener('click', function(e) {
+      if (!e.target.closest('#sf-cat-wrap')) {
+        var dd = document.getElementById('sf-cat-dropdown');
+        if (dd) dd.style.display = 'none';
+      }
+      if (!e.target.closest('.sf-ms-wrap')) {
+        document.querySelectorAll('.sf-ms-dropdown').forEach(function(d) { d.style.display = 'none'; });
+      }
+    });
+  }
+
   // Render filter panel
   renderFilterPanel();
 
@@ -100,35 +115,40 @@ async function initStockTab() {
   await applyFilters();
 }
 
-// ── Render filter panel HTML into #sv-filter-panel ─────────
+// ── Render filter panel — 2 rows + dynamic attr row ────────
 function renderFilterPanel() {
-  var catOptions = '<option value="">All Categories</option>' +
-    _filterCategories.map(function(c) {
-      return '<option value="' + c.id + '"'
-        + (String(c.id) === String(_activeFilters.category_id) ? ' selected' : '') + '>'
-        + _esc(c.name) + '</option>';
-    }).join('');
-
   var statusDefs = [
     { v: 'all',      l: 'All' },
     { v: 'in_stock', l: 'In Stock' },
     { v: 'low',      l: 'Low Stock' },
     { v: 'out',      l: 'Out of Stock' },
   ];
-
   var statusChips = statusDefs.map(function(s) {
     var active = _activeFilters.stock_status === s.v;
     return '<button class="sf-chip' + (active ? ' active' : '') + '" '
       + 'onclick="setStockStatusFilter(\'' + s.v + '\')">' + s.l + '</button>';
   }).join('');
 
+  // Find selected category name for the combobox
+  var selCatName = '';
+  if (_activeFilters.category_id) {
+    var sc = _filterCategories.find(function(c) { return String(c.id) === String(_activeFilters.category_id); });
+    if (sc) selCatName = sc.name;
+  }
+
   var html =
+    // ── Row 1: Category combobox + Stock Status ─────────────
     '<div class="sf-row">'
     + '<div class="sf-col sf-col-wide">'
       + '<div class="sf-label">Category</div>'
-      + '<select class="form-select sf-select" id="sf-category" onchange="onCategoryFilterChange(this.value)">'
-        + catOptions
-      + '</select>'
+      + '<div class="sf-cat-wrap" id="sf-cat-wrap">'
+        + '<input class="sf-cat-input" id="sf-cat-input" type="text" autocomplete="off" '
+          + 'placeholder="All categories…" value="' + _esc(selCatName) + '" '
+          + 'oninput="onCatSearchInput(this.value)" onfocus="showCatDropdown()" />'
+        + '<button class="sf-cat-clear" id="sf-cat-clear" type="button" onclick="clearCategoryFilter()" '
+          + 'style="display:' + (selCatName ? 'flex' : 'none') + '">×</button>'
+        + '<div class="sf-cat-dropdown" id="sf-cat-dropdown" style="display:none"></div>'
+      + '</div>'
     + '</div>'
     + '<div class="sf-col">'
       + '<div class="sf-label">Stock Status</div>'
@@ -136,13 +156,14 @@ function renderFilterPanel() {
     + '</div>'
     + '</div>'
 
-    + '<div class="sf-row">'
+    // ── Row 2: Range filters + Apply / Clear ────────────────
+    + '<div class="sf-row sf-row-ranges">'
     + '<div class="sf-col">'
       + '<div class="sf-label">Stock Qty</div>'
       + '<div class="sf-range">'
         + '<input class="sf-range-input" type="number" id="sf-min-stock" placeholder="Min" min="0" '
           + 'value="' + (_activeFilters.min_stock || '') + '">'
-        + '<span class="sf-range-sep">to</span>'
+        + '<span class="sf-range-sep">–</span>'
         + '<input class="sf-range-input" type="number" id="sf-max-stock" placeholder="Max" min="0" '
           + 'value="' + (_activeFilters.max_stock || '') + '">'
       + '</div>'
@@ -152,7 +173,7 @@ function renderFilterPanel() {
       + '<div class="sf-range">'
         + '<input class="sf-range-input" type="number" id="sf-min-sell" placeholder="0" min="0" '
           + 'value="' + (_activeFilters.min_sell || '') + '">'
-        + '<span class="sf-range-sep">to</span>'
+        + '<span class="sf-range-sep">–</span>'
         + '<input class="sf-range-input" type="number" id="sf-max-sell" placeholder="∞" min="0" '
           + 'value="' + (_activeFilters.max_sell || '') + '">'
       + '</div>'
@@ -162,23 +183,25 @@ function renderFilterPanel() {
       + '<div class="sf-range">'
         + '<input class="sf-range-input" type="number" id="sf-min-buy" placeholder="0" min="0" '
           + 'value="' + (_activeFilters.min_buy || '') + '">'
-        + '<span class="sf-range-sep">to</span>'
+        + '<span class="sf-range-sep">–</span>'
         + '<input class="sf-range-input" type="number" id="sf-max-buy" placeholder="∞" min="0" '
           + 'value="' + (_activeFilters.max_buy || '') + '">'
       + '</div>'
     + '</div>'
+    + '<div class="sf-actions">'
+      + '<button class="btn btn-primary" onclick="applyFilters()">Apply</button>'
+      + '<button class="btn btn-outline" onclick="clearFilters()">Clear</button>'
+    + '</div>'
     + '</div>'
 
-    // Dynamic attribute rows rendered here by onCategoryFilterChange
-    + '<div id="sf-attr-rows"></div>'
-
-    + '<div class="sf-actions">'
-      + '<button class="btn btn-primary" onclick="applyFilters()">Apply Filters</button>'
-      + '<button class="btn btn-outline" onclick="clearFilters()">Clear</button>'
-    + '</div>';
+    // ── Row 3 (dynamic): Attribute multi-select dropdowns ───
+    + '<div id="sf-attr-rows"></div>';
 
   var panel = document.getElementById('sv-filter-panel');
   if (panel) panel.innerHTML = html;
+
+  // Pre-populate the category dropdown list
+  populateCatDropdown('');
 
   // If a category was already selected, reload its attribute rows
   if (_activeFilters.category_id) {
@@ -186,17 +209,73 @@ function renderFilterPanel() {
   }
 }
 
-// ── Category filter changed ─────────────────────────────────
+// ── Category combobox ───────────────────────────────────────
+function onCatSearchInput(q) {
+  _activeFilters.category_id = '';  // typing clears selection
+  _activeFilters.attrs = {};
+  document.getElementById('sf-attr-rows').innerHTML = '';
+  var clearBtn = document.getElementById('sf-cat-clear');
+  if (clearBtn) clearBtn.style.display = 'none';
+  populateCatDropdown(q);
+  showCatDropdown();
+}
+
+function showCatDropdown() {
+  var input = document.getElementById('sf-cat-input');
+  populateCatDropdown(input ? input.value : '');
+  var dd = document.getElementById('sf-cat-dropdown');
+  if (dd) dd.style.display = '';
+}
+
+function populateCatDropdown(q) {
+  var dd = document.getElementById('sf-cat-dropdown');
+  if (!dd) return;
+  var lower = (q || '').toLowerCase();
+  var filtered = _filterCategories.filter(function(c) {
+    return !lower || c.name.toLowerCase().includes(lower);
+  }).slice(0, 25);
+  if (!filtered.length) {
+    dd.innerHTML = '<div class="sf-cat-opt-empty">No categories found</div>';
+    return;
+  }
+  dd.innerHTML = filtered.map(function(c) {
+    return '<div class="sf-cat-opt" onclick="selectCategory(' + c.id
+      + ', \'' + _esc(c.name).replace(/'/g, '&#39;') + '\')">'
+      + _esc(c.name) + '</div>';
+  }).join('');
+}
+
+function selectCategory(id, name) {
+  _activeFilters.category_id = id;
+  _activeFilters.attrs = {};
+  var input = document.getElementById('sf-cat-input');
+  if (input) input.value = name;
+  var dd = document.getElementById('sf-cat-dropdown');
+  if (dd) dd.style.display = 'none';
+  var clearBtn = document.getElementById('sf-cat-clear');
+  if (clearBtn) clearBtn.style.display = 'flex';
+  onCategoryFilterChange(id, false);
+}
+
+function clearCategoryFilter() {
+  _activeFilters.category_id = '';
+  _activeFilters.attrs = {};
+  var input = document.getElementById('sf-cat-input');
+  if (input) input.value = '';
+  var clearBtn = document.getElementById('sf-cat-clear');
+  if (clearBtn) clearBtn.style.display = 'none';
+  document.getElementById('sf-attr-rows').innerHTML = '';
+}
+
+// ── Category changed → load attribute multi-selects ────────
 async function onCategoryFilterChange(id, keepAttrs) {
   _activeFilters.category_id = id;
   if (!keepAttrs) _activeFilters.attrs = {};
 
   var attrRowsEl = document.getElementById('sf-attr-rows');
   if (!attrRowsEl) return;
-
   if (!id) { attrRowsEl.innerHTML = ''; return; }
 
-  // Load category attributes
   var result = await apiFetch('/categories/' + id);
   if (!result.ok || !result.data.attributes) { attrRowsEl.innerHTML = ''; return; }
 
@@ -208,65 +287,106 @@ async function onCategoryFilterChange(id, keepAttrs) {
     var attrName = attr.attribute_name;
     var values = [];
     try { values = JSON.parse(attr.attribute_values || '[]'); } catch(e) {}
-
-    var currentVal = _activeFilters.attrs[attrName] || '';
-    var chips = '<button class="sf-chip' + (!currentVal ? ' active' : '') + '" '
-      + 'onclick="toggleAttrFilter(\'' + _esc(attrName) + '\', \'\')">All</button>';
-
-    chips += values.map(function(v) {
-      var active = currentVal === v;
-      return '<button class="sf-chip' + (active ? ' active' : '') + '" '
-        + 'onclick="toggleAttrFilter(\'' + _esc(attrName) + '\', \'' + _esc(v) + '\')">'
-        + _esc(v) + '</button>';
-    }).join('');
-
-    html += '<div class="sf-col">'
-      + '<div class="sf-label">' + _esc(attrName) + '</div>'
-      + '<div class="sf-chips">' + chips + '</div>'
-      + '</div>';
+    if (!values.length) return;
+    html += _renderAttrMs(attrName, values);
   });
-
   html += '</div>';
   attrRowsEl.innerHTML = html;
+}
+
+// ── Build one multi-select dropdown for an attribute ────────
+function _renderAttrMs(attrName, values) {
+  var selectedVals = _activeFilters.attrs[attrName] || [];
+  var labelText = selectedVals.length === 0 ? 'All'
+    : selectedVals.length === 1 ? selectedVals[0]
+    : selectedVals.length + ' selected';
+  // Safe ID: replace spaces/special chars
+  var safeId = attrName.replace(/[^a-zA-Z0-9]/g, '_');
+  var msId   = 'sf-ms-' + safeId;
+  var ddId   = 'sf-ms-dd-' + safeId;
+  var optsId = 'sf-ms-opts-' + safeId;
+  var lblId  = 'sf-ms-lbl-' + safeId;
+  var qEsc   = _esc(attrName).replace(/'/g, '&#39;');  // safe for single-quoted onclick
+
+  var checkboxes = values.map(function(v) {
+    var chk = selectedVals.indexOf(v) !== -1 ? ' checked' : '';
+    return '<label class="sf-ms-opt">'
+      + '<input type="checkbox" value="' + _esc(v) + '"' + chk
+        + ' onchange="onAttrCheck(\'' + qEsc + '\', this)">'
+      + '<span>' + _esc(v) + '</span>'
+      + '</label>';
+  }).join('');
+
+  return '<div class="sf-col">'
+    + '<div class="sf-label">' + _esc(attrName) + '</div>'
+    + '<div class="sf-ms-wrap" id="' + msId + '">'
+      + '<button class="sf-ms-btn" type="button" onclick="toggleMsDropdown(\'' + qEsc + '\')">'
+        + '<span class="sf-ms-lbl" id="' + lblId + '">' + _esc(labelText) + '</span>'
+        + '<span class="sf-ms-arrow">▾</span>'
+      + '</button>'
+      + '<div class="sf-ms-dropdown" id="' + ddId + '" style="display:none">'
+        + '<input class="sf-ms-search" type="text" placeholder="Search…" '
+          + 'oninput="filterMsOpts(\'' + qEsc + '\', this.value)">'
+        + '<div class="sf-ms-opts" id="' + optsId + '">' + checkboxes + '</div>'
+      + '</div>'
+    + '</div>'
+    + '</div>';
+}
+
+// ── Multi-select helpers ────────────────────────────────────
+function toggleMsDropdown(attrName) {
+  var safeId = attrName.replace(/[^a-zA-Z0-9]/g, '_');
+  var dd = document.getElementById('sf-ms-dd-' + safeId);
+  if (!dd) return;
+  var isOpen = dd.style.display !== 'none';
+  document.querySelectorAll('.sf-ms-dropdown').forEach(function(d) { d.style.display = 'none'; });
+  if (!isOpen) {
+    dd.style.display = '';
+    var search = dd.querySelector('.sf-ms-search');
+    if (search) { search.value = ''; filterMsOpts(attrName, ''); search.focus(); }
+  }
+}
+
+function filterMsOpts(attrName, q) {
+  var safeId = attrName.replace(/[^a-zA-Z0-9]/g, '_');
+  var opts = document.querySelectorAll('#sf-ms-opts-' + safeId + ' .sf-ms-opt');
+  var lower = (q || '').toLowerCase();
+  opts.forEach(function(opt) {
+    var span = opt.querySelector('span');
+    var text = span ? span.textContent.toLowerCase() : '';
+    opt.style.display = (!lower || text.includes(lower)) ? '' : 'none';
+  });
+}
+
+function onAttrCheck(attrName, checkbox) {
+  var vals = (_activeFilters.attrs[attrName] || []).slice();
+  if (checkbox.checked) {
+    if (vals.indexOf(checkbox.value) === -1) vals.push(checkbox.value);
+  } else {
+    vals = vals.filter(function(v) { return v !== checkbox.value; });
+  }
+  _activeFilters.attrs[attrName] = vals;
+  // Update button label
+  var safeId = attrName.replace(/[^a-zA-Z0-9]/g, '_');
+  var lbl = document.getElementById('sf-ms-lbl-' + safeId);
+  if (lbl) {
+    lbl.textContent = vals.length === 0 ? 'All'
+      : vals.length === 1 ? vals[0]
+      : vals.length + ' selected';
+  }
 }
 
 // ── Status chip clicked ─────────────────────────────────────
 function setStockStatusFilter(status) {
   _activeFilters.stock_status = status;
-  // Update chip active state without re-rendering everything
-  document.querySelectorAll('#sv-filter-panel .sf-chips:first-of-type .sf-chip').forEach(function(el) {
-    // Find the status chips row (not attr chips) and update
-  });
-  // Re-render the status chips only
-  var chipEls = document.querySelectorAll('#sv-filter-panel .sf-chip[onclick*="setStockStatusFilter"]');
-  chipEls.forEach(function(el) {
+  document.querySelectorAll('.sf-chip[onclick*="setStockStatusFilter"]').forEach(function(el) {
     var m = el.getAttribute('onclick').match(/'([^']+)'/);
     if (m) el.classList.toggle('active', m[1] === status);
   });
 }
 
-// ── Attribute chip clicked ──────────────────────────────────
-function toggleAttrFilter(attrName, value) {
-  if (!value) {
-    delete _activeFilters.attrs[attrName];
-  } else {
-    _activeFilters.attrs[attrName] = value;
-  }
-  // Update chip active state inline (no full re-render)
-  var allChips = document.querySelectorAll(
-    '#sf-attr-rows .sf-chip[onclick*="toggleAttrFilter(\'' + attrName.replace(/'/g, "\\'") + '\'"]'
-  );
-  allChips.forEach(function(el) {
-    var m = el.getAttribute('onclick').match(/,\s*'([^']*)'\)/);
-    var chipVal = m ? m[1] : '';
-    var activeVal = _activeFilters.attrs[attrName] || '';
-    el.classList.toggle('active', chipVal === activeVal);
-  });
-}
-
 // ── Collect range inputs + fire query ──────────────────────
 async function applyFilters() {
-  // Read range inputs from DOM
   function gv(id) {
     var el = document.getElementById(id);
     return el ? el.value.trim() : '';
@@ -278,7 +398,6 @@ async function applyFilters() {
   _activeFilters.min_buy   = gv('sf-min-buy');
   _activeFilters.max_buy   = gv('sf-max-buy');
 
-  // Build query string
   var qs = [];
   if (_activeFilters.category_id) qs.push('category_id=' + encodeURIComponent(_activeFilters.category_id));
   if (_activeFilters.min_sell)    qs.push('min_sell='    + encodeURIComponent(_activeFilters.min_sell));
@@ -290,15 +409,17 @@ async function applyFilters() {
   if (_activeFilters.stock_status && _activeFilters.stock_status !== 'all') {
     qs.push('stock_status=' + encodeURIComponent(_activeFilters.stock_status));
   }
+  // Attribute filters — arrays joined with comma → attr_Size=M,L
   Object.keys(_activeFilters.attrs).forEach(function(k) {
-    if (_activeFilters.attrs[k]) {
-      qs.push('attr_' + encodeURIComponent(k) + '=' + encodeURIComponent(_activeFilters.attrs[k]));
+    var vals = _activeFilters.attrs[k];
+    if (!Array.isArray(vals)) vals = vals ? [vals] : [];
+    if (vals.length) {
+      qs.push('attr_' + encodeURIComponent(k) + '=' + encodeURIComponent(vals.join(',')));
     }
   });
 
   var url = '/items/stock/view' + (qs.length ? '?' + qs.join('&') : '');
 
-  // Show loading
   document.getElementById('sv-table').innerHTML =
     '<div style="padding:44px;text-align:center;color:var(--slate400)">'
     + '<div style="font-size:28px;margin-bottom:8px">⏳</div>'
@@ -306,14 +427,9 @@ async function applyFilters() {
     + '</div>';
 
   var result = await apiFetch(url, 'GET');
-  if (!result.ok) {
-    showToast('Failed to load stock data', 'red');
-    return;
-  }
+  if (!result.ok) { showToast('Failed to load stock data', 'red'); return; }
 
   var data = result.data;
-
-  // Update stats from returned data
   var totalSkus  = data.length;
   var outOfStock = data.filter(function(r) { return (parseFloat(r.stock) || 0) <= 0; }).length;
   var lowStock   = data.filter(function(r) {

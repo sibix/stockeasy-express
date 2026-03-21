@@ -569,13 +569,22 @@ router.get("/stock/view", async (req, res) => {
       conditions.push('iv.stock <= 0');
     }
 
-    // Dynamic attribute filters: ?attr_Size=M&attr_Color=Red
+    // Dynamic attribute filters: ?attr_Size=M,L&attr_Color=Red
+    // Comma-separated values → IN clause; single value → = clause
     Object.keys(req.query).forEach(function(key) {
       if (key.startsWith('attr_') && req.query[key]) {
-        const attrName = key.slice(5);  // e.g. "Size"
-        conditions.push('JSON_EXTRACT(iv.attributes, ?) = ?');
-        params.push('$."' + attrName + '"');
-        params.push(req.query[key]);
+        const attrName = key.slice(5);
+        const vals = req.query[key].split(',').map(v => v.trim()).filter(Boolean);
+        if (vals.length === 1) {
+          conditions.push('JSON_EXTRACT(iv.attributes, ?) = ?');
+          params.push('$."' + attrName + '"');
+          params.push(vals[0]);
+        } else if (vals.length > 1) {
+          const placeholders = vals.map(() => '?').join(', ');
+          conditions.push('JSON_EXTRACT(iv.attributes, ?) IN (' + placeholders + ')');
+          params.push('$."' + attrName + '"');
+          vals.forEach(function(v) { params.push(v); });
+        }
       }
     });
 
