@@ -564,8 +564,9 @@ router.get("/stock/view", async (req, res) => {
     if (stock_status === 'in_stock') {
       conditions.push('iv.stock > 0');
     } else if (stock_status === 'low') {
-      // Fall back to 5 if min_stock_alert is NULL or 0
-      conditions.push('iv.stock > 0 AND iv.stock <= GREATEST(COALESCE(i.min_stock_alert, 5), 1)');
+      // Use category alert first, then item alert, then 5 as default
+      // NULLIF converts 0→NULL so COALESCE skips it (COALESCE only skips NULL, not 0)
+      conditions.push('iv.stock > 0 AND iv.stock <= COALESCE(NULLIF(c.min_stock_alert, 0), NULLIF(i.min_stock_alert, 0), 5)');
     } else if (stock_status === 'out') {
       conditions.push('iv.stock <= 0');
     }
@@ -600,7 +601,7 @@ router.get("/stock/view", async (req, res) => {
         i.name AS item, i.tags,
         i.internal_barcode,
         iv.barcode,
-        i.min_stock_alert,
+        COALESCE(NULLIF(c.min_stock_alert, 0), NULLIF(i.min_stock_alert, 0), 5) AS min_stock_alert,
         c.name AS cat,
         c.id   AS category_id
       FROM item_variants iv
