@@ -936,6 +936,77 @@
   margin-top: 3px;
 }
 
+/* ── Specs modal attribute multi-select list ───────────────── */
+.specs-attr-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.specs-attr-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.1s;
+  user-select: none;
+}
+
+.specs-attr-row:hover { background: var(--slate-50); }
+
+.specs-attr-row.specs-attr-sel { background: var(--green-50, #f0fdf4); }
+
+.specs-attr-check {
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  border: 2px solid var(--slate-300);
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 700;
+  color: #fff;
+  background: #fff;
+  transition: background 0.1s, border-color 0.1s;
+}
+
+.specs-attr-row.specs-attr-sel .specs-attr-check {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+}
+
+.specs-attr-val {
+  font-size: var(--text-sm, 13px);
+  color: var(--slate-700);
+}
+
+.specs-attr-row.specs-attr-sel .specs-attr-val {
+  color: var(--slate-800);
+  font-weight: var(--weight-semibold, 600);
+}
+
+/* ── Inline packaging select under category in data row ─────── */
+.pur-pkg-inline-sel {
+  display: block;
+  width: 100%;
+  margin-top: 5px;
+  padding: 3px 6px;
+  font-size: 11px;
+  color: var(--slate-600);
+  border: 1px solid var(--slate-200);
+  border-radius: var(--radius-sm, 6px);
+  background: var(--slate-50);
+  cursor: pointer;
+  outline: none;
+  transition: border-color 0.12s;
+}
+
+.pur-pkg-inline-sel:focus { border-color: var(--color-primary); background: #fff; }
+
 /* ── Specs chips below Item Name in table ──────────────────── */
 .pur-row-tags {
   display: flex;

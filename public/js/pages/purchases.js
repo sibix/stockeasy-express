@@ -75,7 +75,13 @@ function openSpecsModal(rid) {
   if (!li.category) { showToast('Select a category first', 'amber'); return; }
 
   _specsModalRid = rid;
-  _specsDraft    = { set_def_id: li.set_def_id || null, fixed_attrs: Object.assign({}, li.fixed_attrs || {}) };
+  // Normalize fixed_attrs to arrays (backward-compat with old single-value strings)
+  var normAttrs = {};
+  Object.keys(li.fixed_attrs || {}).forEach(function (k) {
+    var v = li.fixed_attrs[k];
+    normAttrs[k] = Array.isArray(v) ? v.slice() : (v ? [v] : []);
+  });
+  _specsDraft = { set_def_id: li.set_def_id || null, fixed_attrs: normAttrs };
   _specsModalSec = 'packaging';
 
   document.getElementById('specs-modal-title').textContent = escH(li.item_name || li.category_name || 'Item Specs');
@@ -130,20 +136,29 @@ function renderSpecsOptions(section) {
     return;
   }
 
-  // Attribute section
+  // Attribute section — multi-select list with search
   var cat  = li && li.category;
   var attr = cat ? (cat.attributes || []).find(function (a) { return a.attribute_name === section; }) : null;
   if (!attr) { panel.innerHTML = ''; return; }
-  var selVal = _specsDraft.fixed_attrs[section] || null;
 
-  panel.innerHTML = '<div class="specs-opt-grid">' +
-    (attr.attribute_values || []).map(function (v) {
-      return '<div class="specs-opt-item' + (selVal === v ? ' specs-opt-sel' : '') + '"' +
-        ' data-section="' + escH(section) + '" data-value="' + escH(v) + '">' +
-        '<div class="specs-opt-name">' + escH(v) + '</div>' +
-      '</div>';
-    }).join('') +
-  '</div>';
+  var selArr = Array.isArray(_specsDraft.fixed_attrs[section])
+    ? _specsDraft.fixed_attrs[section]
+    : (_specsDraft.fixed_attrs[section] ? [_specsDraft.fixed_attrs[section]] : []);
+
+  var rows = (attr.attribute_values || []).map(function (v) {
+    var isSel = selArr.indexOf(v) !== -1;
+    return '<div class="specs-attr-row' + (isSel ? ' specs-attr-sel' : '') + '"' +
+      ' data-section="' + escH(section) + '" data-value="' + escH(v) + '">' +
+      '<span class="specs-attr-check">' + (isSel ? '✓' : '') + '</span>' +
+      '<span class="specs-attr-val">' + escH(v) + '</span>' +
+    '</div>';
+  }).join('');
+
+  panel.innerHTML =
+    '<input class="form-input js-specs-attr-search" type="text"' +
+      ' placeholder="Search ' + escH(section) + '…" autocomplete="off"' +
+      ' style="margin-bottom:10px" />' +
+    '<div class="specs-attr-list">' + rows + '</div>';
 }
 
 function selectSpecsSection(key) {
@@ -152,14 +167,36 @@ function selectSpecsSection(key) {
   renderSpecsOptions(key);
 }
 
+// Handles packaging tile click (single-select)
 function selectSpecsOpt(section, value) {
-  if (section === 'packaging') {
-    _specsDraft.set_def_id = value || null;
-  } else {
-    if (value) _specsDraft.fixed_attrs[section] = value;
-    else        delete _specsDraft.fixed_attrs[section];
-  }
-  renderSpecsOptions(section);
+  if (section !== 'packaging') return;
+  _specsDraft.set_def_id = value || null;
+  renderSpecsOptions('packaging');
+  updateSpecsSummary();
+}
+
+// Handles attribute row click (multi-select toggle, no re-render → preserves search)
+function toggleSpecsAttrVal(section, value) {
+  if (!value) return;
+  var arr = Array.isArray(_specsDraft.fixed_attrs[section])
+    ? _specsDraft.fixed_attrs[section].slice()
+    : (_specsDraft.fixed_attrs[section] ? [_specsDraft.fixed_attrs[section]] : []);
+  var idx = arr.indexOf(value);
+  if (idx === -1) arr.push(value);
+  else            arr.splice(idx, 1);
+  if (arr.length) _specsDraft.fixed_attrs[section] = arr;
+  else            delete _specsDraft.fixed_attrs[section];
+
+  // Patch just this row visually — preserves search text state
+  var rows = document.querySelectorAll('#specs-modal-options .specs-attr-row');
+  rows.forEach(function (r) {
+    if (r.dataset.section === section && r.dataset.value === value) {
+      var nowSel = arr.indexOf(value) !== -1;
+      r.classList.toggle('specs-attr-sel', nowSel);
+      var check = r.querySelector('.specs-attr-check');
+      if (check) check.textContent = nowSel ? '✓' : '';
+    }
+  });
   updateSpecsSummary();
 }
 
@@ -167,15 +204,23 @@ function updateSpecsSummary() {
   var li      = getRow(_specsModalRid);
   var summary = document.getElementById('specs-modal-summary');
   if (!summary) return;
-  var parts = [];
+  var parts        = [];
+  var variantCount = 1;
+  var hasAttrs     = false;
+
   if (_specsDraft.set_def_id) {
     var sd = (li && li.set_defs || []).find(function (s) { return s.id === _specsDraft.set_def_id; });
-    if (sd) parts.push(sd.name);
+    if (sd) parts.push('📦 ' + sd.name);
   }
   Object.keys(_specsDraft.fixed_attrs).forEach(function (k) {
-    var v = _specsDraft.fixed_attrs[k];
-    if (v) parts.push(k + ': ' + v);
+    var arr = Array.isArray(_specsDraft.fixed_attrs[k]) ? _specsDraft.fixed_attrs[k] : [];
+    if (arr.length) {
+      parts.push(k + ': ' + arr.length);
+      variantCount *= arr.length;
+      hasAttrs = true;
+    }
   });
+  if (hasAttrs && variantCount > 1) parts.push('Variants: ' + variantCount);
   summary.textContent = parts.length ? parts.join(' · ') : 'Nothing selected';
 }
 
@@ -194,18 +239,37 @@ function applySpecsModal() {
   if (_currentSubTab === 'detail') renderDetailView();
 }
 
-// ── Specs chips below Item Name ───────────────────────────────
+// ── Count chips below Item Name (Size:5 · Color:3 · Variants:15) ────────────
 function buildRowSpecsTags(li) {
-  var tags = [];
-  if (li.set_def) tags.push(escH(li.set_def.name));
+  var parts        = [];
+  var variantCount = 1;
   Object.keys(li.fixed_attrs || {}).forEach(function (k) {
-    var v = li.fixed_attrs[k];
-    if (v) tags.push(escH(k) + ': ' + escH(v));
+    var vals = Array.isArray(li.fixed_attrs[k])
+      ? li.fixed_attrs[k]
+      : (li.fixed_attrs[k] ? [li.fixed_attrs[k]] : []);
+    if (vals.length) {
+      parts.push(escH(k) + ': ' + vals.length);
+      variantCount *= vals.length;
+    }
   });
-  if (!tags.length) return '';
+  if (variantCount > 1) parts.push('Variants: ' + variantCount);
+  if (!parts.length) return '';
   return '<div class="pur-row-tags">' +
-    tags.map(function (t) { return '<span class="pur-row-tag">' + t + '</span>'; }).join('') +
+    parts.map(function (t) { return '<span class="pur-row-tag">' + t + '</span>'; }).join('') +
   '</div>';
+}
+
+// ── Inline packaging select (shown below category name in data row) ───────────
+function buildInlinePkgSelect(li) {
+  if (!li.category_id) return '';
+  var setDefs = li.set_defs || [];
+  if (!setDefs.length) return '';   // no sets defined for this category
+  var opts = '<option value="">Loose</option>' +
+    setDefs.map(function (sd) {
+      return '<option value="' + sd.id + '"' + (li.set_def_id === sd.id ? ' selected' : '') + '>' +
+        escH(sd.name) + '</option>';
+    }).join('');
+  return '<select class="pur-pkg-inline-sel js-row-pkg">' + opts + '</select>';
 }
 
 // ── Category search (per-row, client-side) ───────────────────
@@ -392,12 +456,13 @@ function renderSimpleTable() {
 function buildDataRow(li, idx) {
   var rid = li.row_id;
 
-  // Category — search-and-select input with dropdown
+  // Category — search-and-select input + dropdown + inline packaging select
   var catCell = '<td style="position:relative">' +
     '<input class="form-input js-row-cat-search" type="text"' +
       ' value="' + escH(li.category_name) + '"' +
       ' placeholder="Search category…" autocomplete="off" />' +
     '<div class="p-drop pur-cat-drop" id="cat-drop-' + rid + '" style="display:none"></div>' +
+    buildInlinePkgSelect(li) +
   '</td>';
 
   // Item Specs button — .active when specs are configured
@@ -476,12 +541,25 @@ function bindGlobalEvents() {
     });
   }
 
-  // Specs modal — right options delegation
+  // Specs modal — right options delegation (click + search-input filter)
   var specsOpts = document.getElementById('specs-modal-options');
   if (specsOpts) {
     specsOpts.addEventListener('click', function (e) {
+      // Packaging tiles (single-select)
       var item = e.target.closest('.specs-opt-item');
-      if (item) selectSpecsOpt(item.dataset.section, item.dataset.value || null);
+      if (item) { selectSpecsOpt(item.dataset.section, item.dataset.value || null); return; }
+      // Attribute rows (multi-select toggle)
+      var row = e.target.closest('.specs-attr-row');
+      if (row) { toggleSpecsAttrVal(row.dataset.section, row.dataset.value); return; }
+    });
+    specsOpts.addEventListener('input', function (e) {
+      var inp = e.target.closest('.js-specs-attr-search');
+      if (!inp) return;
+      var q    = inp.value.toLowerCase().trim();
+      var rows = specsOpts.querySelectorAll('.specs-attr-row');
+      rows.forEach(function (r) {
+        r.style.display = (!q || (r.dataset.value || '').toLowerCase().indexOf(q) !== -1) ? '' : 'none';
+      });
     });
   }
 
