@@ -125,6 +125,19 @@
                   </div>
                 </div>
               </div>
+              <div class="divider"></div>
+              <!-- Task 4: Number of line items -->
+              <div class="form-row" style="align-items:flex-end;margin-top:0">
+                <div class="form-col" style="max-width:200px">
+                  <div class="form-group" style="margin-bottom:0">
+                    <label class="form-label">Number of Line Items</label>
+                    <input class="form-input" type="number" id="row-count-input" min="1" max="50" placeholder="e.g. 5" />
+                  </div>
+                </div>
+                <div class="form-col" style="flex:0;margin-bottom:var(--space-4)">
+                  <button class="btn btn-outline" onclick="initRows()">Generate Rows</button>
+                </div>
+              </div>
             </div>
 
             <!-- ── Entry Section ──────────────────────────── -->
@@ -143,20 +156,15 @@
               <div id="simple-entry-wrap" style="overflow-x:auto">
                 <table class="pur-entry-tbl" id="simple-tbl">
                   <thead>
-                    <!-- Row 1: Column labels -->
+                    <!-- Row 1: Column labels (12 cols) -->
                     <tr class="pur-th-labels">
                       <th style="width:36px">#</th>
-                      <th style="min-width:150px">Category</th>
-                      <th style="min-width:100px">Design Code</th>
+                      <th style="min-width:210px">Category</th>
                       <th style="min-width:160px">Item Name</th>
-                      <th style="min-width:140px">Packaging</th>
-                      <th style="min-width:130px">Attr 1</th>
-                      <th style="min-width:130px">Attr 2</th>
-                      <th style="width:72px">Qty</th>
-                      <th style="width:82px"></th>
-                      <th style="min-width:80px">Buy ₹</th>
-                      <th style="min-width:96px">Sell ₹</th>
-                      <th style="min-width:96px">MRP ₹</th>
+                      <th style="width:80px">Qty</th>
+                      <th style="min-width:90px">Buy ₹</th>
+                      <th style="min-width:100px">Sell ₹</th>
+                      <th style="min-width:100px">MRP ₹</th>
                       <th style="width:58px">GST%</th>
                       <th style="min-width:90px">Amount</th>
                       <th style="min-width:90px">Total</th>
@@ -168,35 +176,13 @@
                       <td></td>
                       <td>
                         <select class="pur-apply-sel" id="apply-cat" onchange="onApplyAllCatChange(this.value)">
-                          <option value="">Apply category…</option>
+                          <option value="">Apply category to all…</option>
                         </select>
                       </td>
                       <td></td>
-                      <td></td>
-                      <td>
-                        <select class="pur-apply-sel" id="apply-pkg" onchange="onApplyAllPkgChange(this.value)">
-                          <option value="">Apply packaging…</option>
-                        </select>
-                      </td>
-                      <td>
-                        <select class="pur-apply-sel" id="apply-attr1" onchange="onApplyAllAttrChange(0, this.value)">
-                          <option value="">Apply Attr 1…</option>
-                        </select>
-                      </td>
-                      <td>
-                        <select class="pur-apply-sel" id="apply-attr2" onchange="onApplyAllAttrChange(1, this.value)">
-                          <option value="">Apply Attr 2…</option>
-                        </select>
-                      </td>
                       <td>
                         <input class="pur-apply-inp" type="number" id="apply-qty" min="0"
                           placeholder="Qty all" onchange="applyToAllField('qty', this.value)" />
-                      </td>
-                      <td>
-                        <div class="pur-qty-toggle">
-                          <button class="seg-btn" onclick="applyToAllField('qty_mode','pcs')">Pcs</button>
-                          <button class="seg-btn" onclick="applyToAllField('qty_mode','sets')">Sets</button>
-                        </div>
                       </td>
                       <td>
                         <input class="pur-apply-inp" type="number" id="apply-buy" min="0"
@@ -215,7 +201,7 @@
                   </thead>
                   <tbody id="simple-tbody">
                     <tr class="pur-empty-row">
-                      <td colspan="17">Click <strong>+ Add Row</strong> to begin entering items.</td>
+                      <td colspan="12">Click <strong>+ Add Row</strong> or use <strong>Generate Rows</strong> in Bill Details to begin.</td>
                     </tr>
                   </tbody>
                 </table>

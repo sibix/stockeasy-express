@@ -130,6 +130,21 @@ function addOneRow() {
   updateFooter();
 }
 
+// ── Generate N rows from Bill Details input ──────────────────
+function initRows() {
+  var n = parseInt(document.getElementById('row-count-input').value, 10) || 0;
+  if (n < 1 || n > 50) { showToast('Enter a number between 1 and 50', 'amber'); return; }
+
+  var hasData = _lineItems.some(function (li) { return li.item_name || li.qty > 0; });
+  if (hasData && !confirm('This will replace existing rows. Continue?')) return;
+
+  _lineItems   = [];
+  _rowCounter  = 0;
+  for (var i = 0; i < n; i++) addRow();
+  renderSimpleTable();
+  updateFooter();
+}
+
 function addRow() {
   _rowCounter++;
   _lineItems.push({
@@ -152,6 +167,7 @@ function addRow() {
     gst_cgst:     0,
     gst_sgst:     0,
     expanded:     false,
+    specs_open:   false,
     overrides:    {},   // { attrsKey: actualQty } for set mode
     loose_qtys:   {},   // { attrsKey: qty } for loose mode
     ean_upcs:     {}    // { attrsKey: ean }
@@ -173,13 +189,14 @@ function getRow(rid) {
 function renderSimpleTable() {
   var tbody = document.getElementById('simple-tbody');
   if (!_lineItems.length) {
-    tbody.innerHTML = '<tr class="pur-empty-row"><td colspan="17">Click <strong>+ Add Row</strong> to begin entering items.</td></tr>';
+    tbody.innerHTML = '<tr class="pur-empty-row"><td colspan="12">Click <strong>+ Add Row</strong> or use <strong>Generate Rows</strong> in Bill Details to begin.</td></tr>';
     return;
   }
 
   var html = '';
   _lineItems.forEach(function (li, idx) {
     html += buildDataRow(li, idx);
+    html += buildSpecsRow(li);
     html += buildBreakdownRow(li);
   });
   tbody.innerHTML = html;
@@ -188,81 +205,62 @@ function renderSimpleTable() {
 function buildDataRow(li, idx) {
   var rid = li.row_id;
 
-  // Category dropdown
+  // Category dropdown — Task 1: use form-select, Task 3: add Item Specs button
   var catOpts = '<option value="">— Category —</option>' +
     _categories.map(function (c) {
       return '<option value="' + c.id + '"' + (li.category_id == c.id ? ' selected' : '') + '>' + escH(c.name) + '</option>';
     }).join('');
 
-  // Packaging dropdown
-  var pkgOpts = '<option value="0">Loose / No set</option>' +
-    (li.set_defs || []).map(function (sd) {
-      return '<option value="' + sd.id + '"' + (li.set_def_id == sd.id ? ' selected' : '') + '>' + escH(sd.name) + '</option>';
-    }).join('');
-  var pkgSel = li.set_def_id || 0;
-
-  // Attr cells
-  var attr1Cell = buildAttrCell(li, 0);
-  var attr2Cell = buildAttrCell(li, 1);
+  // Item Specs button state
+  var specsHasSettings = li.set_def || Object.keys(li.fixed_attrs || {}).length > 0;
+  var specsBtnCls  = 'pur-specs-btn js-row-specs' + (specsHasSettings ? ' active' : '') + (li.specs_open ? ' open' : '');
+  var specsBtnText = specsHasSettings
+    ? '⚙ Item Specs <span style="color:var(--green-600)">✓</span>'
+    : '⚙ Item Specs';
 
   // GST %
-  var gstPct = ((li.gst_cgst || 0) + (li.gst_sgst || 0));
+  var gstPct = (li.gst_cgst || 0) + (li.gst_sgst || 0);
 
-  // Amounts
+  // Computed amounts
   var amount = calcLineAmount(li);
   var total  = calcLineTotal(li);
 
-  // Margin labels
+  // Margin labels — Task 1: same visual, just new classes
   var sellMargin = calcMarginPct(li.buy_price, li.sell_price);
   var mrpMargin  = calcMarginPct(li.buy_price, li.mrp);
   var lowWarn    = parseFloat(_settings.low_margin_warning || 0);
   var sellWarn   = sellMargin !== null && sellMargin < lowWarn;
   var mrpWarn    = mrpMargin  !== null && mrpMargin  < lowWarn;
 
-  // Product code display
-  var codeDisplay = li.product_code
-    ? '<span class="pur-code-chip">' + escH(li.product_code) + '</span>'
-    : '<span style="color:var(--slate-300);font-size:var(--text-xs)">—</span>';
-
   // Expand button
   var expandCls = li.expanded ? 'pur-expand-btn js-row-expand open' : 'pur-expand-btn js-row-expand';
 
+  // Task 1: use form-input / form-select (same as Bill Details)
+  // Task 2: removed Design Code, Packaging, Attr 1, Attr 2, Pcs/Sets toggle
+  // Task 3: Item Specs button lives inside the Category cell
   return '<tr class="pur-data-row" id="srow-' + rid + '" data-rid="' + rid + '">' +
     '<td class="pur-row-num">' + (idx + 1) + '</td>' +
-    '<td><select class="pur-cell-sel js-row-cat">' + catOpts + '</select></td>' +
-    '<td>' + codeDisplay + '</td>' +
     '<td>' +
-      '<input class="pur-cell-inp js-row-name" type="text" value="' + escH(li.item_name) + '" placeholder="Item name" />' +
+      '<select class="form-select js-row-cat">' + catOpts + '</select>' +
+      '<button class="' + specsBtnCls + '">' + specsBtnText + '</button>' +
     '</td>' +
-    '<td>' +
-      '<select class="pur-cell-sel js-row-pkg" data-sel="' + pkgSel + '">' + pkgOpts + '</select>' +
-    '</td>' +
-    attr1Cell +
-    attr2Cell +
-    '<td>' +
-      '<input class="pur-qty-inp js-row-qty" type="number" min="0" value="' + (li.qty || '') + '" placeholder="0" />' +
-    '</td>' +
-    '<td>' +
-      '<div class="pur-qty-toggle">' +
-        '<button class="seg-btn js-mode-pcs' + (li.qty_mode !== 'sets' ? ' active' : '') + '">Pcs</button>' +
-        '<button class="seg-btn js-mode-sets' + (li.qty_mode === 'sets' ? ' active' : '') + '">Sets</button>' +
-      '</div>' +
+    '<td><input class="form-input js-row-name" type="text" value="' + escH(li.item_name) + '" placeholder="Item name" /></td>' +
+    '<td><input class="form-input js-row-qty" type="number" min="0" value="' + (li.qty || '') + '" placeholder="0" style="font-family:var(--font-mono);text-align:right" /></td>' +
+    '<td class="pur-price-cell">' +
+      '<input class="form-input js-row-buy" type="number" min="0" value="' + (li.buy_price || '') + '" placeholder="0.00" style="font-family:var(--font-mono)" />' +
     '</td>' +
     '<td class="pur-price-cell">' +
-      '<input class="pur-cell-inp js-row-buy" type="number" min="0" value="' + (li.buy_price || '') + '" placeholder="0.00" />' +
-    '</td>' +
-    '<td class="pur-price-cell">' +
-      '<input class="pur-cell-inp js-row-sell" type="number" min="0" value="' + (li.sell_price || '') + '" placeholder="0.00" />' +
+      '<input class="form-input js-row-sell" type="number" min="0" value="' + (li.sell_price || '') + '" placeholder="0.00" style="font-family:var(--font-mono)" />' +
       (sellMargin !== null ? '<span class="pur-margin-sub' + (sellWarn ? ' warn' : '') + '">' + sellMargin + '% margin</span>' : '') +
     '</td>' +
     '<td class="pur-price-cell">' +
-      '<input class="pur-cell-inp js-row-mrp" type="number" min="0" value="' + (li.mrp || '') + '" placeholder="0.00" />' +
+      '<input class="form-input js-row-mrp" type="number" min="0" value="' + (li.mrp || '') + '" placeholder="0.00" style="font-family:var(--font-mono)" />' +
       (mrpMargin !== null ? '<span class="pur-margin-sub' + (mrpWarn ? ' warn' : '') + '">' + mrpMargin + '% margin</span>' : '') +
     '</td>' +
     '<td class="pur-gst-label">' + (gstPct ? gstPct + '%' : '—') + '</td>' +
     '<td class="pur-mono-val js-row-amount">' + (amount ? formatINR(amount) : '—') + '</td>' +
     '<td class="pur-total-val js-row-total">' + (total ? formatINR(total) : '—') + '</td>' +
-    '<td><button class="' + expandCls + '" title="Expand variants">▼</button></td>' +
+    '<td><button class="' + expandCls + '" title="Variant breakdown">▼</button></td>' +
     '<td><button class="pur-del-btn js-row-del" title="Delete row">×</button></td>' +
   '</tr>';
 }
@@ -305,7 +303,7 @@ function buildBreakdownRow(li) {
   var rid = li.row_id;
   var display = li.expanded ? '' : 'display:none';
   return '<tr class="pur-breakdown-tr" id="bd-' + rid + '" style="' + display + '">' +
-    '<td colspan="17"><div class="pur-breakdown-panel" id="bd-panel-' + rid + '">' +
+    '<td colspan="12"><div class="pur-breakdown-panel" id="bd-panel-' + rid + '">' +
       (li.expanded ? buildBreakdownContent(li) : '') +
     '</div></td>' +
   '</tr>';
@@ -368,6 +366,81 @@ function buildBreakdownContent(li) {
       '</tr></thead>' +
       '<tbody>' + rows + '</tbody>' +
     '</table>';
+}
+
+// ── Specs row (hidden <tr> after each data row) ───────────────
+function buildSpecsRow(li) {
+  var rid     = li.row_id;
+  var display = li.specs_open ? '' : 'display:none';
+  return '<tr class="pur-specs-tr" id="specs-' + rid + '" data-rid="' + rid + '" style="' + display + '">' +
+    '<td colspan="12"><div class="pur-specs-panel" id="specs-panel-' + rid + '">' +
+      (li.specs_open ? buildSpecsContent(li) : '') +
+    '</div></td>' +
+  '</tr>';
+}
+
+function buildSpecsContent(li) {
+  var rid  = li.row_id;
+  var html = '<div style="display:flex;align-items:flex-end;gap:var(--space-3);flex-wrap:wrap;">';
+
+  // Packaging select
+  var pkgOpts = '<option value="0">— Loose / No set —</option>' +
+    (li.set_defs || []).map(function (sd) {
+      return '<option value="' + sd.id + '"' + (li.set_def_id === sd.id ? ' selected' : '') + '>' + escH(sd.name) + '</option>';
+    }).join('');
+  html += '<div style="min-width:180px">' +
+    '<div class="pur-specs-label">Packaging</div>' +
+    '<select class="form-select js-row-pkg" style="width:100%">' + pkgOpts + '</select>' +
+  '</div>';
+
+  // Fixed attr dropdowns (set mode only, exclude varies_by attr)
+  if (li.set_def && li.category) {
+    var variesBy   = detectVariesBy(li.set_def, li.category);
+    var fixedAttrs = (li.category.attributes || []).filter(function (a) { return a.attribute_name !== variesBy; });
+    fixedAttrs.forEach(function (attr) {
+      var currentVal = (li.fixed_attrs || {})[attr.attribute_name] || '';
+      var opts = '<option value="">— ' + escH(attr.attribute_name) + ' —</option>' +
+        (attr.attribute_values || []).map(function (v) {
+          return '<option value="' + escH(v) + '"' + (currentVal === v ? ' selected' : '') + '>' + escH(v) + '</option>';
+        }).join('');
+      html += '<div style="min-width:140px">' +
+        '<div class="pur-specs-label">' + escH(attr.attribute_name) + '</div>' +
+        '<select class="form-select js-row-attr" data-attr-name="' + escH(attr.attribute_name) + '" style="width:100%">' + opts + '</select>' +
+      '</div>';
+    });
+  }
+
+  // Pcs / Sets toggle
+  html += '<div>' +
+    '<div class="pur-specs-label">Qty Mode</div>' +
+    '<div class="seg-control">' +
+      '<button class="seg-btn js-mode-pcs' + (li.qty_mode === 'pcs'  ? ' active' : '') + '">Pcs</button>' +
+      '<button class="seg-btn js-mode-sets' + (li.qty_mode === 'sets' ? ' active' : '') + '">Sets</button>' +
+    '</div>' +
+  '</div>';
+
+  html += '</div>';
+  return html;
+}
+
+// ── Toggle specs panel ────────────────────────────────────────
+function toggleSpecs(rid) {
+  var li = getRow(rid);
+  if (!li) return;
+  li.specs_open = !li.specs_open;
+
+  var specsRow   = document.getElementById('specs-' + rid);
+  var specsPanel = document.getElementById('specs-panel-' + rid);
+  var specsBtn   = document.querySelector('#srow-' + rid + ' .js-row-specs');
+
+  if (li.specs_open) {
+    if (specsPanel) specsPanel.innerHTML = buildSpecsContent(li);
+    if (specsRow)   specsRow.style.display = '';
+    if (specsBtn)   specsBtn.classList.add('open');
+  } else {
+    if (specsRow)   specsRow.style.display = 'none';
+    if (specsBtn)   specsBtn.classList.remove('open');
+  }
 }
 
 // ── Toggle breakdown ─────────────────────────────────────────
@@ -475,7 +548,15 @@ function onSimpleTbodyClick(e) {
     return;
   }
 
-  // Pcs/Sets mode toggle
+  // Item Specs toggle
+  if (t.matches('.js-row-specs') || t.closest('.js-row-specs')) {
+    var btn = t.matches('.js-row-specs') ? t : t.closest('.js-row-specs');
+    var rid = getRowId(btn);
+    if (rid) toggleSpecs(rid);
+    return;
+  }
+
+  // Pcs/Sets mode toggle (buttons live inside specs panel)
   if (t.matches('.js-mode-pcs')) {
     var rid = getRowId(t);
     if (rid) onQtyModeChange(rid, 'pcs');
@@ -583,11 +664,13 @@ function onQtyModeChange(rid, mode) {
   li.qty_mode = mode;
   li.overrides = {};
 
-  // Update the toggle buttons in the row without full re-render
-  var row = document.getElementById('srow-' + rid);
-  if (row) {
-    row.querySelector('.js-mode-pcs').classList.toggle('active', mode === 'pcs');
-    row.querySelector('.js-mode-sets').classList.toggle('active', mode === 'sets');
+  // Update the toggle buttons in the specs panel (moved there in Phase 2)
+  var specsPanel = document.getElementById('specs-panel-' + rid);
+  if (specsPanel) {
+    var pcsBtn  = specsPanel.querySelector('.js-mode-pcs');
+    var setsBtn = specsPanel.querySelector('.js-mode-sets');
+    if (pcsBtn)  pcsBtn.classList.toggle('active', mode === 'pcs');
+    if (setsBtn) setsBtn.classList.toggle('active', mode === 'sets');
   }
 
   updateRowAmounts(rid);
@@ -1090,32 +1173,11 @@ function applyToAllField(field, value) {
 }
 
 function updateApplyAllSelects(cat, setDefs) {
-  var pkgSel = document.getElementById('apply-pkg');
-  pkgSel.innerHTML = '<option value="0">Loose / No set</option>' +
-    (setDefs || cat.set_definitions || []).map(function (sd) {
-      return '<option value="' + sd.id + '">' + escH(sd.name) + '</option>';
-    }).join('');
-
-  var attrs = cat.attributes || [];
-  var vb    = null; // For apply-all we don't filter attrs by varies_by
-
-  var a1sel = document.getElementById('apply-attr1');
-  a1sel.innerHTML = '<option value="">Apply Attr 1…</option>' +
-    (attrs[0] ? (attrs[0].attribute_values || []).map(function (v) {
-      return '<option value="' + escH(v) + '">' + escH(v) + '</option>';
-    }).join('') : '');
-
-  var a2sel = document.getElementById('apply-attr2');
-  a2sel.innerHTML = '<option value="">Apply Attr 2…</option>' +
-    (attrs[1] ? (attrs[1].attribute_values || []).map(function (v) {
-      return '<option value="' + escH(v) + '">' + escH(v) + '</option>';
-    }).join('') : '');
+  // Packaging and attr selects removed from apply-all row in Phase 2 (moved to per-row ITEM SPECS panel)
 }
 
 function resetApplyAllSelects() {
-  document.getElementById('apply-pkg').innerHTML   = '<option value="">Apply packaging…</option>';
-  document.getElementById('apply-attr1').innerHTML = '<option value="">Apply Attr 1…</option>';
-  document.getElementById('apply-attr2').innerHTML = '<option value="">Apply Attr 2…</option>';
+  // Packaging and attr selects removed from apply-all row in Phase 2 (moved to per-row ITEM SPECS panel)
 }
 
 // ── Build payload for POST /purchases ────────────────────────
@@ -1253,6 +1315,7 @@ function resetBillForm() {
   document.getElementById('bill-date').value          = todayISO();
   document.getElementById('bill-form-title').textContent = 'New Purchase Bill';
 
+  document.getElementById('row-count-input').value = '';
   resetApplyAllSelects();
   document.getElementById('apply-cat').value = '';
 

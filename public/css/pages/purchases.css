@@ -893,6 +893,62 @@
   gap: var(--space-3);
 }
 
+/* ── Item Specs button (inside category cell) ──────────────── */
+.pur-specs-btn {
+  display: block;
+  width: 100%;
+  margin-top: var(--space-1);
+  padding: 3px var(--space-2);
+  border: 1px solid var(--slate-200);
+  border-radius: var(--radius-md);
+  background: var(--white);
+  font-size: 10px;
+  font-weight: var(--weight-semibold);
+  color: var(--slate-400);
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.1s, color 0.1s, border-color 0.1s;
+  white-space: nowrap;
+}
+
+.pur-specs-btn:hover {
+  background: var(--slate-50);
+  color: var(--slate-600);
+  border-color: var(--slate-300);
+}
+
+.pur-specs-btn.active {
+  border-color: var(--color-primary);
+  color: var(--slate-700);
+}
+
+.pur-specs-btn.open {
+  background: var(--slate-50);
+  border-color: var(--slate-300);
+  color: var(--slate-700);
+}
+
+/* ── Specs row & panel ─────────────────────────────────────── */
+.pur-specs-tr td {
+  padding: 0 !important;
+  border-bottom: none !important;
+  background: var(--slate-50) !important;
+}
+
+.pur-specs-panel {
+  padding: var(--space-2) var(--space-4) var(--space-3);
+  border-bottom: 1px solid var(--slate-100);
+}
+
+.pur-specs-label {
+  font-size: 10px;
+  color: var(--slate-400);
+  font-weight: var(--weight-semibold);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 4px;
+}
+
 /* ── Variant attr tags in Detail View ──────────────────────── */
 .pur-attr-tag {
   display: inline-block;
