@@ -59,7 +59,7 @@ var STOCK_SCHEMA = {
     { k:'sell',             lb:'Sell ₹',          t:'inr',         w:100, srt:1, flt:0, vis:1 },
     { k:'mrp',              lb:'MRP ₹',           t:'inr',         w:100, srt:0, flt:0, vis:0 },
     { k:'val',              lb:'Stock Value ₹',   t:'inr',         w:130, srt:1, flt:0, vis:1 },
-    { k:'barcode',          lb:'Barcode',         t:'mono',        w:160, srt:0, flt:1, vis:0 },
+    { k:'barcode',          lb:'Barcode',         t:'mono',        w:160, srt:0, flt:1, vis:1 },
   ]
 };
 
@@ -113,7 +113,7 @@ async function initStockTab() {
     emptyLabel:   'No stock entries found',
     storageKey:   'dt-pref-stock-view',
     idPrefix:     'sv',
-    searchFields: ['item', 'cat', 'sku', 'internal_barcode'],
+    searchFields: ['item', 'cat', 'sku', 'internal_barcode', 'attrs_text', 'barcode'],
     schema:       STOCK_SCHEMA,
   });
 

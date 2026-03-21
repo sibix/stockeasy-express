@@ -247,11 +247,15 @@ DetailedTable.prototype._filteredRows = function() {
   var rows = (this._data || []).slice();
 
   // Global search — uses cfg.searchFields if provided, else sensible defaults
+  // Supports ">" as AND separator: "shirt>m>yellow" means ALL tokens must match
   if (self._S.q) {
-    var fields = self._cfg.searchFields || ['name', 'hsn_code', 'attribute_names', 'tags'];
+    var fields  = self._cfg.searchFields || ['name', 'hsn_code', 'attribute_names', 'tags'];
+    var tokens  = self._S.q.split('>').map(function(t) { return t.trim(); }).filter(Boolean);
     rows = rows.filter(function(r) {
-      return fields.some(function(f) {
-        return String(r[f] || '').toLowerCase().includes(self._S.q);
+      return tokens.every(function(token) {
+        return fields.some(function(f) {
+          return String(r[f] || '').toLowerCase().includes(token);
+        });
       });
     });
   }

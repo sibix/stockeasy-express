@@ -536,7 +536,7 @@ router.get("/stock/view", async (req, res) => {
         iv.stock * iv.buy_price AS val,
         i.name AS item, i.tags,
         i.internal_barcode,
-        iv.barcode  AS variant_barcode,
+        iv.barcode,
         i.min_stock_alert,
         c.name AS cat,
         c.id   AS category_id
