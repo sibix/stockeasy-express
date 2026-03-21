@@ -1073,10 +1073,12 @@
 .pur-compact-num::-webkit-inner-spin-button { -webkit-appearance: none; }
 
 /* ── Category search drop in table rows ─────────────────────── */
+/* Must exceed table row paint order — set very high so it floats above all rows */
 .pur-cat-drop {
   min-width: 200px;
   left: 0;
   right: auto;
+  z-index: 9999;
 }
 
 /* ── Specs row & panel ─────────────────────────────────────── */

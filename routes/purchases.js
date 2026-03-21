@@ -219,14 +219,56 @@ router.post('/', async (req, res) => {
     let   variantsCreated = 0;
     let   variantsUpdated = 0;
 
-    // ── 2. Process each line item (skip for drafts) ─────────
+    // ── 2. Process each line item ─────────────────────────────
+    // Drafts: create items + UOMs but NOT variants/stock (variant_id stays null)
     if (billStatus === 'draft') {
-      // For drafts, just save line items without stock changes
       for (const line of line_items) {
-        for (const variant of (line.variants || [])) {
-          const qty = parseFloat(variant.quantity || 0);
+        const { item_id, item_name, category_id, uom_id, variants } = line;
+
+        // Find or create item
+        let draftItemId = item_id;
+        if (!draftItemId && item_name) {
+          const [existItem] = await connection.execute(
+            `SELECT id FROM items WHERE name = ? AND category_id = ? AND status = 'active'`,
+            [item_name.trim(), category_id]
+          );
+          if (existItem.length) {
+            draftItemId = existItem[0].id;
+          } else {
+            const [newItem] = await connection.execute(
+              `INSERT INTO items (category_id, name, base_uom, has_variants, created_by) VALUES (?, ?, 'Pcs', 1, ?)`,
+              [category_id, item_name.trim(), req.session.userId]
+            );
+            draftItemId = newItem.insertId;
+            try {
+              const pc = await generateProductCode(connection, draftItemId);
+              await connection.execute('UPDATE items SET product_code = ? WHERE id = ?', [pc, draftItemId]);
+            } catch(e) {}
+          }
+        }
+        if (!draftItemId) continue; // can't save without a valid item
+
+        // Always resolve UOM from DB — never trust frontend value
+        let draftUomId = null;
+        const [existUom] = await connection.execute(
+          `SELECT id FROM item_uoms WHERE item_id = ? AND is_base = 1 LIMIT 1`,
+          [draftItemId]
+        );
+        if (existUom.length) {
+          draftUomId = existUom[0].id;
+        } else {
+          const [newUom] = await connection.execute(
+            `INSERT INTO item_uoms (item_id, uom_name, conversion_factor, is_base) VALUES (?, 'Pcs', 1, 1)`,
+            [draftItemId]
+          );
+          draftUomId = newUom.insertId;
+        }
+
+        for (const variant of (variants || [])) {
+          const qty       = parseFloat(variant.quantity || 0);
           if (qty <= 0) continue;
           const expectedQty = variant.expected_qty != null ? parseFloat(variant.expected_qty) : qty;
+          const unitPrice   = parseFloat(variant.unit_price || 0);
           await connection.execute(`
             INSERT INTO purchase_items (
               purchase_id, item_id, variant_id, uom_id,
@@ -234,14 +276,10 @@ router.post('/', async (req, res) => {
               unit_price, cgst_amount, sgst_amount, total_price
             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
             [
-              purchaseId,
-              line.item_id || null,
-              variant.variant_id || null,
-              line.uom_id || 1,
+              purchaseId, draftItemId, variant.variant_id || null, draftUomId,
               qty, expectedQty, 1, qty,
-              parseFloat(variant.unit_price || 0).toFixed(2),
-              '0.00', '0.00',
-              (qty * parseFloat(variant.unit_price || 0)).toFixed(2)
+              unitPrice.toFixed(2), '0.00', '0.00',
+              (qty * unitPrice).toFixed(2)
             ]
           );
         }
@@ -299,7 +337,25 @@ router.post('/', async (req, res) => {
         }
       }
 
-      // ── 2b. Process each variant in this line ──────────────
+      // ── 2b. Resolve UOM for this item ──────────────────────
+      // Always look up from DB — never trust the frontend value,
+      // since item_uoms is managed server-side per item.
+      let resolvedUomId = null;
+      const [existingUom] = await connection.execute(
+        `SELECT id FROM item_uoms WHERE item_id = ? AND is_base = 1 LIMIT 1`,
+        [actualItemId]
+      );
+      if (existingUom.length) {
+        resolvedUomId = existingUom[0].id;
+      } else {
+        const [newUom] = await connection.execute(
+          `INSERT INTO item_uoms (item_id, uom_name, conversion_factor, is_base) VALUES (?, 'Pcs', 1, 1)`,
+          [actualItemId]
+        );
+        resolvedUomId = newUom.insertId;
+      }
+
+      // ── 2c. Process each variant in this line ──────────────
       for (const variant of (variants || [])) {
         const {
           attributes,   // { Size: 'M', Color: 'Red' }
@@ -380,7 +436,7 @@ router.post('/', async (req, res) => {
             purchaseId,
             actualItemId,
             variantId,
-            uom_id || 1,
+            resolvedUomId,
             qty,
             expectedQty,
             convFactor,
@@ -404,7 +460,7 @@ router.post('/', async (req, res) => {
           [
             actualItemId,
             variantId,
-            uom_id || 1,
+            resolvedUomId,
             purchaseId,
             qty,
             qty * convFactor,

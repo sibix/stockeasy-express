@@ -652,7 +652,17 @@ function onSimpleTbodyInput(e) {
   if (t.matches('.js-row-cat-search')) { showCatDrop(rid, t.value); return; }
   if (t.matches('.js-row-name'))       { li.item_name  = t.value; updateFooter(); return; }
   if (t.matches('.js-row-qty'))        { li.qty = parseFloat(t.value) || 0; li.overrides = {}; updateRowAmounts(rid); return; }
-  if (t.matches('.js-row-buy'))        { li.buy_price  = parseFloat(t.value) || 0; updateRowAmounts(rid); return; }
+  if (t.matches('.js-row-buy')) {
+    li.buy_price = parseFloat(t.value) || 0;
+    // Recalculate GST slab if this category uses variable GST
+    if (li.category && li.category.gst_type === 'variable') {
+      var newRates = getGstRates(li);
+      li.gst_cgst = newRates.cgst;
+      li.gst_sgst = newRates.sgst;
+    }
+    updateRowAmounts(rid);
+    return;
+  }
   if (t.matches('.js-row-sell'))       { li.sell_price = parseFloat(t.value) || 0; updateRowAmounts(rid); return; }
   if (t.matches('.js-row-mrp'))        { li.mrp        = parseFloat(t.value) || 0; updateRowAmounts(rid); return; }
 }
@@ -726,9 +736,10 @@ async function onCatChange(rid, catId) {
     if (cat) {
       li.category      = cat;
       li.category_name = cat.name;
-      li.gst_cgst      = parseFloat(cat.cgst_rate || 0);
-      li.gst_sgst      = parseFloat(cat.sgst_rate || 0);
       li.item_name = cat.name; // always sync item name to category name
+      var initRates = getGstRates(li);
+      li.gst_cgst  = initRates.cgst;
+      li.gst_sgst  = initRates.sgst;
 
       // Load set defs
       var supId = document.getElementById('sup-id').value;
@@ -824,8 +835,13 @@ function updateRowAmounts(rid) {
 
   var amountCell = row.querySelector('.js-row-amount');
   var totalCell  = row.querySelector('.js-row-total');
+  var gstCell    = row.querySelector('.pur-gst-label');
   if (amountCell) amountCell.textContent = amount ? formatINR(amount) : '—';
   if (totalCell)  totalCell.textContent  = total  ? formatINR(total)  : '—';
+  if (gstCell) {
+    var gstPct = (li.gst_cgst || 0) + (li.gst_sgst || 0);
+    gstCell.textContent = gstPct ? gstPct + '%' : '—';
+  }
 
   // Update margin sub-labels
   var sellCell = row.querySelector('.js-row-sell');
@@ -954,12 +970,17 @@ function setDetailFilter(rid) {
 // ── Expand line item into variants ───────────────────────────
 function expandLineItem(li) {
   if (!li.category) return [];
-  var attrs = li.category.attributes || [];
+
+  // Helper: normalise a fixed_attrs value to array
+  function toArr(v) { return Array.isArray(v) ? v.filter(Boolean) : (v ? [v] : []); }
 
   if (!li.set_def) {
-    // Loose mode — build all combos, user enters qtys
-    var combos = buildAttrCombos(attrs);
-    return combos.map(function (comboAttrs) {
+    // Loose mode — generate combos from selected fixed_attrs (arrays)
+    var attrDefs = Object.keys(li.fixed_attrs || {}).map(function (k) {
+      return { name: k, values: toArr(li.fixed_attrs[k]) };
+    });
+    var looseCombos = buildAttrCombosFromArrays(attrDefs);
+    return looseCombos.map(function (comboAttrs) {
       var key = attrsKey(comboAttrs);
       return {
         row_id:       li.row_id,
@@ -980,46 +1001,55 @@ function expandLineItem(li) {
     });
   }
 
-  // Set mode — expand from ratios
+  // Set mode — cross-product: ratio keys (varies_by) × fixed_attr combos
   var setDef   = li.set_def;
   var variesBy = detectVariesBy(setDef, li.category);
   var ratios   = setDef.size_ratios || {};
   if (typeof ratios === 'string') { try { ratios = JSON.parse(ratios); } catch (e) { ratios = {}; } }
 
-  var totalRatio  = Object.values(ratios).reduce(function (a, b) { return a + (b || 0); }, 0) || 1;
-  var qtyInSets   = li.qty_mode === 'sets' ? (li.qty || 0) : null;
-  var qtyInPcs    = li.qty_mode === 'pcs'  ? (li.qty || 0) : null;
+  var totalRatio = Object.values(ratios).reduce(function (a, b) { return a + (b || 0); }, 0) || 1;
+  var qtyInSets  = li.qty_mode === 'sets' ? (li.qty || 0) : null;
+  var qtyInPcs   = li.qty_mode === 'pcs'  ? (li.qty || 0) : null;
 
-  return Object.keys(ratios).map(function (varVal) {
+  // Build fixed-attr combos (exclude the varies_by attr; supports multi-select arrays)
+  var fixedDefs = Object.keys(li.fixed_attrs || {})
+    .filter(function (k) { return k !== variesBy; })
+    .map(function (k) { return { name: k, values: toArr(li.fixed_attrs[k]) }; });
+  var fixedCombos = buildAttrCombosFromArrays(fixedDefs);
+
+  var result = [];
+  Object.keys(ratios).forEach(function (varVal) {
     var ratio    = ratios[varVal] || 1;
     var expected = qtyInSets !== null
       ? qtyInSets * ratio
       : Math.round((qtyInPcs || 0) * ratio / totalRatio);
 
-    var varAttrs = Object.assign({}, li.fixed_attrs || {});
-    if (variesBy) varAttrs[variesBy] = varVal;
-    else          varAttrs['Value']  = varVal;
+    fixedCombos.forEach(function (fixedCombo) {
+      var varAttrs = Object.assign({}, fixedCombo);
+      if (variesBy) varAttrs[variesBy] = varVal;
+      else          varAttrs['Value']  = varVal;
 
-    var key    = attrsKey(varAttrs);
-    var actual = li.overrides.hasOwnProperty(key) ? li.overrides[key] : expected;
-
-    return {
-      row_id:       li.row_id,
-      item_name:    li.item_name,
-      product_code: li.product_code,
-      attributes:   varAttrs,
-      _key:         key,
-      expected_qty: expected,
-      actual_qty:   actual,
-      buy_price:    li.buy_price,
-      sell_price:   li.sell_price,
-      mrp:          li.mrp,
-      gst_cgst:     li.gst_cgst,
-      gst_sgst:     li.gst_sgst,
-      set_def_name: setDef.name,
-      ean:          li.ean_upcs[key] || ''
-    };
+      var key    = attrsKey(varAttrs);
+      var actual = li.overrides.hasOwnProperty(key) ? li.overrides[key] : expected;
+      result.push({
+        row_id:       li.row_id,
+        item_name:    li.item_name,
+        product_code: li.product_code,
+        attributes:   varAttrs,
+        _key:         key,
+        expected_qty: expected,
+        actual_qty:   actual,
+        buy_price:    li.buy_price,
+        sell_price:   li.sell_price,
+        mrp:          li.mrp,
+        gst_cgst:     li.gst_cgst,
+        gst_sgst:     li.gst_sgst,
+        set_def_name: setDef.name,
+        ean:          li.ean_upcs[key] || ''
+      });
+    });
   });
+  return result;
 }
 
 // ── Detect varies_by from set def ratios ─────────────────────
@@ -1044,7 +1074,7 @@ function detectVariesBy(setDef, category) {
   return null;
 }
 
-// ── Build all attribute combinations ────────────────────────
+// ── Build all attribute combinations (from category attribute objects) ────────
 function buildAttrCombos(attrs) {
   if (!attrs || !attrs.length) return [{}];
   var result = [{}];
@@ -1064,6 +1094,26 @@ function buildAttrCombos(attrs) {
   return result;
 }
 
+// ── Build combos from {name, values[]} array (used with fixed_attrs multi-select) ──
+// attrDefs = [{ name: 'Color', values: ['Red','Blue'] }, { name: 'Size', values: ['S','M'] }]
+function buildAttrCombosFromArrays(attrDefs) {
+  var result = [{}];
+  (attrDefs || []).forEach(function (def) {
+    var vals = (def.values || []).filter(Boolean);
+    if (!vals.length) return;
+    var newResult = [];
+    result.forEach(function (combo) {
+      vals.forEach(function (v) {
+        var c = Object.assign({}, combo);
+        c[def.name] = v;
+        newResult.push(c);
+      });
+    });
+    result = newResult;
+  });
+  return result.length ? result : [{}];
+}
+
 // ── Stable key for attrs object ──────────────────────────────
 function attrsKey(attrs) {
   var sorted = {};
@@ -1079,6 +1129,23 @@ function getQtyInPcs(li) {
     return li.qty * (li.set_def.total_pcs || 1);
   }
   return li.qty;
+}
+
+// ── GST rate resolver (standard / variable / exempt) ─────────
+function getGstRates(li) {
+  var cat = li.category;
+  if (!cat) return { cgst: 0, sgst: 0 };
+  if (cat.gst_type === 'exempt') return { cgst: 0, sgst: 0 };
+  if (cat.gst_type === 'variable' && cat.gst_threshold) {
+    var threshold = parseFloat(cat.gst_threshold) || 0;
+    var price     = parseFloat(li.buy_price)      || 0;
+    var useLower  = price === 0 || price <= threshold; // 0 = not entered yet → show lower slab
+    return useLower
+      ? { cgst: parseFloat(cat.lower_cgst  || 0), sgst: parseFloat(cat.lower_sgst  || 0) }
+      : { cgst: parseFloat(cat.higher_cgst || 0), sgst: parseFloat(cat.higher_sgst || 0) };
+  }
+  // Standard
+  return { cgst: parseFloat(cat.cgst_rate || 0), sgst: parseFloat(cat.sgst_rate || 0) };
 }
 
 // ── Amount calculations ──────────────────────────────────────
@@ -1192,8 +1259,9 @@ async function onApplyAllCatChange(catId) {
     li.fixed_attrs   = {};
     li.overrides     = {};
     li.loose_qtys    = {};
-    li.gst_cgst      = parseFloat(cat.cgst_rate || 0);
-    li.gst_sgst      = parseFloat(cat.sgst_rate || 0);
+    var applyRates = getGstRates(li);
+    li.gst_cgst    = applyRates.cgst;
+    li.gst_sgst    = applyRates.sgst;
     if (!li.item_name) li.item_name = cat.name;
   });
 
@@ -1278,22 +1346,28 @@ function buildPayload(saveAs) {
     var variants = [];
 
     if (!li.set_def) {
-      // Loose mode — use loose_qtys
-      Object.keys(li.loose_qtys).forEach(function (key) {
-        var qty = li.loose_qtys[key] || 0;
+      // Loose mode — generate combos from fixed_attrs arrays, distribute qty equally
+      var looseDefs = Object.keys(li.fixed_attrs || {}).map(function (k) {
+        var vals = Array.isArray(li.fixed_attrs[k]) ? li.fixed_attrs[k] : (li.fixed_attrs[k] ? [li.fixed_attrs[k]] : []);
+        return { name: k, values: vals.filter(Boolean) };
+      });
+      var looseCombos  = buildAttrCombosFromArrays(looseDefs);
+      var totalLooseQty = li.qty || 0;
+      var qtyEach      = Math.floor(totalLooseQty / looseCombos.length) || 0;
+      var remainder    = totalLooseQty % looseCombos.length;
+      looseCombos.forEach(function (attrs, idx) {
+        var qty = qtyEach + (idx < remainder ? 1 : 0);
         if (!qty) return;
-        try {
-          var attrs = JSON.parse(key);
-          variants.push({
-            attributes:   attrs,
-            quantity:     qty,
-            expected_qty: null,
-            unit_price:   li.buy_price || 0,
-            sell_price:   li.sell_price || 0,
-            mrp:          li.mrp || 0,
-            ean_upc:      li.ean_upcs[key] || ''
-          });
-        } catch (e) {}
+        var key = attrsKey(attrs);
+        variants.push({
+          attributes:   attrs,
+          quantity:     qty,
+          expected_qty: null,
+          unit_price:   li.buy_price  || 0,
+          sell_price:   li.sell_price || 0,
+          mrp:          li.mrp        || 0,
+          ean_upc:      li.ean_upcs[key] || ''
+        });
       });
     } else {
       // Set mode — expand from ratios
@@ -1318,7 +1392,6 @@ function buildPayload(saveAs) {
       item_id:     li.item_id || null,
       item_name:   li.item_name.trim(),
       category_id: li.category_id,
-      uom_id:      1,
       cgst_rate:   li.gst_cgst || 0,
       sgst_rate:   li.gst_sgst || 0,
       sell_price:  li.sell_price || 0,
