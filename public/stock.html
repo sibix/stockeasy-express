@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Inventory — StockEasy</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=DM+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="/css/styles.css" />
+    <link rel="stylesheet" href="/css/pages/categories.css" />
+    <link rel="stylesheet" href="/css/components/detailed-table.css" />
+  </head>
+  <body>
+    <div class="shell">
+
+      <!-- SIDEBAR -->
+      <div id="sidebar-container"></div>
+
+      <!-- MAIN -->
+      <div class="main">
+
+        <!-- TOPBAR -->
+        <div id="topbar-container"></div>
+
+        <!-- MODULE TABS -->
+        <div class="module-tabs visible">
+          <a href="#" class="mtab active" id="tab-stock"
+             onclick="switchStockTab('stock'); return false">📊 Stock</a>
+          <a href="#" class="mtab" id="tab-items"
+             onclick="switchStockTab('items'); return false">🏷️ Items</a>
+        </div>
+
+        <!-- PAGE CONTENT -->
+        <div class="page-content">
+
+          <!-- ── STOCK PANEL ────────────────────────────── -->
+          <div id="panel-stock">
+            <div class="page-header">
+              <div>
+                <div class="page-header-title">Stock</div>
+                <div class="page-header-sub">Current stock levels across all SKUs — sorted by category and item</div>
+              </div>
+            </div>
+
+            <div class="dt-stats" id="sv-stats">
+              <div class="dt-qs">
+                <div class="dt-qs-v">—</div>
+                <div class="dt-qs-l">Loading…</div>
+              </div>
+            </div>
+
+            <div class="dt-toolbar" id="sv-toolbar"></div>
+            <div class="dt-grp" id="sv-table">
+              <div style="padding:44px;text-align:center;color:var(--slate400)">
+                <div style="font-size:28px;margin-bottom:8px">⏳</div>
+                <div style="font-size:13px;font-weight:700;color:var(--slate600)">Loading stock…</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ── ITEMS PANEL ────────────────────────────── -->
+          <div id="panel-items" style="display:none">
+            <div class="page-header">
+              <div>
+                <div class="page-header-title">Items</div>
+                <div class="page-header-sub">All products in your catalogue — click a row to view variants</div>
+              </div>
+            </div>
+
+            <div class="dt-stats" id="iv-stats">
+              <div class="dt-qs">
+                <div class="dt-qs-v">—</div>
+                <div class="dt-qs-l">Loading…</div>
+              </div>
+            </div>
+
+            <div class="dt-toolbar" id="iv-toolbar"></div>
+            <div class="dt-grp" id="iv-table">
+              <div style="padding:44px;text-align:center;color:var(--slate400)">
+                <div style="font-size:28px;margin-bottom:8px">⏳</div>
+                <div style="font-size:13px;font-weight:700;color:var(--slate600)">Loading items…</div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+        <!-- end page-content -->
+
+      </div>
+      <!-- end main -->
+    </div>
+    <!-- end shell -->
+
+    <!-- TOAST -->
+    <div id="toast" class="toast toast-green" style="display:none">
+      <span id="toast-icon" style="font-size:var(--text-xl)">&#x2705;</span>
+      <span id="toast-msg"></span>
+    </div>
+
+    <!-- SCRIPTS -->
+    <script src="/js/app.js"></script>
+    <script src="/js/components/detailed-table.js"></script>
+    <script src="/js/pages/stock.js"></script>
+  </body>
+</html>

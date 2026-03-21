@@ -384,6 +384,21 @@ router.put("/:id", async (req, res) => {
   }
 });
 
+// ── PATCH — Toggle item status (active / inactive) ─────────
+router.patch("/:id/toggle", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const [rows] = await db.execute("SELECT status FROM items WHERE id = ?", [id]);
+    if (!rows.length) return res.status(404).json({ error: "Item not found" });
+    const newStatus = rows[0].status === 'active' ? 'inactive' : 'active';
+    await db.execute("UPDATE items SET status = ? WHERE id = ?", [newStatus, id]);
+    res.json({ status: newStatus });
+  } catch (error) {
+    console.error("Error toggling item status:", error);
+    res.status(500).json({ error: "Could not update item status." });
+  }
+});
+
 // ── DELETE — Soft delete ───────────────────────────────────
 router.delete("/:id", async (req, res) => {
   try {
@@ -483,6 +498,7 @@ router.get("/stock/view", async (req, res) => {
         iv.stock * iv.buy_price AS val,
         i.name AS item, i.tags,
         i.internal_barcode,
+        i.min_stock_alert,
         c.name AS cat,
         c.id   AS category_id
       FROM item_variants iv

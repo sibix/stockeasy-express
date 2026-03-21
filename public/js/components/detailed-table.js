@@ -6,21 +6,45 @@
 
    Usage:
      var tbl = new DetailedTable({
-       statsEl:     '#cat-stats',
-       toolbarEl:   '#cat-toolbar',
-       tableEl:     '#cat-table',
-       filterLabel: 'Search categories…',
-       countLabel:  'categories',
-       storageKey:  'dt-pref-categories',   // optional: persist column prefs
+       statsEl:      '#cat-stats',
+       toolbarEl:    '#cat-toolbar',
+       tableEl:      '#cat-table',
+       filterLabel:  'Search categories…',
+       countLabel:   'categories',
+       emptyLabel:   'No categories found',      // optional
+       storageKey:   'dt-pref-categories',        // optional: persist column prefs
+       idPrefix:     'cat',                       // optional: unique prefix (avoid ID collision when 2+ tables on same page)
+       searchFields: ['name','hsn_code','tags'],  // optional: fields for global search
+       toggleHandler:'window._dtToggleCat',       // optional: function name for toggle cells
        schema: {
          cols: [
-           { k:'name', lb:'Category', t:'bold', w:180, srt:1, flt:1, vis:1 },
+           { k:'name',  lb:'Category', t:'bold',   w:180, srt:1, flt:1, vis:1 },
+           { k:'edit',  lb:'Edit',     t:'action', w:80,  srt:0, flt:0, vis:1,
+             href:'/add-category.html?edit={{id}}', actionLabel:'✏️ Edit' },
            ...
          ]
        },
      });
      tbl.setStats([{ v:'12', l:'Total', c:'var(--g700)' }, ...]);
      tbl.setData([...]);   // flat array of row objects
+
+   Cell types:
+     bold        — heavy text
+     mono        — monospace
+     num         — monospace number
+     inr         — ₹ currency (Indian locale)
+     rate        — standard GST: reads row.cgst_rate + row.sgst_rate
+     var_rate    — variable GST: lower ↔ higher
+     threshold   — variable GST threshold (₹ amount)
+     exempt      — shows "Exempt" badge when gst_type = 'none'
+     chips       — comma-separated string → chip badges
+     json_chips  — JSON array string → chip badges
+     attrs_json  — JSON object → "Key: Val" chip badges
+     stock_badge — stock level with colour (green/amber/red) using row.min_stock_alert threshold
+     mar         — margin value with type suffix
+     bool        — On / Off badge
+     action      — link button; uses col.href ({{id}} replaced) + col.actionLabel
+     toggle      — enable/disable toggle; uses cfg.toggleHandler (default: window._dtToggleCat)
 ================================================================ */
 
 function DetailedTable(cfg) {
@@ -31,6 +55,10 @@ function DetailedTable(cfg) {
   this._schema  = cfg.schema || { cols: [] };
   this._data    = [];
   this._pp      = 10;
+
+  // Namespace prefix — all element IDs use this to avoid collisions when
+  // multiple DetailedTable instances exist on the same page.
+  this._ns = cfg.idPrefix || 'dt';
 
   // Flat state — single table, no per-group keying
   this._S = {
@@ -109,6 +137,7 @@ DetailedTable.prototype._savePrefs = function() {
 DetailedTable.prototype._buildToolbar = function() {
   if (!this._toolEl) return;
   var self      = this;
+  var ns        = this._ns;
   var label     = this._cfg.filterLabel || 'Search…';
   var countWord = this._cfg.countLabel  || 'rows';
 
@@ -116,41 +145,42 @@ DetailedTable.prototype._buildToolbar = function() {
     '<div class="dt-toolbar-row">'
     +  '<div class="dt-tf" style="flex:1;min-width:220px">'
     +    '<div class="dt-tfl">Search</div>'
-    +    '<input class="dt-ti" type="text" id="dt-search-input" placeholder="' + label + '" autocomplete="off">'
+    +    '<input class="dt-ti" type="text" id="' + ns + '-search-input" placeholder="' + label + '" autocomplete="off">'
     +  '</div>'
     +  '<div style="flex:1"></div>'
-    +  '<span class="dt-gm" id="dt-count-label">0 ' + countWord + '</span>'
+    +  '<span class="dt-gm" id="' + ns + '-count-label">0 ' + countWord + '</span>'
     +  '<div class="dt-tf">'
     +    '<div class="dt-tfl" style="opacity:0">—</div>'
-    +    '<div class="dt-cpw" id="dt-cpw">'
-    +      '<button class="dt-cpb" id="dt-cpbtn">⊞ Columns <span id="dt-cpbadge" style="background:var(--slate100);padding:1px 6px;border-radius:4px;font-size:11px"></span></button>'
-    +      '<div class="dt-cpdrop" id="dt-cpdrop"><div class="dt-cplist" id="dt-cplist"></div></div>'
+    +    '<div class="dt-cpw" id="' + ns + '-cpw">'
+    +      '<button class="dt-cpb" id="' + ns + '-cpbtn">⊞ Columns <span id="' + ns + '-cpbadge" style="background:var(--slate100);padding:1px 6px;border-radius:4px;font-size:11px"></span></button>'
+    +      '<div class="dt-cpdrop" id="' + ns + '-cpdrop"><div class="dt-cplist" id="' + ns + '-cplist"></div></div>'
     +    '</div>'
     +  '</div>'
     + '</div>'
-    + '<div class="dt-chips-row" id="dt-chips-inner"></div>';
+    + '<div class="dt-chips-row" id="' + ns + '-chips-inner"></div>';
 
-  this._chipsEl = document.getElementById('dt-chips-inner');
+  this._chipsEl = document.getElementById(ns + '-chips-inner');
 
   // Search input
-  document.getElementById('dt-search-input').addEventListener('input', function() {
+  document.getElementById(ns + '-search-input').addEventListener('input', function() {
     self._S.q  = this.value.toLowerCase().trim();
     self._S.pg = 1;
     self._render();
   });
 
   // Column picker toggle — opens/closes dropdown
-  document.getElementById('dt-cpbtn').addEventListener('click', function(e) {
+  document.getElementById(ns + '-cpbtn').addEventListener('click', function(e) {
     e.stopPropagation();
     self._cpOpen = !self._cpOpen;
-    document.getElementById('dt-cpdrop').classList.toggle('open', self._cpOpen);
+    document.getElementById(ns + '-cpdrop').classList.toggle('open', self._cpOpen);
     if (self._cpOpen) self._renderCP();
   });
 };
 
 DetailedTable.prototype._renderCP = function() {
   var self = this;
-  var list = document.getElementById('dt-cplist');
+  var ns   = this._ns;
+  var list = document.getElementById(ns + '-cplist');
   if (!list) return;
 
   list.innerHTML = this._schema.cols.map(function(col) {
@@ -177,7 +207,7 @@ DetailedTable.prototype._renderCP = function() {
     });
   });
 
-  var badge = document.getElementById('dt-cpbadge');
+  var badge = document.getElementById(ns + '-cpbadge');
   if (badge) badge.textContent = Object.values(self._S.vis).filter(Boolean).length;
 };
 
@@ -185,6 +215,7 @@ DetailedTable.prototype._renderCP = function() {
 
 DetailedTable.prototype._bindGlobal = function() {
   var self = this;
+  var ns   = this._ns;
 
   document.addEventListener('mousemove', function(e) {
     if (!self._resize) return;
@@ -201,9 +232,9 @@ DetailedTable.prototype._bindGlobal = function() {
 
   // Close column picker when user clicks anywhere outside it
   document.addEventListener('click', function(e) {
-    if (!e.target.closest('#dt-cpw') && self._cpOpen) {
+    if (!e.target.closest('#' + ns + '-cpw') && self._cpOpen) {
       self._cpOpen = false;
-      var d = document.getElementById('dt-cpdrop');
+      var d = document.getElementById(ns + '-cpdrop');
       if (d) d.classList.remove('open');
     }
   });
@@ -215,13 +246,13 @@ DetailedTable.prototype._filteredRows = function() {
   var self = this;
   var rows = (this._data || []).slice();
 
-  // Global search
+  // Global search — uses cfg.searchFields if provided, else sensible defaults
   if (self._S.q) {
+    var fields = self._cfg.searchFields || ['name', 'hsn_code', 'attribute_names', 'tags'];
     rows = rows.filter(function(r) {
-      return (r.name            || '').toLowerCase().includes(self._S.q)
-          || (r.hsn_code        || '').toLowerCase().includes(self._S.q)
-          || (r.attribute_names || '').toLowerCase().includes(self._S.q)
-          || (r.tags            || '').toLowerCase().includes(self._S.q);
+      return fields.some(function(f) {
+        return String(r[f] || '').toLowerCase().includes(self._S.q);
+      });
     });
   }
 
@@ -257,10 +288,11 @@ DetailedTable.prototype._filteredRows = function() {
    column key may not directly map to a DB field (e.g. 'rate'
    reads from row.cgst_rate+row.sgst_rate regardless of col.k),
    or because they need row.gst_type to decide what to show. */
-var _DT_SKIP_EMPTY = { toggle:1, action:1, rate:1, var_rate:1, threshold:1, exempt:1, bool:1 };
+var _DT_SKIP_EMPTY = { toggle:1, action:1, rate:1, var_rate:1, threshold:1, exempt:1, bool:1, stock_badge:1 };
 
 DetailedTable.prototype._cell = function(col, row) {
-  var v = row[col.k];
+  var v    = row[col.k];
+  var self = this;
 
   // Show — for truly empty values, unless the cell type handles emptiness itself
   if ((v === undefined || v === null || v === '') && !_DT_SKIP_EMPTY[col.t]) {
@@ -277,6 +309,42 @@ DetailedTable.prototype._cell = function(col, row) {
 
     case 'num':
       return '<span class="dt-cm">' + v + '</span>';
+
+    // ₹ currency formatted in Indian locale (₹1,23,456.00)
+    case 'inr': {
+      var n = parseFloat(v);
+      if (isNaN(n)) return '<span class="dt-cmut">—</span>';
+      var formatted = n.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      return '<span class="dt-cm">₹' + formatted + '</span>';
+    }
+
+    // Stock level with colour coding (green/amber/red) based on min_stock_alert
+    case 'stock_badge': {
+      var sv = parseFloat(v) || 0;
+      if (sv <= 0) {
+        return '<span class="dt-bdg dt-bout2">Out of Stock</span>';
+      }
+      var minAlert = parseFloat(row.min_stock_alert) || 5;
+      if (sv <= minAlert) {
+        return '<span class="dt-bdg dt-blow2">⚠ ' + sv + '</span>';
+      }
+      return '<span class="dt-bdg dt-bok2">' + sv + '</span>';
+    }
+
+    // JSON object { Key: Value } → "Key: Val" chip badges
+    case 'attrs_json': {
+      try {
+        var attrsObj = typeof v === 'string' ? JSON.parse(v) : (v || {});
+        var keys = Object.keys(attrsObj);
+        if (!keys.length) return '<span class="dt-cmut">—</span>';
+        var html = '<div class="dt-chips">' + keys.map(function(k) {
+          return '<span class="dt-chip">' + _esc(k) + ': ' + _esc(String(attrsObj[k])) + '</span>';
+        }).join('') + '</div>';
+        return html;
+      } catch(e) {
+        return '<span class="dt-cmut">—</span>';
+      }
+    }
 
     case 'rate': // standard GST: cgst + sgst (uses row fields, not col.k)
       if (row.gst_type !== 'standard') return '<span class="dt-cmut">—</span>';
@@ -328,15 +396,23 @@ DetailedTable.prototype._cell = function(col, row) {
       // Treat null/undefined as Off rather than —
       return v ? '<span class="dt-bool-on">On</span>' : '<span class="dt-bool-off">Off</span>';
 
-    case 'action':
-      return '<a class="dt-act-btn" href="/add-category.html?edit=' + row.id + '">✏️ Edit</a>';
+    case 'action': {
+      // Use col.href with {{id}} placeholder; fallback to legacy categories edit URL
+      var href = col.href
+        ? col.href.replace('{{id}}', row.id)
+        : '/add-category.html?edit=' + row.id;
+      var label = col.actionLabel || '✏️ Edit';
+      return '<a class="dt-act-btn" href="' + _esc(href) + '">' + label + '</a>';
+    }
 
-    case 'toggle': // Enable / Disable row toggle
+    case 'toggle': { // Enable / Disable row toggle
       var enabled = row.status === 'active';
+      var handler = self._cfg.toggleHandler || 'window._dtToggleCat';
       return '<label class="dt-tog" title="' + (enabled ? 'Enabled — click to disable' : 'Disabled — click to enable') + '">'
-        + '<input type="checkbox" ' + (enabled ? 'checked' : '') + ' onchange="window._dtToggleCat(' + row.id + ', this)">'
+        + '<input type="checkbox" ' + (enabled ? 'checked' : '') + ' onchange="' + handler + '(' + row.id + ', this)">'
         + '<span class="dt-tog-track"></span>'
         + '</label>';
+    }
 
     default:
       return _esc(String(v === null || v === undefined ? '' : v));
@@ -395,7 +471,7 @@ DetailedTable.prototype._buildTable = function() {
       + '</td></tr>';
   } else {
     pRows.forEach(function(row) {
-      var disabled = row.status !== 'active';
+      var disabled = row.status !== undefined && row.status !== 'active';
       tbody += '<tr' + (disabled ? ' class="dt-row-disabled"' : '') + '>'
         + cols.map(function(c) {
             return '<td title="' + _esc(String(row[c.k] !== null && row[c.k] !== undefined ? row[c.k] : '')) + '">'
@@ -427,7 +503,7 @@ DetailedTable.prototype._buildTable = function() {
     +   '<button class="dt-pgb" data-pg-p="' + (pg + 1) + '"' + (pg >= mx ? ' disabled' : '') + '>›</button>'
     + '</div>'
     + '<div class="dt-pgpp">Rows<select data-pp="1">'
-    +   [5, 10, 20, 50].map(function(n) { return '<option value="' + n + '"' + (self._pp === n ? ' selected' : '') + '>' + n + '</option>'; }).join('')
+    +   [10, 20, 50, 100].map(function(n) { return '<option value="' + n + '"' + (self._pp === n ? ' selected' : '') + '>' + n + '</option>'; }).join('')
     + '</select></div></div>';
 
   return '<div class="dt-tscroll"><table class="dt-table">' + cg + '<thead><tr>' + th + '</tr></thead>' + tbody + '</table></div>' + pag;
@@ -438,6 +514,7 @@ DetailedTable.prototype._buildTable = function() {
 DetailedTable.prototype._renderChips = function() {
   if (!this._chipsEl) return;
   var self  = this;
+  var ns    = this._ns;
   var chips = [];
 
   if (self._S.q) {
@@ -445,7 +522,7 @@ DetailedTable.prototype._renderChips = function() {
       t:  'Search: "' + self._S.q + '"',
       rm: function() {
         self._S.q = '';
-        var inp = document.getElementById('dt-search-input');
+        var inp = document.getElementById(ns + '-search-input');
         if (inp) inp.value = '';
         self._render();
       }
@@ -467,7 +544,7 @@ DetailedTable.prototype._renderChips = function() {
 
   this._chipsEl.innerHTML = chips.map(function(ch, i) {
     return '<div class="dt-fc"><span>' + ch.t + '</span><span class="x" data-chip="' + i + '">×</span></div>';
-  }).join('') + '<button class="dt-clr-btn" id="dt-clr-all">Clear all</button>';
+  }).join('') + '<button class="dt-clr-btn" id="' + ns + '-clr-all">Clear all</button>';
 
   this._chipsEl.querySelectorAll('.x').forEach(function(el) {
     el.addEventListener('click', function() {
@@ -475,12 +552,12 @@ DetailedTable.prototype._renderChips = function() {
     });
   });
 
-  var clrBtn = document.getElementById('dt-clr-all');
+  var clrBtn = document.getElementById(ns + '-clr-all');
   if (clrBtn) {
     clrBtn.addEventListener('click', function() {
       self._S.q    = '';
       self._S.colf = {};
-      var inp = document.getElementById('dt-search-input');
+      var inp = document.getElementById(ns + '-search-input');
       if (inp) inp.value = '';
       self._render();
     });
@@ -491,7 +568,9 @@ DetailedTable.prototype._renderChips = function() {
 
 DetailedTable.prototype._render = function() {
   if (!this._tableEl) return;
-  var self = this;
+  var self  = this;
+  var ns    = this._ns;
+  var empty = this._cfg.emptyLabel || 'No items found';
 
   this._renderChips();
 
@@ -499,7 +578,7 @@ DetailedTable.prototype._render = function() {
     this._tableEl.innerHTML =
       '<div style="padding:44px;text-align:center;color:var(--slate400)">'
       + '<div style="font-size:28px;margin-bottom:8px">🔍</div>'
-      + '<div style="font-size:13px;font-weight:700;color:var(--slate600)">No categories found</div>'
+      + '<div style="font-size:13px;font-weight:700;color:var(--slate600)">' + empty + '</div>'
       + '</div>';
     return;
   }
@@ -522,7 +601,7 @@ DetailedTable.prototype._render = function() {
   }
 
   // Update count label in toolbar
-  var countEl = document.getElementById('dt-count-label');
+  var countEl = document.getElementById(ns + '-count-label');
   if (countEl) {
     var total    = this._data.length;
     var filtered = this._filteredRows().length;
@@ -533,7 +612,7 @@ DetailedTable.prototype._render = function() {
   }
 
   // Update column picker badge
-  var badge = document.getElementById('dt-cpbadge');
+  var badge = document.getElementById(ns + '-cpbadge');
   if (badge) badge.textContent = Object.values(self._S.vis).filter(Boolean).length;
 };
 
