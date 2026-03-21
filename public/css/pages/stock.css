@@ -247,15 +247,15 @@
    Filter panel — stock tab
 ================================================================ */
 
-/* Outer card — 3 columns: left | middle | right-price */
+/* Outer card — 2 columns: left | middle */
 .stock-filter-panel {
   display: flex;
   align-items: stretch;
   border: 1px solid var(--slate-200);
   border-radius: var(--radius-lg);
   margin-bottom: var(--space-4);
-  overflow: hidden;
   background: var(--white);
+  /* NOTE: no overflow:hidden — keeps the category dropdown visible above siblings */
 }
 
 /* ── Left column: Category + Apply/Clear ───────────────────── */
@@ -268,6 +268,8 @@
   flex-shrink: 0;
   min-width: 210px;
   justify-content: flex-start;
+  position: relative;  /* establishes stacking context for the dropdown */
+  z-index: 10;         /* sits above .sf-middle so dropdown is never clipped */
 }
 
 .sf-actions-row {
@@ -308,46 +310,13 @@
   border-top: 1px solid var(--slate-100);
 }
 
-/* ── Right column: Sell + Buy price (primary bg) ───────────── */
-.sf-price-panel {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-3);
-  padding: var(--space-4);
-  background: var(--color-primary);
+/* ── Vertical separator between filter groups ──────────────── */
+.sf-vsep {
+  width: 1px;
+  background: var(--slate-100);
+  align-self: stretch;
   flex-shrink: 0;
-  min-width: 185px;
-  justify-content: center;
-}
-
-/* Inverted labels (white text on green) */
-.sf-label-inv {
-  font-size: 10px;
-  font-weight: var(--weight-bold);
-  color: rgba(255, 255, 255, 0.80);
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-}
-
-/* Inverted range inputs */
-.sf-range-inv {
-  background: rgba(255, 255, 255, 0.20) !important;
-  border-color: rgba(255, 255, 255, 0.35) !important;
-  color: var(--white) !important;
-}
-
-.sf-range-inv::placeholder { color: rgba(255,255,255,0.55) !important; }
-
-.sf-range-inv:focus {
-  outline: none !important;
-  background: rgba(255, 255, 255, 0.30) !important;
-  border-color: rgba(255, 255, 255, 0.70) !important;
-  box-shadow: none !important;
-}
-
-.sf-range-sep-inv {
-  color: rgba(255, 255, 255, 0.60);
-  font-size: 11px;
+  margin: 0 var(--space-3);
 }
 
 /* ── Shared label ──────────────────────────────────────────── */
