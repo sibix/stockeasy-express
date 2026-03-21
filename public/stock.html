@@ -8,6 +8,7 @@
     <link rel="stylesheet" href="/css/styles.css" />
     <link rel="stylesheet" href="/css/pages/categories.css" />
     <link rel="stylesheet" href="/css/components/detailed-table.css" />
+    <link rel="stylesheet" href="/css/pages/stock.css" />
   </head>
   <body>
     <div class="shell">
@@ -94,6 +95,28 @@
     <div id="toast" class="toast toast-green" style="display:none">
       <span id="toast-icon" style="font-size:var(--text-xl)">&#x2705;</span>
       <span id="toast-msg"></span>
+    </div>
+
+    <!-- EDIT OVERLAY -->
+    <div id="edit-overlay" onclick="closeEditPanel()"
+      style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.35);z-index:400"></div>
+
+    <!-- EDIT PANEL -->
+    <div id="edit-panel" class="edit-panel">
+      <div class="edit-panel-header">
+        <div>
+          <div class="edit-panel-title" id="edit-panel-title">Edit Item</div>
+          <div class="edit-panel-subtitle" id="edit-panel-subtitle"></div>
+        </div>
+        <button class="edit-panel-close" onclick="closeEditPanel()">✕</button>
+      </div>
+      <div class="edit-panel-body" id="edit-panel-body">
+        <!-- filled by renderEditPanel() -->
+      </div>
+      <div class="edit-panel-footer">
+        <button class="btn btn-outline" onclick="closeEditPanel()">Cancel</button>
+        <button class="btn btn-primary" id="edit-save-btn" onclick="saveItemEdit()">Save Changes</button>
+      </div>
     </div>
 
     <!-- SCRIPTS -->
