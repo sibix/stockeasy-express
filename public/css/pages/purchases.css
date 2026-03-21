@@ -989,23 +989,6 @@
   font-weight: var(--weight-semibold, 600);
 }
 
-/* ── Inline packaging select under category in data row ─────── */
-.pur-pkg-inline-sel {
-  display: block;
-  width: 100%;
-  margin-top: 5px;
-  padding: 3px 6px;
-  font-size: 11px;
-  color: var(--slate-600);
-  border: 1px solid var(--slate-200);
-  border-radius: var(--radius-sm, 6px);
-  background: var(--slate-50);
-  cursor: pointer;
-  outline: none;
-  transition: border-color 0.12s;
-}
-
-.pur-pkg-inline-sel:focus { border-color: var(--color-primary); background: #fff; }
 
 /* ── Specs chips below Item Name in table ──────────────────── */
 .pur-row-tags {
@@ -1025,6 +1008,13 @@
   color: var(--green-700, #15803d);
   font-weight: var(--weight-semibold);
   white-space: nowrap;
+}
+
+/* ── Packaging tag under category name (blue — distinct from green attr chips) ── */
+.pur-pkg-tag {
+  background: var(--bluebg, #eff6ff);
+  border-color: #bfdbfe;
+  color: var(--color-info-text, #1e40af);
 }
 
 /* ── Item Specs column cell ────────────────────────────────── */

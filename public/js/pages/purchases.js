@@ -125,7 +125,7 @@ function renderSpecsOptions(section) {
     var opts    = [{ id: null, name: 'Loose / No set', total_pcs: null }].concat(setDefs);
     panel.innerHTML = '<div class="specs-opt-grid">' +
       opts.map(function (sd) {
-        var isSel = (sd.id === null) ? !_specsDraft.set_def_id : _specsDraft.set_def_id === sd.id;
+        var isSel = (sd.id === null) ? !_specsDraft.set_def_id : _specsDraft.set_def_id === sd.id; // both ints after selectSpecsOpt parses
         return '<div class="specs-opt-item' + (isSel ? ' specs-opt-sel' : '') + '"' +
           ' data-section="packaging" data-value="' + (sd.id || '') + '">' +
           '<div class="specs-opt-name">' + escH(sd.name) + '</div>' +
@@ -167,11 +167,35 @@ function selectSpecsSection(key) {
   renderSpecsOptions(key);
 }
 
-// Handles packaging tile click (single-select)
+// Handles packaging tile click (single-select + auto-fills size attribute)
 function selectSpecsOpt(section, value) {
   if (section !== 'packaging') return;
-  _specsDraft.set_def_id = value || null;
+  var id = value ? (parseInt(value) || null) : null;
+  _specsDraft.set_def_id = id;
+
+  // Auto-select size attribute values from the set's size_ratios
+  if (id) {
+    var li = getRow(_specsModalRid);
+    var sd = (li && li.set_defs || []).find(function (s) { return s.id === id; });
+    if (sd) {
+      var ratios = sd.size_ratios;
+      if (typeof ratios === 'string') {
+        try { ratios = JSON.parse(ratios); } catch (e) { ratios = null; }
+      }
+      if (ratios && Object.keys(ratios).length) {
+        var variesBy = detectVariesBy(sd, li.category);
+        if (variesBy) {
+          // Overwrite with the exact values this set contains
+          _specsDraft.fixed_attrs[variesBy] = Object.keys(ratios);
+          // If the user is looking at that attribute section right now, refresh it
+          if (_specsModalSec === variesBy) renderSpecsOptions(variesBy);
+        }
+      }
+    }
+  }
+
   renderSpecsOptions('packaging');
+  renderSpecsMenu();          // refresh left menu so attr counts update
   updateSpecsSummary();
 }
 
@@ -259,17 +283,12 @@ function buildRowSpecsTags(li) {
   '</div>';
 }
 
-// ── Inline packaging select (shown below category name in data row) ───────────
-function buildInlinePkgSelect(li) {
-  if (!li.category_id) return '';
-  var setDefs = li.set_defs || [];
-  if (!setDefs.length) return '';   // no sets defined for this category
-  var opts = '<option value="">Loose</option>' +
-    setDefs.map(function (sd) {
-      return '<option value="' + sd.id + '"' + (li.set_def_id === sd.id ? ' selected' : '') + '>' +
-        escH(sd.name) + '</option>';
-    }).join('');
-  return '<select class="pur-pkg-inline-sel js-row-pkg">' + opts + '</select>';
+// ── Selected packaging tag under category name (matches chip style under item name) ──
+function buildCatPkgTag(li) {
+  if (!li.set_def) return '';
+  return '<div class="pur-row-tags" style="margin-top:4px">' +
+    '<span class="pur-row-tag pur-pkg-tag">📦 ' + escH(li.set_def.name) + '</span>' +
+  '</div>';
 }
 
 // ── Category search (per-row, client-side) ───────────────────
@@ -456,13 +475,13 @@ function renderSimpleTable() {
 function buildDataRow(li, idx) {
   var rid = li.row_id;
 
-  // Category — search-and-select input + dropdown + inline packaging select
+  // Category cell — search input + dropdown + selected set tag
   var catCell = '<td style="position:relative">' +
     '<input class="form-input js-row-cat-search" type="text"' +
       ' value="' + escH(li.category_name) + '"' +
       ' placeholder="Search category…" autocomplete="off" />' +
     '<div class="p-drop pur-cat-drop" id="cat-drop-' + rid + '" style="display:none"></div>' +
-    buildInlinePkgSelect(li) +
+    buildCatPkgTag(li) +
   '</td>';
 
   // Item Specs button — .active when specs are configured
