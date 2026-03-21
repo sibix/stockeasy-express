@@ -154,11 +154,26 @@
           </div>
 
           <!-- ══════════════════════════════════════════
-               CARD 2 — Variant Attributes + Packaging Sets
+               CARD 2 — Packaging Sets + Variant Attributes
           ══════════════════════════════════════════ -->
           <div class="card card-padded mb-4">
 
-            <!-- Attributes subsection -->
+            <!-- Packaging Sets — top of card -->
+            <div style="display:flex;align-items:center;gap:var(--space-2);margin-bottom:var(--space-1)">
+              <div class="section-title" style="margin-bottom:0">Packaging Sets</div>
+              <button class="btn btn-sm btn-primary" onclick="openSetTemplateLibrary()">Browse templates</button>
+              <button class="btn btn-sm btn-outline" onclick="addCustomSetDef()">+ Custom set</button>
+            </div>
+            <span class="form-hint" style="display:block;margin-bottom:var(--space-3)">
+              Define how this product arrives from suppliers — Full Set, Half Set, Ratio pack.
+              Set definitions use the Size attribute above.
+            </span>
+            <div id="set-defs-container"></div>
+
+            <!-- Divider -->
+            <div class="divider" style="margin:var(--space-6) 0 var(--space-4)"></div>
+
+            <!-- Product Attributes -->
             <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:var(--space-1)">
               <div class="section-title" style="margin-bottom:0">Product Attributes</div>
               <span class="text-muted">Press Enter or comma to add values</span>
@@ -171,25 +186,6 @@
               <!-- rows added dynamically by addAttribute() -->
             </div>
             <button class="add-attr-btn" onclick="addAttribute()">+ Add Attribute</button>
-
-            <!-- Packaging Sets subsection -->
-            <div class="divider" style="margin:var(--space-6) 0 var(--space-4)"></div>
-            <div class="set-def-header">
-              <div>
-                <div class="section-title" style="margin-bottom:var(--space-1)">Packaging Sets</div>
-                <span class="form-hint">
-                  Define how this product arrives from suppliers — Full Set, Half Set, Ratio pack.
-                  Set definitions use the Size attribute above.
-                </span>
-              </div>
-              <div class="set-def-actions">
-                <button class="btn btn-sm btn-outline" onclick="openSetTemplateLibrary()">
-                  Browse templates
-                </button>
-                <button class="btn btn-sm" onclick="addCustomSetDef()">+ Custom set</button>
-              </div>
-            </div>
-            <div id="set-defs-container"></div>
 
           </div>
 
