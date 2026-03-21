@@ -29,7 +29,7 @@ document.addEventListener('DOMContentLoaded', async function () {
   await Promise.all([loadCategories(), loadSettings()]);
   populateApplyAllCatSelect();
   bindGlobalEvents();
-  switchTab('new');
+  switchTab('history');
 });
 
 function todayISO() {
