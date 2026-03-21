@@ -288,7 +288,7 @@ DetailedTable.prototype._filteredRows = function() {
    column key may not directly map to a DB field (e.g. 'rate'
    reads from row.cgst_rate+row.sgst_rate regardless of col.k),
    or because they need row.gst_type to decide what to show. */
-var _DT_SKIP_EMPTY = { toggle:1, action:1, rate:1, var_rate:1, threshold:1, exempt:1, bool:1, stock_badge:1 };
+var _DT_SKIP_EMPTY = { toggle:1, action:1, rate:1, var_rate:1, threshold:1, exempt:1, bool:1, stock_badge:1, item_sub:1 };
 
 DetailedTable.prototype._cell = function(col, row) {
   var v    = row[col.k];
@@ -303,6 +303,17 @@ DetailedTable.prototype._cell = function(col, row) {
 
     case 'bold':
       return '<span class="dt-cb">' + _esc(v) + '</span>';
+
+    // Bold primary value + optional muted sub-label from col.subKey field
+    case 'item_sub': {
+      var sub = col.subKey ? (row[col.subKey] || '') : '';
+      var html = '<span class="dt-cb">' + _esc(v) + '</span>';
+      if (sub) {
+        html += '<br><span style="font-size:11px;color:var(--slate400);font-family:var(--font-mono);font-weight:400">'
+              + _esc(sub) + '</span>';
+      }
+      return html;
+    }
 
     case 'mono':
       return '<span class="dt-cm">' + _esc(v) + '</span>';

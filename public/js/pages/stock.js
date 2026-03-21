@@ -42,16 +42,17 @@ function switchStockTab(tab) {
 
 var STOCK_SCHEMA = {
   cols: [
-    { k:'item',             lb:'Item',          t:'bold',        w:190, srt:1, flt:1, vis:1 },
-    { k:'cat',              lb:'Category',       t:'text',        w:150, srt:1, flt:1, vis:1 },
-    { k:'sku',              lb:'SKU',            t:'mono',        w:170, srt:1, flt:1, vis:1 },
-    { k:'attributes',       lb:'Attributes',     t:'attrs_json',  w:230, srt:0, flt:0, vis:1 },
-    { k:'stock',            lb:'Stock',          t:'stock_badge', w:120, srt:1, flt:0, vis:1 },
-    { k:'cost',             lb:'Buy ₹',          t:'inr',         w:110, srt:1, flt:0, vis:1 },
-    { k:'sell',             lb:'Sell ₹',         t:'inr',         w:110, srt:1, flt:0, vis:1 },
-    { k:'mrp',              lb:'MRP ₹',          t:'inr',         w:110, srt:0, flt:0, vis:0 },
-    { k:'val',              lb:'Stock Value ₹',  t:'inr',         w:140, srt:1, flt:0, vis:1 },
-    { k:'internal_barcode', lb:'Barcode',        t:'mono',        w:160, srt:0, flt:1, vis:0 },
+    // item_sub shows item name (bold) + "Size · Color" sub-label via attrs_text
+    { k:'item',             lb:'Item',           t:'item_sub',    subKey:'attrs_text', w:210, srt:1, flt:1, vis:1 },
+    { k:'cat',              lb:'Category',        t:'text',        w:150, srt:1, flt:1, vis:1 },
+    { k:'sku',              lb:'SKU',             t:'mono',        w:160, srt:1, flt:1, vis:1 },
+    { k:'attributes',       lb:'Attributes',      t:'attrs_json',  w:220, srt:0, flt:0, vis:1 },
+    { k:'stock',            lb:'Stock',           t:'stock_badge', w:110, srt:1, flt:0, vis:1 },
+    { k:'cost',             lb:'Buy ₹',           t:'inr',         w:100, srt:1, flt:0, vis:1 },
+    { k:'sell',             lb:'Sell ₹',          t:'inr',         w:100, srt:1, flt:0, vis:1 },
+    { k:'mrp',              lb:'MRP ₹',           t:'inr',         w:100, srt:0, flt:0, vis:0 },
+    { k:'val',              lb:'Stock Value ₹',   t:'inr',         w:130, srt:1, flt:0, vis:1 },
+    { k:'internal_barcode', lb:'Barcode',         t:'mono',        w:150, srt:0, flt:1, vis:0 },
   ]
 };
 

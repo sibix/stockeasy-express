@@ -520,9 +520,12 @@ router.get("/stock/view", async (req, res) => {
         tags = JSON.parse(v.tags || "[]");
       } catch (e) {}
 
-      // Flatten attributes into row fields
+      // Flatten attributes into row fields (for per-column filtering)
+      // Keep parsed attrs object under 'attributes' for the attrs_json cell renderer
+      // Add attrs_text = "M · Red" for the item-name sub-label
       var row = Object.assign({}, v, attrs, { tags });
-      delete row.attributes;
+      row.attributes = attrs;
+      row.attrs_text = Object.values(attrs).join(' · ');
       return row;
     });
 
