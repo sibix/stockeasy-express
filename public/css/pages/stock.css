@@ -248,73 +248,124 @@
 ================================================================ */
 
 .stock-filter-panel {
-  background: var(--slate-50);
   border: 1px solid var(--slate-200);
   border-radius: var(--radius-lg);
-  padding: var(--space-4) var(--space-5);
   margin-bottom: var(--space-4);
+  overflow: hidden;
+}
+
+/* ── Two-row layout ────────────────────────────────────────── */
+.sf-panel-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 0;
+  flex-wrap: wrap;
+}
+
+/* Row 1: green tint — category + status + sell price */
+.sf-panel-row-1 {
+  background: #f0fdf4;
+  border-bottom: 1px solid var(--slate-200);
+}
+
+/* Row 2: slate tint — stock qty + attributes + buy price */
+.sf-panel-row-2 {
+  background: #f8fafc;
+}
+
+/* ── Apply / Clear buttons — LEFT column ───────────────────── */
+.sf-actions-left {
   display: flex;
   flex-direction: column;
-  gap: var(--space-3);
+  align-items: stretch;
+  gap: var(--space-2);
+  padding: var(--space-4);
+  background: var(--color-primary);
+  flex-shrink: 0;
+  min-width: 90px;
+  align-self: stretch;
+  justify-content: center;
 }
 
-/* A horizontal row of filter controls */
-.sf-row {
+.sf-actions-label {
+  font-size: 10px;
+  font-weight: var(--weight-bold);
+  color: rgba(255,255,255,0.75);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  text-align: center;
+}
+
+.sf-btn {
+  height: 30px;
+  padding: 0 var(--space-3);
+  font-size: 12px;
+  width: 100%;
+  justify-content: center;
+}
+
+/* Row 2 spacer matches the actions-left column width */
+.sf-spacer-left {
+  flex-shrink: 0;
+  min-width: 90px;
+  background: #e8f5e9;
+  align-self: stretch;
+  border-right: 1px solid rgba(34,197,94,0.2);
+}
+
+/* ── Filter groups ─────────────────────────────────────────── */
+.sf-group {
   display: flex;
-  align-items: flex-start;
+  align-items: flex-end;
   flex-wrap: wrap;
   gap: var(--space-4);
+  padding: var(--space-3) var(--space-4);
+  flex: 1;
 }
 
-/* A single column (label + control) */
+/* Main group: category + status (row 1 left) */
+.sf-group-main {
+  border-right: 1px solid var(--slate-200);
+}
+
+/* Price group: sell/buy price (row 1+2 right end) */
+.sf-group-price {
+  background: #fffbeb;
+  border-left: 1px solid #fde68a;
+  flex: 0 0 auto;
+  padding: var(--space-3) var(--space-4);
+}
+
+/* Stock + attrs group (row 2) */
+.sf-group-stock {
+  display: flex;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+  padding: var(--space-3) var(--space-4);
+  flex: 1;
+}
+
+/* ── Label above each control ─────────────────────────────── */
 .sf-col {
   display: flex;
   flex-direction: column;
   gap: var(--space-1);
-  min-width: 140px;
 }
 
-.sf-col-wide {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-1);
-  min-width: 220px;
-}
-
-/* Label above each filter group */
 .sf-label {
-  font-size: 11px;
+  font-size: 10px;
   font-weight: var(--weight-bold);
   color: var(--slate-500);
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.06em;
 }
 
-/* Category dropdown */
-.sf-select {
-  height: 32px;
-  padding: 0 var(--space-3);
-  border: 1px solid var(--slate-200);
-  border-radius: var(--radius-md);
-  background: var(--white);
-  font-size: var(--text-sm);
-  color: var(--slate-700);
-  cursor: pointer;
-  width: 100%;
-  max-width: 200px;
-}
-
-.sf-select:focus {
-  outline: none;
-  border-color: var(--color-primary);
-  box-shadow: 0 0 0 2px rgba(34, 197, 94, 0.15);
-}
-
-/* Chip button row (stock status, attribute values) */
+/* ── Status chips ──────────────────────────────────────────── */
 .sf-chips {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--space-1);
+  gap: 4px;
 }
 
 .sf-chip {
@@ -325,7 +376,7 @@
   border: 1px solid var(--slate-200);
   border-radius: var(--radius-full);
   background: var(--white);
-  font-size: var(--text-xs);
+  font-size: 12px;
   font-weight: var(--weight-semibold);
   color: var(--slate-600);
   cursor: pointer;
@@ -344,21 +395,21 @@
   color: var(--white);
 }
 
-/* Price / stock range pair  e.g.  [____] to [____] */
+/* ── Range inputs ──────────────────────────────────────────── */
 .sf-range {
   display: flex;
   align-items: center;
-  gap: var(--space-2);
+  gap: var(--space-1);
 }
 
 .sf-range-input {
-  width: 86px;
-  height: 32px;
+  width: 80px;
+  height: 30px;
   padding: 0 var(--space-2);
   border: 1px solid var(--slate-200);
   border-radius: var(--radius-md);
   background: var(--white);
-  font-size: var(--text-sm);
+  font-size: 12px;
   font-family: var(--font-mono);
   color: var(--slate-700);
   text-align: right;
@@ -375,73 +426,35 @@
 }
 
 .sf-range-sep {
-  font-size: var(--text-xs);
-  color: var(--slate-400);
-  white-space: nowrap;
-}
-
-/* Dynamic attribute chip section */
-.sf-attr-section {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2);
-  padding-top: var(--space-2);
-  border-top: 1px dashed var(--slate-200);
-}
-
-.sf-attr-row {
-  display: flex;
-  align-items: flex-start;
-  gap: var(--space-3);
-  flex-wrap: wrap;
-}
-
-.sf-attr-label {
-  min-width: 64px;
   font-size: 11px;
-  font-weight: var(--weight-bold);
-  color: var(--slate-500);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  padding-top: 5px;
-  flex-shrink: 0;
+  color: var(--slate-400);
 }
 
-/* Apply / Clear action buttons */
-.sf-actions {
+/* ── Attribute multi-selects inline in row 2 ──────────────── */
+.sf-attr-inline {
   display: flex;
   align-items: flex-end;
-  gap: var(--space-2);
-  padding-bottom: 0;
-  margin-left: auto;
-  flex-shrink: 0;
+  flex-wrap: wrap;
+  gap: var(--space-4);
 }
 
-.sf-actions .btn {
-  height: 32px;
-  padding: 0 var(--space-4);
-  font-size: var(--text-sm);
-}
-
-/* ── Category searchable combobox ──────────────────────────── */
+/* ── Category searchable combobox ─────────────────────────── */
 .sf-cat-wrap {
   position: relative;
   display: inline-flex;
   align-items: center;
-  width: 100%;
-  max-width: 220px;
+  width: 200px;
 }
 
 .sf-cat-input {
   width: 100%;
-  height: 32px;
-  padding: 0 28px 0 var(--space-3);
+  height: 30px;
+  padding: 0 26px 0 var(--space-3);
   border: 1px solid var(--slate-200);
   border-radius: var(--radius-md);
   background: var(--white);
   font-size: var(--text-sm);
   color: var(--slate-700);
-  cursor: text;
 }
 
 .sf-cat-input:focus {
@@ -452,46 +465,43 @@
 
 .sf-cat-clear {
   position: absolute;
-  right: 6px;
+  right: 5px;
   top: 50%;
   transform: translateY(-50%);
-  width: 18px;
-  height: 18px;
+  width: 16px;
+  height: 16px;
   border: none;
-  background: var(--slate-300);
+  background: var(--slate-400);
   border-radius: var(--radius-full);
   color: var(--white);
-  font-size: 11px;
+  font-size: 10px;
   font-weight: var(--weight-bold);
   cursor: pointer;
   align-items: center;
   justify-content: center;
   line-height: 1;
   padding: 0;
-  display: none;  /* shown via JS when category selected */
+  display: none;
 }
 
-.sf-cat-clear:hover {
-  background: var(--slate-500);
-}
+.sf-cat-clear:hover { background: var(--slate-600); }
 
 .sf-cat-dropdown {
   position: absolute;
-  top: calc(100% + 4px);
+  top: calc(100% + 3px);
   left: 0;
-  min-width: 220px;
-  max-width: 300px;
-  max-height: 220px;
+  min-width: 200px;
+  max-height: 200px;
   overflow-y: auto;
   background: var(--white);
   border: 1px solid var(--slate-200);
   border-radius: var(--radius-md);
   box-shadow: 0 6px 24px rgba(0,0,0,0.10);
-  z-index: 200;
+  z-index: 300;
 }
 
 .sf-cat-opt {
-  padding: var(--space-2) var(--space-3);
+  padding: 7px var(--space-3);
   font-size: var(--text-sm);
   color: var(--slate-700);
   cursor: pointer;
@@ -500,10 +510,7 @@
   text-overflow: ellipsis;
 }
 
-.sf-cat-opt:hover {
-  background: var(--slate-50);
-  color: var(--slate-900);
-}
+.sf-cat-opt:hover { background: var(--slate-50); }
 
 .sf-cat-opt-empty {
   padding: var(--space-3);
@@ -512,7 +519,7 @@
   text-align: center;
 }
 
-/* ── Attribute multi-select dropdown ───────────────────────── */
+/* ── Attribute multi-select dropdown ──────────────────────── */
 .sf-ms-wrap {
   position: relative;
   display: inline-block;
@@ -522,7 +529,7 @@
   display: inline-flex;
   align-items: center;
   gap: var(--space-2);
-  height: 32px;
+  height: 30px;
   padding: 0 var(--space-3);
   border: 1px solid var(--slate-200);
   border-radius: var(--radius-md);
@@ -530,15 +537,20 @@
   font-size: var(--text-sm);
   color: var(--slate-700);
   cursor: pointer;
-  white-space: nowrap;
-  min-width: 100px;
-  max-width: 160px;
-  text-align: left;
+  min-width: 90px;
+  max-width: 150px;
 }
 
 .sf-ms-btn:hover {
   background: var(--slate-50);
   border-color: var(--slate-300);
+}
+
+/* Highlight the button when values are selected */
+.sf-ms-btn.has-selection {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+  background: rgba(34, 197, 94, 0.06);
 }
 
 .sf-ms-lbl {
@@ -549,29 +561,29 @@
 }
 
 .sf-ms-arrow {
-  font-size: 10px;
+  font-size: 9px;
   color: var(--slate-400);
   flex-shrink: 0;
 }
 
 .sf-ms-dropdown {
   position: absolute;
-  top: calc(100% + 4px);
+  top: calc(100% + 3px);
   left: 0;
-  min-width: 160px;
-  max-width: 220px;
+  min-width: 150px;
+  max-width: 210px;
   background: var(--white);
   border: 1px solid var(--slate-200);
   border-radius: var(--radius-md);
-  box-shadow: 0 6px 24px rgba(0,0,0,0.10);
-  z-index: 200;
+  box-shadow: 0 6px 24px rgba(0,0,0,0.12);
+  z-index: 300;
   display: flex;
   flex-direction: column;
 }
 
 .sf-ms-search {
   width: 100%;
-  height: 32px;
+  height: 30px;
   padding: 0 var(--space-3);
   border: none;
   border-bottom: 1px solid var(--slate-100);
@@ -581,41 +593,31 @@
   box-sizing: border-box;
 }
 
-.sf-ms-search:focus {
-  outline: none;
-  background: var(--white);
-}
+.sf-ms-search:focus { outline: none; background: var(--white); }
 
 .sf-ms-opts {
-  max-height: 180px;
+  max-height: 170px;
   overflow-y: auto;
-  padding: var(--space-1) 0;
+  padding: 3px 0;
 }
 
 .sf-ms-opt {
   display: flex;
   align-items: center;
   gap: var(--space-2);
-  padding: var(--space-2) var(--space-3);
+  padding: 6px var(--space-3);
   font-size: var(--text-sm);
   color: var(--slate-700);
   cursor: pointer;
   user-select: none;
 }
 
-.sf-ms-opt:hover {
-  background: var(--slate-50);
-}
+.sf-ms-opt:hover { background: var(--slate-50); }
 
 .sf-ms-opt input[type="checkbox"] {
-  width: 14px;
-  height: 14px;
+  width: 13px;
+  height: 13px;
   accent-color: var(--color-primary);
   cursor: pointer;
   flex-shrink: 0;
-}
-
-/* Row 2 aligns range cols + actions to baseline */
-.sf-row-ranges {
-  align-items: flex-end;
 }

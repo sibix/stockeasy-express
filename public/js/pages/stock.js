@@ -115,7 +115,7 @@ async function initStockTab() {
   await applyFilters();
 }
 
-// ── Render filter panel — 2 rows + dynamic attr row ────────
+// ── Render filter panel — 2-row layout ─────────────────────
 function renderFilterPanel() {
   var statusDefs = [
     { v: 'all',      l: 'All' },
@@ -129,81 +129,107 @@ function renderFilterPanel() {
       + 'onclick="setStockStatusFilter(\'' + s.v + '\')">' + s.l + '</button>';
   }).join('');
 
-  // Find selected category name for the combobox
   var selCatName = '';
   if (_activeFilters.category_id) {
     var sc = _filterCategories.find(function(c) { return String(c.id) === String(_activeFilters.category_id); });
     if (sc) selCatName = sc.name;
   }
 
+  var catCombo =
+    '<div class="sf-cat-wrap" id="sf-cat-wrap">'
+    + '<input class="sf-cat-input" id="sf-cat-input" type="text" autocomplete="off" '
+      + 'placeholder="All categories…" value="' + _esc(selCatName) + '" '
+      + 'oninput="onCatSearchInput(this.value)" onfocus="showCatDropdown()" />'
+    + '<button class="sf-cat-clear" id="sf-cat-clear" type="button" onclick="clearCategoryFilter()" '
+      + 'style="display:' + (selCatName ? 'flex' : 'none') + '">×</button>'
+    + '<div class="sf-cat-dropdown" id="sf-cat-dropdown" style="display:none"></div>'
+    + '</div>';
+
+  var sellRange =
+    '<div class="sf-range">'
+    + '<input class="sf-range-input" type="number" id="sf-min-sell" placeholder="0" min="0" '
+      + 'value="' + (_activeFilters.min_sell || '') + '">'
+    + '<span class="sf-range-sep">–</span>'
+    + '<input class="sf-range-input" type="number" id="sf-max-sell" placeholder="∞" min="0" '
+      + 'value="' + (_activeFilters.max_sell || '') + '">'
+    + '</div>';
+
+  var buyRange =
+    '<div class="sf-range">'
+    + '<input class="sf-range-input" type="number" id="sf-min-buy" placeholder="0" min="0" '
+      + 'value="' + (_activeFilters.min_buy || '') + '">'
+    + '<span class="sf-range-sep">–</span>'
+    + '<input class="sf-range-input" type="number" id="sf-max-buy" placeholder="∞" min="0" '
+      + 'value="' + (_activeFilters.max_buy || '') + '">'
+    + '</div>';
+
+  var stockRange =
+    '<div class="sf-range">'
+    + '<input class="sf-range-input" type="number" id="sf-min-stock" placeholder="Min" min="0" '
+      + 'value="' + (_activeFilters.min_stock || '') + '">'
+    + '<span class="sf-range-sep">–</span>'
+    + '<input class="sf-range-input" type="number" id="sf-max-stock" placeholder="Max" min="0" '
+      + 'value="' + (_activeFilters.max_stock || '') + '">'
+    + '</div>';
+
   var html =
-    // ── Row 1: Category combobox + Stock Status ─────────────
-    '<div class="sf-row">'
-    + '<div class="sf-col sf-col-wide">'
-      + '<div class="sf-label">Category</div>'
-      + '<div class="sf-cat-wrap" id="sf-cat-wrap">'
-        + '<input class="sf-cat-input" id="sf-cat-input" type="text" autocomplete="off" '
-          + 'placeholder="All categories…" value="' + _esc(selCatName) + '" '
-          + 'oninput="onCatSearchInput(this.value)" onfocus="showCatDropdown()" />'
-        + '<button class="sf-cat-clear" id="sf-cat-clear" type="button" onclick="clearCategoryFilter()" '
-          + 'style="display:' + (selCatName ? 'flex' : 'none') + '">×</button>'
-        + '<div class="sf-cat-dropdown" id="sf-cat-dropdown" style="display:none"></div>'
-      + '</div>'
-    + '</div>'
-    + '<div class="sf-col">'
-      + '<div class="sf-label">Stock Status</div>'
-      + '<div class="sf-chips">' + statusChips + '</div>'
-    + '</div>'
+    // ── Row 1: [Apply/Clear] | [Category + Status] | [Sell Price] ─
+    '<div class="sf-panel-row sf-panel-row-1">'
+
+    + '<div class="sf-actions-left">'
+      + '<span class="sf-actions-label">Filters</span>'
+      + '<button class="btn btn-primary sf-btn" onclick="applyFilters()">Apply</button>'
+      + '<button class="btn btn-outline sf-btn" onclick="clearFilters()">Clear</button>'
     + '</div>'
 
-    // ── Row 2: Range filters + Apply / Clear ────────────────
-    + '<div class="sf-row sf-row-ranges">'
-    + '<div class="sf-col">'
-      + '<div class="sf-label">Stock Qty</div>'
-      + '<div class="sf-range">'
-        + '<input class="sf-range-input" type="number" id="sf-min-stock" placeholder="Min" min="0" '
-          + 'value="' + (_activeFilters.min_stock || '') + '">'
-        + '<span class="sf-range-sep">–</span>'
-        + '<input class="sf-range-input" type="number" id="sf-max-stock" placeholder="Max" min="0" '
-          + 'value="' + (_activeFilters.max_stock || '') + '">'
+    + '<div class="sf-group sf-group-main">'
+      + '<div class="sf-col">'
+        + '<div class="sf-label">Category</div>'
+        + catCombo
       + '</div>'
-    + '</div>'
-    + '<div class="sf-col">'
-      + '<div class="sf-label">Sell Price ₹</div>'
-      + '<div class="sf-range">'
-        + '<input class="sf-range-input" type="number" id="sf-min-sell" placeholder="0" min="0" '
-          + 'value="' + (_activeFilters.min_sell || '') + '">'
-        + '<span class="sf-range-sep">–</span>'
-        + '<input class="sf-range-input" type="number" id="sf-max-sell" placeholder="∞" min="0" '
-          + 'value="' + (_activeFilters.max_sell || '') + '">'
+      + '<div class="sf-col">'
+        + '<div class="sf-label">Stock Status</div>'
+        + '<div class="sf-chips">' + statusChips + '</div>'
       + '</div>'
-    + '</div>'
-    + '<div class="sf-col">'
-      + '<div class="sf-label">Buy Price ₹</div>'
-      + '<div class="sf-range">'
-        + '<input class="sf-range-input" type="number" id="sf-min-buy" placeholder="0" min="0" '
-          + 'value="' + (_activeFilters.min_buy || '') + '">'
-        + '<span class="sf-range-sep">–</span>'
-        + '<input class="sf-range-input" type="number" id="sf-max-buy" placeholder="∞" min="0" '
-          + 'value="' + (_activeFilters.max_buy || '') + '">'
-      + '</div>'
-    + '</div>'
-    + '<div class="sf-actions">'
-      + '<button class="btn btn-primary" onclick="applyFilters()">Apply</button>'
-      + '<button class="btn btn-outline" onclick="clearFilters()">Clear</button>'
-    + '</div>'
     + '</div>'
 
-    // ── Row 3 (dynamic): Attribute multi-select dropdowns ───
-    + '<div id="sf-attr-rows"></div>';
+    + '<div class="sf-group sf-group-price">'
+      + '<div class="sf-col">'
+        + '<div class="sf-label">Sell Price ₹</div>'
+        + sellRange
+      + '</div>'
+    + '</div>'
+
+    + '</div>'
+
+    // ── Row 2: (spacer) | [Stock Qty + Attrs inline] | [Buy Price] ─
+    + '<div class="sf-panel-row sf-panel-row-2">'
+
+    + '<div class="sf-spacer-left"></div>'
+
+    + '<div class="sf-group sf-group-stock">'
+      + '<div class="sf-col">'
+        + '<div class="sf-label">Stock Qty</div>'
+        + stockRange
+      + '</div>'
+      // Attribute multi-selects injected here as flex siblings
+      + '<div id="sf-attr-rows" class="sf-attr-inline"></div>'
+    + '</div>'
+
+    + '<div class="sf-group sf-group-price">'
+      + '<div class="sf-col">'
+        + '<div class="sf-label">Buy Price ₹</div>'
+        + buyRange
+      + '</div>'
+    + '</div>'
+
+    + '</div>';
 
   var panel = document.getElementById('sv-filter-panel');
   if (panel) panel.innerHTML = html;
 
-  // Pre-populate the category dropdown list
   populateCatDropdown('');
 
-  // If a category was already selected, reload its attribute rows
   if (_activeFilters.category_id) {
     onCategoryFilterChange(_activeFilters.category_id, true);
   }
@@ -282,7 +308,8 @@ async function onCategoryFilterChange(id, keepAttrs) {
   var attributes = result.data.attributes;
   if (!attributes.length) { attrRowsEl.innerHTML = ''; return; }
 
-  var html = '<div class="sf-row sf-attr-section">';
+  // Attrs render as inline sf-col siblings inside the stock group flex container
+  var html = '';
   attributes.forEach(function(attr) {
     var attrName = attr.attribute_name;
     // Route already parses attribute_values into an array — use directly
@@ -292,8 +319,17 @@ async function onCategoryFilterChange(id, keepAttrs) {
     if (!values.length) return;
     html += _renderAttrMs(attrName, values);
   });
-  html += '</div>';
   attrRowsEl.innerHTML = html;
+
+  // Restore has-selection highlight for any pre-existing selections
+  Object.keys(_activeFilters.attrs).forEach(function(attrName) {
+    var vals = _activeFilters.attrs[attrName] || [];
+    if (vals.length) {
+      var safeId = attrName.replace(/[^a-zA-Z0-9]/g, '_');
+      var btn = document.querySelector('#sf-ms-' + safeId + ' .sf-ms-btn');
+      if (btn) btn.classList.add('has-selection');
+    }
+  });
 }
 
 // ── Build one multi-select dropdown for an attribute ────────
@@ -368,7 +404,7 @@ function onAttrCheck(attrName, checkbox) {
     vals = vals.filter(function(v) { return v !== checkbox.value; });
   }
   _activeFilters.attrs[attrName] = vals;
-  // Update button label
+  // Update button label + highlight
   var safeId = attrName.replace(/[^a-zA-Z0-9]/g, '_');
   var lbl = document.getElementById('sf-ms-lbl-' + safeId);
   if (lbl) {
@@ -376,6 +412,8 @@ function onAttrCheck(attrName, checkbox) {
       : vals.length === 1 ? vals[0]
       : vals.length + ' selected';
   }
+  var btn = document.querySelector('#sf-ms-' + safeId + ' .sf-ms-btn');
+  if (btn) btn.classList.toggle('has-selection', vals.length > 0);
 }
 
 // ── Status chip clicked ─────────────────────────────────────

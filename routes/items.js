@@ -564,24 +564,25 @@ router.get("/stock/view", async (req, res) => {
     if (stock_status === 'in_stock') {
       conditions.push('iv.stock > 0');
     } else if (stock_status === 'low') {
-      conditions.push('iv.stock > 0 AND iv.stock <= i.min_stock_alert');
+      // Fall back to 5 if min_stock_alert is NULL or 0
+      conditions.push('iv.stock > 0 AND iv.stock <= GREATEST(COALESCE(i.min_stock_alert, 5), 1)');
     } else if (stock_status === 'out') {
       conditions.push('iv.stock <= 0');
     }
 
     // Dynamic attribute filters: ?attr_Size=M,L&attr_Color=Red
-    // Comma-separated values → IN clause; single value → = clause
+    // Use JSON_UNQUOTE so MariaDB compares plain strings (works for both = and IN)
     Object.keys(req.query).forEach(function(key) {
       if (key.startsWith('attr_') && req.query[key]) {
         const attrName = key.slice(5);
         const vals = req.query[key].split(',').map(v => v.trim()).filter(Boolean);
         if (vals.length === 1) {
-          conditions.push('JSON_EXTRACT(iv.attributes, ?) = ?');
+          conditions.push('JSON_UNQUOTE(JSON_EXTRACT(iv.attributes, ?)) = ?');
           params.push('$."' + attrName + '"');
           params.push(vals[0]);
         } else if (vals.length > 1) {
           const placeholders = vals.map(() => '?').join(', ');
-          conditions.push('JSON_EXTRACT(iv.attributes, ?) IN (' + placeholders + ')');
+          conditions.push('JSON_UNQUOTE(JSON_EXTRACT(iv.attributes, ?)) IN (' + placeholders + ')');
           params.push('$."' + attrName + '"');
           vals.forEach(function(v) { params.push(v); });
         }
