@@ -131,35 +131,35 @@
     <div style="flex:1;overflow:hidden;position:relative">
 
      <!-- PAGE GOES HERE-->
-       <!-- REPORTS PAGE -->
-      <div class="page" id="page-reports">
+       <!-- RETURNS PAGE -->
+      <div class="page" id="page-returns">
         <div class="page-content">
           <div class="sec-header mb-16">
-            <div><div class="sec-title">Reports & Analytics</div><div class="text-muted">Your business at a glance</div></div>
-            <div class="sec-actions">
-              <select class="form-input form-select" style="width:auto">
-                <option>This Month</option><option>Last Month</option><option>This Year</option><option>Custom Range</option>
-              </select>
+            <div><div class="sec-title">Returns</div><div class="text-muted">Handle goods coming back — from customers or to suppliers</div></div>
+          </div>
+          <div class="grid-2 mb-16">
+            <div class="card card-pad" style="cursor:pointer;border-left:4px solid var(--g500)" onclick="showModal('customer-return')">
+              <div style="font-size:28px;margin-bottom:8px">👤↩️</div>
+              <div style="font-weight:700;font-size:15px">Customer Returned Goods</div>
+              <div class="text-muted" style="margin-top:4px">Customer brought back items you sold them. Refund or adjust their account.</div>
+              <div style="margin-top:12px"><button class="btn btn-primary">Record Return</button></div>
+            </div>
+            <div class="card card-pad" style="cursor:pointer;border-left:4px solid var(--blue)" onclick="showModal('supplier-return')">
+              <div style="font-size:28px;margin-bottom:8px">🏪↩️</div>
+              <div style="font-weight:700;font-size:15px">Returning Goods to Supplier</div>
+              <div class="text-muted" style="margin-top:4px">Sending defective or excess stock back to your supplier. Adjust their bill.</div>
+              <div style="margin-top:12px"><button class="btn btn-outline">Record Return</button></div>
             </div>
           </div>
-          <div class="action-grid mb-16">
-            <div class="action-tile" onclick="showToast('📊 Day Book report loading...')"><div class="action-tile-icon">📅</div><div class="action-tile-label">Day Book</div><div class="action-tile-sub">All of today</div></div>
-            <div class="action-tile" onclick="showToast('💵 Cash Book loading...')"><div class="action-tile-icon">💵</div><div class="action-tile-label">Cash Book</div><div class="action-tile-sub">Cash in & out</div></div>
-            <div class="action-tile" onclick="showToast('🧾 Sales Register loading...')"><div class="action-tile-icon">🧾</div><div class="action-tile-label">Sales Report</div><div class="action-tile-sub">Bills & revenue</div></div>
-            <div class="action-tile" onclick="showToast('📦 Purchase Register loading...')"><div class="action-tile-icon">📦</div><div class="action-tile-label">Purchase Report</div><div class="action-tile-sub">What you bought</div></div>
-            <div class="action-tile" onclick="showToast('📈 Profit & Loss loading...')"><div class="action-tile-icon">📈</div><div class="action-tile-label">Profit & Loss</div><div class="action-tile-sub">Gross margin</div></div>
-            <div class="action-tile" onclick="showToast('⏳ Outstanding Report loading...')"><div class="action-tile-icon">⏳</div><div class="action-tile-label">Who Owes What</div><div class="action-tile-sub">Party-wise dues</div></div>
-            <div class="action-tile" onclick="showToast('🏆 Top sellers loading...')"><div class="action-tile-icon">🏆</div><div class="action-tile-label">Best Sellers</div><div class="action-tile-sub">Fast-moving items</div></div>
-            <div class="action-tile" onclick="showToast('📊 Stock Value report loading...')"><div class="action-tile-icon">🏷️</div><div class="action-tile-label">Stock Value</div><div class="action-tile-sub">What you hold</div></div>
-            <div class="action-tile" onclick="showToast('💸 Expense Summary loading...')"><div class="action-tile-icon">💸</div><div class="action-tile-label">Expenses</div><div class="action-tile-sub">Monthly costs</div></div>
-          </div>
-          <div class="card card-pad">
-            <div class="sec-title mb-16">📊 Sales This Month — By Category</div>
-            <div style="display:flex;flex-direction:column;gap:10px">
-              <div><div class="flex items-center gap-8" style="margin-bottom:4px"><span style="font-size:13px;font-weight:500;flex:1">Churidars</span><span class="td-mono" style="font-size:13px;font-weight:700;color:var(--g600)">₹1,42,000</span><span class="text-muted">42%</span></div><div class="progress"><div class="progress-bar" style="width:72%"></div></div></div>
-              <div><div class="flex items-center gap-8" style="margin-bottom:4px"><span style="font-size:13px;font-weight:500;flex:1">Kurtis</span><span class="td-mono" style="font-size:13px;font-weight:700;color:var(--g600)">₹84,500</span><span class="text-muted">25%</span></div><div class="progress"><div class="progress-bar" style="width:45%"></div></div></div>
-              <div><div class="flex items-center gap-8" style="margin-bottom:4px"><span style="font-size:13px;font-weight:500;flex:1">Sarees</span><span class="td-mono" style="font-size:13px;font-weight:700;color:var(--g600)">₹62,000</span><span class="text-muted">18%</span></div><div class="progress"><div class="progress-bar amber" style="width:34%"></div></div></div>
-              <div><div class="flex items-center gap-8" style="margin-bottom:4px"><span style="font-size:13px;font-weight:500;flex:1">Others</span><span class="td-mono" style="font-size:13px;font-weight:700;color:var(--g600)">₹50,000</span><span class="text-muted">15%</span></div><div class="progress"><div class="progress-bar" style="width:22%;background:var(--slate300)"></div></div></div>
+          <div class="card">
+            <div style="padding:12px 16px;border-bottom:1px solid var(--slate100);font-weight:600;font-size:13px">Recent Returns</div>
+            <div class="tbl-wrap">
+              <table>
+                <tr><th>Ref #</th><th>Date</th><th>Type</th><th>Party</th><th>Items</th><th>Amount</th><th>Action Taken</th></tr>
+                <tr><td class="td-mono td-bold">CR-014</td><td>14 Mar</td><td><span class="badge badge-green">Customer Return</span></td><td>Priya Stores</td><td>2 pcs</td><td class="td-mono">₹900</td><td><span class="badge badge-blue">Refunded</span></td></tr>
+                <tr><td class="td-mono td-bold">SR-008</td><td>12 Mar</td><td><span class="badge badge-blue">Supplier Return</span></td><td>Ravi Textiles</td><td>5 pcs</td><td class="td-mono">₹2,250</td><td><span class="badge badge-amber">Adjusted in bill</span></td></tr>
+                <tr><td class="td-mono td-bold">CR-013</td><td>10 Mar</td><td><span class="badge badge-green">Customer Return</span></td><td>Walk-in</td><td>1 pc</td><td class="td-mono">₹450</td><td><span class="badge badge-green">Exchanged</span></td></tr>
+              </table>
             </div>
           </div>
         </div>

@@ -199,7 +199,23 @@ router.post('/', async (req, res) => {
       const lineSgst = (qty * price * (parseFloat(line.sgst_rate || 0) / 100)).toFixed(2);
       const total    = (qty * price).toFixed(2);
 
-      // ── 2a. Get current stock ────────────────────────────
+      // ── 2a. Resolve UOM (always from DB — never trust frontend) ──
+      let resolvedUomId = null;
+      const [existingUom] = await connection.execute(
+        'SELECT id FROM item_uoms WHERE item_id = ? AND is_base = 1 LIMIT 1',
+        [line.item_id]
+      );
+      if (existingUom.length) {
+        resolvedUomId = existingUom[0].id;
+      } else {
+        const [newUom] = await connection.execute(
+          'INSERT INTO item_uoms (item_id, uom_name, conversion_factor, is_base) VALUES (?, \'Pcs\', 1, 1)',
+          [line.item_id]
+        );
+        resolvedUomId = newUom.insertId;
+      }
+
+      // ── 2b. Get current stock ────────────────────────────
       let stockBefore = 0;
       if (line.variant_id) {
         const [v] = await connection.execute(
@@ -211,7 +227,7 @@ router.post('/', async (req, res) => {
 
       const stockAfter = Math.max(0, stockBefore - qty);
 
-      // ── 2b. Deduct stock ─────────────────────────────────
+      // ── 2c. Deduct stock ─────────────────────────────────
       if (line.variant_id) {
         await connection.execute(
           'UPDATE item_variants SET stock = ? WHERE id = ?',
@@ -223,7 +239,7 @@ router.post('/', async (req, res) => {
         );
       }
 
-      // ── 2c. Insert sale line item ─────────────────────────
+      // ── 2d. Insert sale line item ─────────────────────────
       await connection.execute(`
         INSERT INTO sale_items (
           sale_id, item_id, variant_id, uom_id,
@@ -234,7 +250,7 @@ router.post('/', async (req, res) => {
           saleId,
           line.item_id,
           line.variant_id || null,
-          line.uom_id     || 1,
+          resolvedUomId,
           qty,
           1,
           qty,
@@ -245,7 +261,7 @@ router.post('/', async (req, res) => {
         ]
       );
 
-      // ── 2d. Record stock ledger entry ─────────────────────
+      // ── 2e. Record stock ledger entry ─────────────────────
       if (line.variant_id) {
         await connection.execute(`
           INSERT INTO stock_ledger (
@@ -258,7 +274,7 @@ router.post('/', async (req, res) => {
           [
             line.item_id,
             line.variant_id,
-            line.uom_id || 1,
+            resolvedUomId,
             saleId,
             -qty,
             -qty,
