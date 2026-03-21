@@ -235,9 +235,10 @@ router.post('/', async (req, res) => {
           if (existItem.length) {
             draftItemId = existItem[0].id;
           } else {
+            const draftBarcode = generateBarcode('SE');
             const [newItem] = await connection.execute(
-              `INSERT INTO items (category_id, name, base_uom, has_variants, created_by) VALUES (?, ?, 'Pcs', 1, ?)`,
-              [category_id, item_name.trim(), req.session.userId]
+              `INSERT INTO items (category_id, name, base_uom, has_variants, internal_barcode, created_by) VALUES (?, ?, 'Pcs', 1, ?, ?)`,
+              [category_id, item_name.trim(), draftBarcode, req.session.userId]
             );
             draftItemId = newItem.insertId;
             try {
@@ -318,12 +319,13 @@ router.post('/', async (req, res) => {
           actualItemId = existingItem[0].id;
         } else {
           // Create new item
+          const confirmedBarcode = generateBarcode('SE');
           const [newItem] = await connection.execute(`
             INSERT INTO items (
               category_id, name, base_uom,
-              has_variants, created_by
-            ) VALUES (?, ?, 'Pcs', 1, ?)`,
-            [category_id, item_name.trim(), req.session.userId]
+              has_variants, internal_barcode, created_by
+            ) VALUES (?, ?, 'Pcs', 1, ?, ?)`,
+            [category_id, item_name.trim(), confirmedBarcode, req.session.userId]
           );
           actualItemId = newItem.insertId;
           // Generate and save product code

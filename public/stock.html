@@ -24,17 +24,17 @@
 
         <!-- MODULE TABS -->
         <div class="module-tabs visible">
-          <a href="#" class="mtab active" id="tab-stock"
-             onclick="switchStockTab('stock'); return false">📊 Stock</a>
-          <a href="#" class="mtab" id="tab-items"
+          <a href="#" class="mtab active" id="tab-items"
              onclick="switchStockTab('items'); return false">🏷️ Items</a>
+          <a href="#" class="mtab" id="tab-stock"
+             onclick="switchStockTab('stock'); return false">📊 Stock</a>
         </div>
 
         <!-- PAGE CONTENT -->
         <div class="page-content">
 
           <!-- ── STOCK PANEL ────────────────────────────── -->
-          <div id="panel-stock">
+          <div id="panel-stock" style="display:none">
             <div class="page-header">
               <div>
                 <div class="page-header-title">Stock</div>
@@ -59,7 +59,7 @@
           </div>
 
           <!-- ── ITEMS PANEL ────────────────────────────── -->
-          <div id="panel-items" style="display:none">
+          <div id="panel-items">
             <div class="page-header">
               <div>
                 <div class="page-header-title">Items</div>

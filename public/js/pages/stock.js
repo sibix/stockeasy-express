@@ -3,9 +3,10 @@
    Two tabs: Stock (variant-level) | Items (item-level)
 ================================================================ */
 
-var _activeStockTab = 'stock';
+var _activeStockTab = 'items';
 var _stockTableInst = null;
 var _itemsTableInst = null;
+var _stockTabLoaded = false;
 var _itemsTabLoaded = false;
 var _editingItem    = null;   // full item object loaded for editing
 
@@ -16,7 +17,8 @@ document.addEventListener('DOMContentLoaded', async function() {
   await checkSession();
   setActivePage('stock');
   setTopbar('Inventory', 'Inventory › Stock');
-  await initStockTab();
+  _itemsTabLoaded = true;
+  await initItemsTab();
 });
 
 // ── Tab switch ─────────────────────────────────────────────
@@ -30,7 +32,11 @@ function switchStockTab(tab) {
   document.getElementById('tab-stock').classList.toggle('active', showStock);
   document.getElementById('tab-items').classList.toggle('active', !showStock);
 
-  // Lazy-load items tab on first visit
+  // Lazy-load whichever tab hasn't loaded yet
+  if (tab === 'stock' && !_stockTabLoaded) {
+    _stockTabLoaded = true;
+    initStockTab();
+  }
   if (tab === 'items' && !_itemsTabLoaded) {
     _itemsTabLoaded = true;
     initItemsTab();
@@ -53,7 +59,7 @@ var STOCK_SCHEMA = {
     { k:'sell',             lb:'Sell ₹',          t:'inr',         w:100, srt:1, flt:0, vis:1 },
     { k:'mrp',              lb:'MRP ₹',           t:'inr',         w:100, srt:0, flt:0, vis:0 },
     { k:'val',              lb:'Stock Value ₹',   t:'inr',         w:130, srt:1, flt:0, vis:1 },
-    { k:'internal_barcode', lb:'Barcode',         t:'mono',        w:150, srt:0, flt:1, vis:0 },
+    { k:'barcode',          lb:'Barcode',         t:'mono',        w:160, srt:0, flt:1, vis:0 },
   ]
 };
 
