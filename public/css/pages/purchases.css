@@ -1114,3 +1114,52 @@
   margin-bottom: 2px;
   white-space: nowrap;
 }
+
+/* ── View Bill (history view mode) ─────────────────────── */
+.vb-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  background: var(--white);
+  border: 1px solid var(--slate-200);
+  border-radius: var(--radius-lg);
+  margin-bottom: var(--space-4);
+  flex-wrap: wrap;
+}
+
+.vb-readonly-field {
+  min-height: 38px;
+  padding: var(--space-2) var(--space-3);
+  background: var(--slate-50);
+  border: 1px solid var(--slate-100);
+  border-radius: var(--radius-md);
+  font-size: var(--text-sm);
+  color: var(--slate-700);
+  display: flex;
+  align-items: center;
+}
+
+.vb-editable-tag {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: var(--weight-semibold);
+  color: var(--green-600);
+  background: #dcfce7;
+  border-radius: 4px;
+  padding: 1px 5px;
+  margin-left: var(--space-1);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  vertical-align: middle;
+}
+
+.vb-readonly-badge {
+  font-size: var(--text-xs);
+  color: var(--slate-400);
+  font-weight: var(--weight-semibold);
+  padding: 0 var(--space-4);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}

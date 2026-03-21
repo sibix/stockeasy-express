@@ -44,6 +44,15 @@ async function initializeDatabase() {
     try { await db.execute("ALTER TABLE item_variants ADD COLUMN mrp DECIMAL(15,4) NULL"); } catch(e) {}
     // ean_upc on item_variants
     try { await db.execute("ALTER TABLE item_variants ADD COLUMN ean_upc VARCHAR(50) NULL"); } catch(e) {}
+    // ── Draft continuation — store pricing + variant attrs on purchase_items ──
+    // sell_price + mrp stored at time of purchase (not just on item_variants)
+    try { await db.execute("ALTER TABLE purchase_items ADD COLUMN sell_price DECIMAL(15,2) DEFAULT 0"); } catch(e) {}
+    try { await db.execute("ALTER TABLE purchase_items ADD COLUMN mrp DECIMAL(15,2) DEFAULT 0"); } catch(e) {}
+    // cgst_rate / sgst_rate percentages (not just the calculated amounts)
+    try { await db.execute("ALTER TABLE purchase_items ADD COLUMN cgst_rate DECIMAL(5,2) DEFAULT 0"); } catch(e) {}
+    try { await db.execute("ALTER TABLE purchase_items ADD COLUMN sgst_rate DECIMAL(5,2) DEFAULT 0"); } catch(e) {}
+    // draft_attributes — variant attribute JSON for draft rows (variant_id is null until confirm)
+    try { await db.execute("ALTER TABLE purchase_items ADD COLUMN draft_attributes JSON NULL"); } catch(e) {}
 
     // app_settings — key/value store for product & system configuration
     await db.execute(`

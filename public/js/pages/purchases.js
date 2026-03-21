@@ -15,6 +15,9 @@ var _supTimer      = null;
 var _eventsBound   = false;
 var _currentSubTab = 'simple';
 var _applyAllCat   = null;    // category object used in apply-all row
+var _viewMode      = false;   // true when viewing a confirmed bill read-only
+var _viewingId     = null;    // id of the bill currently being viewed
+var _viewSubTab    = 'simple';
 
 // ── Init ────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', async function () {
@@ -342,9 +345,16 @@ function showApplyCatDrop(q) {
 
 // ── Tab switching ────────────────────────────────────────────
 function switchTab(tab) {
+  // Exit view mode when navigating away
+  if (_viewMode && tab === 'history') {
+    _viewMode  = false;
+    _viewingId = null;
+    document.getElementById('view-bill-wrap').style.display = 'none';
+    document.getElementById('new-bill-form').style.display  = '';
+  }
   document.getElementById('content-history').style.display = tab === 'history' ? '' : 'none';
   document.getElementById('content-new').style.display     = tab === 'new'     ? '' : 'none';
-  document.getElementById('save-footer').style.display     = tab === 'new'     ? 'flex' : 'none';
+  document.getElementById('save-footer').style.display     = (tab === 'new' && !_viewMode) ? 'flex' : 'none';
   document.getElementById('tab-history').classList.toggle('active', tab === 'history');
   document.getElementById('tab-new').classList.toggle('active', tab === 'new');
   if (tab === 'history') loadHistory();
@@ -1439,7 +1449,20 @@ async function saveBill(mode) {
       return;
     }
 
-    var result = await apiFetch('/purchases', 'POST', payload);
+    var result;
+
+    if (_editDraftId) {
+      // ── Updating an existing draft ────────────────────────
+      result = await apiFetch('/purchases/' + _editDraftId, 'PUT', payload);
+      if (result.ok && !isDraft) {
+        // User hit "Confirm Bill" while editing a draft — confirm it now
+        result = await apiFetch('/purchases/' + _editDraftId + '/confirm', 'PUT', {});
+      }
+    } else {
+      // ── Creating a new bill ───────────────────────────────
+      result = await apiFetch('/purchases', 'POST', payload);
+    }
+
     if (result.ok) {
       showToast(result.data.message || 'Saved!', 'green');
       resetBillForm();
@@ -1519,7 +1542,8 @@ async function loadHistory() {
 
     var actions = '';
     if (status === 'draft') {
-      actions = '<button class="btn btn-sm" onclick="confirmDraft(' + p.id + ')">Confirm</button> ' +
+      actions = '<button class="btn btn-sm btn-outline" onclick="continueDraft(' + p.id + ')">Continue</button> ' +
+                '<button class="btn btn-sm" onclick="confirmDraft(' + p.id + ')">Confirm</button> ' +
                 '<button class="btn btn-sm btn-danger" onclick="deleteDraft(' + p.id + ')">Delete</button>';
     } else if (status === 'completed') {
       actions = '<button class="btn btn-sm btn-outline" onclick="viewPurchase(' + p.id + ')">View</button> ' +
@@ -1552,6 +1576,119 @@ async function deleteDraft(id) {
   else showToast((res.data && res.data.error) || 'Could not delete', 'red');
 }
 
+async function continueDraft(id) {
+  var res = await apiFetch('/purchases/' + id);
+  if (!res.ok) { showToast('Could not load draft', 'red'); return; }
+  var p = res.data;
+  if (p.status !== 'draft') { showToast('This bill is not a draft', 'amber'); return; }
+
+  // ── Reset then fill header ─────────────────────────────
+  resetBillForm();
+
+  document.getElementById('sup-search-input').value     = p.supplier_name || '';
+  document.getElementById('sup-id').value               = p.supplier_id   || '';
+  document.getElementById('seller-bill-no').value       = p.seller_bill_number || '';
+  document.getElementById('bill-notes').value           = p.notes         || '';
+  document.getElementById('supplier-bill-total').value  = p.supplier_bill_total || '';
+  document.getElementById('bill-date').value            = (p.purchase_date || '').split('T')[0] || todayISO();
+  document.getElementById('bill-form-title').textContent = 'Editing Draft — ' + (p.purchase_number || '');
+
+  _supplier    = { id: p.supplier_id, name: p.supplier_name };
+  _editDraftId = id;
+
+  // ── Reconstruct _lineItems from saved purchase_items ───
+  // Group by item_id — one _lineItems entry per product
+  var groups     = {};
+  var groupOrder = [];
+
+  (p.items || []).forEach(function (it) {
+    if (!groups[it.item_id]) {
+      groups[it.item_id] = {
+        item_id:       it.item_id,
+        item_name:     it.item_name,
+        category_id:   it.category_id,
+        category_name: it.category_name,
+        buy_price:     parseFloat(it.unit_price  || 0),
+        sell_price:    parseFloat(it.sell_price  || 0),
+        mrp:           parseFloat(it.mrp         || 0),
+        cgst:          parseFloat(it.cgst_rate   || 0),
+        sgst:          parseFloat(it.sgst_rate   || 0),
+        fixed_attrs:   {},
+        loose_qtys:    {},
+        ean_upcs:      {}
+      };
+      groupOrder.push(it.item_id);
+    }
+    var g     = groups[it.item_id];
+    // variant_attributes already parsed by backend (COALESCE of draft_attributes / iv.attributes)
+    var attrs = it.variant_attributes || {};
+    var key   = attrsKey(attrs);
+
+    // Merge into fixed_attrs (collect all unique values per attribute name)
+    Object.entries(attrs).forEach(function (kv) {
+      var attrName = kv[0], attrVal = String(kv[1]);
+      if (!g.fixed_attrs[attrName]) g.fixed_attrs[attrName] = [];
+      if (g.fixed_attrs[attrName].indexOf(attrVal) === -1) g.fixed_attrs[attrName].push(attrVal);
+    });
+
+    // Per-variant quantity
+    g.loose_qtys[key] = (g.loose_qtys[key] || 0) + parseFloat(it.quantity || 0);
+  });
+
+  // ── Build _lineItems array ─────────────────────────────
+  _lineItems  = [];
+  _rowCounter = 0;
+  var catLoadPromises = [];
+
+  groupOrder.forEach(function (itemId) {
+    var g = groups[itemId];
+    _rowCounter++;
+
+    var totalQty = Object.values(g.loose_qtys).reduce(function (s, q) { return s + q; }, 0);
+
+    var li = {
+      row_id:        _rowCounter,
+      category_id:   g.category_id,
+      category_name: g.category_name,
+      category:      null,          // loaded async below
+      item_id:       g.item_id,
+      item_name:     g.item_name,
+      product_code:  '',
+      set_defs:      [],
+      set_def_id:    null,
+      set_def:       null,
+      fixed_attrs:   g.fixed_attrs,
+      qty:           totalQty,
+      qty_mode:      'pcs',
+      buy_price:     g.buy_price,
+      sell_price:    g.sell_price,
+      mrp:           g.mrp,
+      gst_cgst:      g.cgst,
+      gst_sgst:      g.sgst,
+      expanded:      false,
+      specs_open:    false,
+      overrides:     {},
+      loose_qtys:    g.loose_qtys,
+      ean_upcs:      g.ean_upcs
+    };
+
+    _lineItems.push(li);
+
+    // Load full category object (needed for expandLineItem and detail view)
+    catLoadPromises.push(
+      loadCategoryData(g.category_id).then(function (cat) { li.category = cat; })
+    );
+  });
+
+  // Wait for all category loads then render
+  await Promise.all(catLoadPromises);
+  renderSimpleTable();
+  updateFooter();
+  showSubTab('simple');
+  switchTab('new');
+  showToast('Draft loaded — make changes and save', 'amber');
+}
+
 async function cancelPurchase(id, num) {
   if (!confirm('Cancel purchase ' + num + '? Stock will be reversed.')) return;
   var res = await apiFetch('/purchases/' + id, 'DELETE');
@@ -1562,12 +1699,303 @@ async function cancelPurchase(id, num) {
 async function viewPurchase(id) {
   var res = await apiFetch('/purchases/' + id);
   if (!res.ok) { showToast('Could not load purchase', 'red'); return; }
-  var p = res.data;
-  var lines = (p.items || []).map(function (it) {
-    var attrs = Object.entries(it.variant_attributes || {}).map(function (kv) { return kv[0] + ': ' + kv[1]; }).join(', ');
-    return escH(it.item_name) + ' (' + escH(attrs) + ') × ' + it.quantity + ' @ ' + formatINR(it.unit_price);
-  }).join('\n');
-  alert(p.purchase_number + ' — ' + p.supplier_name + '\n\n' + lines + '\n\nNet: ' + formatINR(p.net_amount));
+
+  _viewMode  = true;
+  _viewingId = id;
+
+  renderViewBill(res.data);
+
+  // Switch to New Bill tab manually (skip history reload)
+  document.getElementById('content-history').style.display = 'none';
+  document.getElementById('content-new').style.display     = '';
+  document.getElementById('save-footer').style.display     = 'none';
+  document.getElementById('tab-history').classList.remove('active');
+  document.getElementById('tab-new').classList.add('active');
+}
+
+function renderViewBill(p) {
+  var date = p.purchase_date
+    ? new Date(p.purchase_date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })
+    : '—';
+
+  var statusBadge = p.status === 'cancelled'
+    ? '<span class="pur-badge pur-badge-cancelled">Cancelled</span>'
+    : '<span class="pur-badge pur-badge-confirmed">Confirmed</span>';
+
+  var isConfirmed = p.status === 'completed';
+
+  // Group items by item_id for the Simple Entry view
+  // Also collect all purchase_items.id values per group (for price update)
+  var groups     = {};
+  var groupOrder = [];
+  (p.items || []).forEach(function (it) {
+    if (!groups[it.item_id]) {
+      groups[it.item_id] = {
+        item_name:     it.item_name,
+        category_name: it.category_name,
+        buy_price:     parseFloat(it.unit_price  || 0),
+        sell_price:    parseFloat(it.sell_price  || 0),
+        mrp:           parseFloat(it.mrp         || 0),
+        cgst:          parseFloat(it.cgst_rate   || 0),
+        sgst:          parseFloat(it.sgst_rate   || 0),
+        total_qty:     0,
+        variant_count: 0,
+        pi_ids:        []   // purchase_items.id list for this item group
+      };
+      groupOrder.push(it.item_id);
+    }
+    groups[it.item_id].total_qty     += (it.quantity || 0);
+    groups[it.item_id].variant_count += 1;
+    groups[it.item_id].pi_ids.push(it.id);   // pi.id from SELECT pi.*
+  });
+
+  // ── Simple Entry rows (one per item, prices editable) ─────
+  var simpleRows = groupOrder.map(function (itemId) {
+    var g      = groups[itemId];
+    var gstPct = g.cgst + g.sgst;
+    var amount = g.total_qty * g.buy_price;
+    var gstAmt = amount * (gstPct / 100);
+    var total  = amount + gstAmt;
+    var piIds  = g.pi_ids.join(',');
+
+    var priceCell = isConfirmed
+      ? function (val, field) {
+          return '<input class="form-input pur-compact-num vb-price-inp" type="number" min="0" step="0.01"' +
+                 ' value="' + val + '" data-field="' + field + '"' +
+                 ' oninput="onViewPriceInput(this)">';
+        }
+      : function (val) { return formatINR(val); };
+
+    return '<tr data-pi-ids="' + piIds + '" data-gst="' + gstPct + '" data-qty="' + g.total_qty + '">' +
+      '<td style="color:var(--slate-500);font-size:var(--text-sm)">' + escH(g.category_name || '—') + '</td>' +
+      '<td><strong>' + escH(g.item_name) + '</strong>' +
+        '<div style="font-size:var(--text-xs);color:var(--slate-400);margin-top:2px">' + g.variant_count + ' variant' + (g.variant_count !== 1 ? 's' : '') + '</div>' +
+      '</td>' +
+      '<td class="pur-bd-exp vb-qty-val">' + g.total_qty + ' pcs</td>' +
+      '<td class="pur-price-cell">' + priceCell(g.buy_price,  'buy')  + '</td>' +
+      '<td class="pur-price-cell">' + priceCell(g.sell_price, 'sell') + '</td>' +
+      '<td class="pur-price-cell">' + priceCell(g.mrp,        'mrp')  + '</td>' +
+      '<td class="pur-gst-label">' + (gstPct ? gstPct + '%' : '—') + '</td>' +
+      '<td class="pur-mono-val vb-amount-val">' + formatINR(amount) + '</td>' +
+      '<td class="pur-total-val vb-total-val">'  + formatINR(total)  + '</td>' +
+    '</tr>';
+  }).join('');
+
+  // ── Detail View rows (one per variant, read-only reference) ─
+  var detailRows = (p.items || []).map(function (it) {
+    var attrsHtml = Object.entries(it.variant_attributes || {}).map(function (kv) {
+      return '<span class="pur-attr-tag"><strong>' + escH(kv[0]) + '</strong>: ' + escH(String(kv[1])) + '</span>';
+    }).join('');
+    var gstPct = (it.cgst_rate || 0) + (it.sgst_rate || 0);
+    var amount = (it.quantity || 0) * parseFloat(it.unit_price || 0);
+    return '<tr>' +
+      '<td style="font-size:var(--text-sm)">' + escH(it.item_name) + '</td>' +
+      '<td style="padding:var(--space-1) var(--space-2)">' + (attrsHtml || '<span style="color:var(--slate-300)">—</span>') + '</td>' +
+      '<td style="font-family:var(--font-mono);font-size:var(--text-xs);color:var(--slate-600)">' + escH(it.sku || '—') + '</td>' +
+      '<td class="pur-bd-exp">' + (it.quantity || 0) + '</td>' +
+      '<td class="pur-mono-val">' + formatINR(it.unit_price  || 0) + '</td>' +
+      '<td class="pur-mono-val">' + formatINR(it.sell_price  || 0) + '</td>' +
+      '<td class="pur-mono-val">' + formatINR(it.mrp         || 0) + '</td>' +
+      '<td class="pur-gst-label">' + (gstPct ? gstPct + '%' : '—') + '</td>' +
+      '<td class="pur-mono-val">' + formatINR(amount) + '</td>' +
+    '</tr>';
+  }).join('');
+
+  var totalVariants = (p.items || []).length;
+  var totalItems    = groupOrder.length;
+
+  var html =
+    // ── View banner ───────────────────────────────────────
+    '<div class="vb-banner">' +
+      '<div style="display:flex;align-items:center;gap:var(--space-3);flex-wrap:wrap">' +
+        '<button class="btn btn-outline" onclick="exitViewMode()">← Back to History</button>' +
+        '<span style="font-family:var(--font-mono);font-weight:var(--weight-bold);font-size:var(--text-sm)">' + escH(p.purchase_number || '') + '</span>' +
+        statusBadge +
+        '<span style="color:var(--slate-500);font-size:var(--text-sm)">' + escH(p.supplier_name || '') + ' · ' + date + '</span>' +
+      '</div>' +
+      (isConfirmed ? '<button class="btn btn-primary" onclick="saveViewChanges()">Save Changes</button>' : '') +
+    '</div>' +
+
+    // ── Bill Details (read-only except notes + seller bill no) ──
+    '<div class="card card-padded mb-4">' +
+      '<div class="section-title">Bill Details</div>' +
+      '<div class="form-row">' +
+        '<div class="form-col">' +
+          '<div class="form-group">' +
+            '<div class="form-label">Supplier</div>' +
+            '<div class="vb-readonly-field">' + escH(p.supplier_name || '—') + '</div>' +
+          '</div>' +
+        '</div>' +
+        '<div class="form-col" style="max-width:160px">' +
+          '<div class="form-group">' +
+            '<div class="form-label">Bill Date</div>' +
+            '<div class="vb-readonly-field">' + date + '</div>' +
+          '</div>' +
+        '</div>' +
+        '<div class="form-col" style="max-width:200px">' +
+          '<div class="form-group">' +
+            '<div class="form-label">Seller Bill No ' + (isConfirmed ? '<span class="vb-editable-tag">editable</span>' : '') + '</div>' +
+            (isConfirmed
+              ? '<input class="form-input" type="text" id="vb-seller-bill-no" value="' + escH(p.seller_bill_number || '') + '" placeholder="e.g. INV-001" />'
+              : '<div class="vb-readonly-field">' + escH(p.seller_bill_number || '—') + '</div>') +
+          '</div>' +
+        '</div>' +
+        '<div class="form-col" style="max-width:160px">' +
+          '<div class="form-group">' +
+            '<div class="form-label">Supplier Total</div>' +
+            '<div class="vb-readonly-field" style="font-family:var(--font-mono)">' + formatINR(p.supplier_bill_total || 0) + '</div>' +
+          '</div>' +
+        '</div>' +
+        '<div class="form-col" style="max-width:160px">' +
+          '<div class="form-group">' +
+            '<div class="form-label">Calculated Total</div>' +
+            '<div class="vb-readonly-field" style="font-family:var(--font-mono);font-weight:var(--weight-bold);color:var(--slate-800)">' + formatINR(p.net_amount || 0) + '</div>' +
+          '</div>' +
+        '</div>' +
+      '</div>' +
+      '<div class="form-row" style="margin-top:0">' +
+        '<div class="form-col">' +
+          '<div class="form-group" style="margin-bottom:0">' +
+            '<div class="form-label">Notes ' + (isConfirmed ? '<span class="vb-editable-tag">editable</span>' : '') + '</div>' +
+            (isConfirmed
+              ? '<input class="form-input" type="text" id="vb-notes" value="' + escH(p.notes || '') + '" placeholder="Optional notes…" />'
+              : '<div class="vb-readonly-field">' + escH(p.notes || '—') + '</div>') +
+          '</div>' +
+        '</div>' +
+      '</div>' +
+    '</div>' +
+
+    // ── Entry tables with sub-tabs ─────────────────────────
+    '<div class="card" style="overflow:hidden;margin-bottom:var(--space-4)">' +
+      '<div class="pur-view-header">' +
+        '<div class="bill-subtabs">' +
+          '<button class="bill-stab active" id="vstab-simple" onclick="showViewSubTab(\'simple\')">Simple Entry</button>' +
+          '<button class="bill-stab" id="vstab-detail" onclick="showViewSubTab(\'detail\')">Detail View</button>' +
+        '</div>' +
+        '<span class="vb-readonly-badge">Read-only</span>' +
+      '</div>' +
+
+      // Simple table
+      '<div id="vb-simple-wrap" style="overflow-x:auto">' +
+        '<table class="pur-entry-tbl">' +
+          '<thead><tr class="pur-th-labels">' +
+            '<th style="min-width:130px">Category</th>' +
+            '<th style="min-width:160px">Item Name</th>' +
+            '<th style="min-width:90px">Total Qty</th>' +
+            (isConfirmed
+              ? '<th style="min-width:100px">Buy ₹ <span class="vb-editable-tag">edit</span></th>' +
+                '<th style="min-width:100px">Sell ₹ <span class="vb-editable-tag">edit</span></th>' +
+                '<th style="min-width:100px">MRP ₹ <span class="vb-editable-tag">edit</span></th>'
+              : '<th style="min-width:82px">Buy ₹</th><th style="min-width:82px">Sell ₹</th><th style="min-width:82px">MRP ₹</th>') +
+            '<th style="width:52px">GST%</th>' +
+            '<th style="min-width:90px">Amount</th>' +
+            '<th style="min-width:90px">Total</th>' +
+          '</tr></thead>' +
+          '<tbody>' + (simpleRows || '<tr class="pur-empty-row"><td colspan="9">No items</td></tr>') + '</tbody>' +
+        '</table>' +
+      '</div>' +
+
+      // Detail table
+      '<div id="vb-detail-wrap" style="overflow-x:auto;display:none">' +
+        '<table class="pur-entry-tbl">' +
+          '<thead><tr class="pur-th-labels">' +
+            '<th style="min-width:140px">Item</th>' +
+            '<th style="min-width:170px">Variant Attrs</th>' +
+            '<th style="min-width:110px">SKU</th>' +
+            '<th style="width:70px">Qty</th>' +
+            '<th style="min-width:82px">Buy ₹</th>' +
+            '<th style="min-width:82px">Sell ₹</th>' +
+            '<th style="min-width:82px">MRP ₹</th>' +
+            '<th style="width:52px">GST%</th>' +
+            '<th style="min-width:90px">Amount</th>' +
+          '</tr></thead>' +
+          '<tbody>' + (detailRows || '<tr class="pur-empty-row"><td colspan="9">No variants</td></tr>') + '</tbody>' +
+        '</table>' +
+      '</div>' +
+
+      // Total bar
+      '<div class="pur-total-bar">' +
+        '<span style="font-size:var(--text-sm);color:var(--slate-500)">' +
+          totalVariants + ' variant' + (totalVariants !== 1 ? 's' : '') +
+          ' across ' + totalItems + ' item' + (totalItems !== 1 ? 's' : '') +
+        '</span>' +
+        '<span class="pur-running-total">Net Amount: <strong>' + formatINR(p.net_amount || 0) + '</strong></span>' +
+      '</div>' +
+    '</div>';
+
+  var wrap = document.getElementById('view-bill-wrap');
+  wrap.innerHTML = html;
+  wrap.style.display = '';
+
+  // Hide the new bill form
+  document.getElementById('new-bill-form').style.display = 'none';
+}
+
+function showViewSubTab(tab) {
+  _viewSubTab = tab;
+  document.getElementById('vb-simple-wrap').style.display  = tab === 'simple' ? '' : 'none';
+  document.getElementById('vb-detail-wrap').style.display  = tab === 'detail' ? '' : 'none';
+  document.getElementById('vstab-simple').classList.toggle('active', tab === 'simple');
+  document.getElementById('vstab-detail').classList.toggle('active', tab === 'detail');
+}
+
+function exitViewMode() {
+  _viewMode  = false;
+  _viewingId = null;
+  document.getElementById('view-bill-wrap').style.display = 'none';
+  document.getElementById('new-bill-form').style.display  = '';
+  switchTab('history');
+}
+
+// Live recalculation when price input changes in view mode
+function onViewPriceInput(el) {
+  var tr     = el.closest('tr');
+  var qty    = parseFloat(tr.getAttribute('data-qty'))  || 0;
+  var gstPct = parseFloat(tr.getAttribute('data-gst'))  || 0;
+  var buy    = parseFloat(tr.querySelector('[data-field="buy"]').value)  || 0;
+  var amount = qty * buy;
+  var total  = amount + (amount * gstPct / 100);
+  tr.querySelector('.vb-amount-val').textContent = formatINR(amount);
+  tr.querySelector('.vb-total-val').textContent  = formatINR(total);
+}
+
+async function saveViewChanges() {
+  if (!_viewingId) return;
+
+  var notesEl  = document.getElementById('vb-notes');
+  var sellerEl = document.getElementById('vb-seller-bill-no');
+
+  // Collect price updates from each Simple Entry row
+  var priceUpdates = [];
+  document.querySelectorAll('#vb-simple-wrap tbody tr[data-pi-ids]').forEach(function (tr) {
+    var piIds = tr.getAttribute('data-pi-ids').split(',').map(Number).filter(Boolean);
+    if (!piIds.length) return;
+    var buyInp  = tr.querySelector('[data-field="buy"]');
+    var sellInp = tr.querySelector('[data-field="sell"]');
+    var mrpInp  = tr.querySelector('[data-field="mrp"]');
+    if (!buyInp) return;   // not editable (cancelled bill)
+    piIds.forEach(function (piId) {
+      priceUpdates.push({
+        purchase_item_id: piId,
+        unit_price:  parseFloat(buyInp.value)  || 0,
+        sell_price:  parseFloat(sellInp.value) || 0,
+        mrp:         parseFloat(mrpInp.value)  || 0
+      });
+    });
+  });
+
+  var payload = {
+    notes:              notesEl  ? notesEl.value.trim()  : null,
+    seller_bill_number: sellerEl ? sellerEl.value.trim() : null,
+    price_updates:      priceUpdates
+  };
+
+  var res = await apiFetch('/purchases/' + _viewingId, 'PATCH', payload);
+  if (res.ok) {
+    showToast(res.data.message || 'Changes saved', 'green');
+  } else {
+    showToast((res.data && res.data.error) || 'Could not save', 'red');
+  }
 }
 
 // ── HTML escape ───────────────────────────────────────────────
