@@ -893,22 +893,29 @@
   gap: var(--space-3);
 }
 
-/* ── Item Specs button (inside category cell) ──────────────── */
+/* ── Item Specs column cell ────────────────────────────────── */
+.pur-specs-col {
+  text-align: center;
+  vertical-align: middle;
+  width: 48px;
+}
+
+/* ── Item Specs button — compact icon in its own column ─────── */
 .pur-specs-btn {
-  display: block;
-  width: 100%;
-  margin-top: var(--space-1);
-  padding: 3px var(--space-2);
+  width: 30px;
+  height: 30px;
+  padding: 0;
   border: 1px solid var(--slate-200);
   border-radius: var(--radius-md);
   background: var(--white);
-  font-size: 10px;
-  font-weight: var(--weight-semibold);
+  font-size: 14px;
   color: var(--slate-400);
   cursor: pointer;
-  text-align: left;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   transition: background 0.1s, color 0.1s, border-color 0.1s;
-  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .pur-specs-btn:hover {
@@ -919,13 +926,33 @@
 
 .pur-specs-btn.active {
   border-color: var(--color-primary);
-  color: var(--slate-700);
+  color: var(--color-primary);
+  background: var(--green-50, #f0fdf4);
 }
 
 .pur-specs-btn.open {
-  background: var(--slate-50);
-  border-color: var(--slate-300);
-  color: var(--slate-700);
+  background: var(--color-primary);
+  color: var(--white);
+  border-color: var(--color-primary);
+}
+
+/* ── Compact number inputs (Qty / Buy / Sell / MRP) ────────── */
+.pur-compact-num {
+  width: 72px !important;
+  font-family: var(--font-mono);
+  text-align: right;
+  padding-right: var(--space-2) !important;
+  -moz-appearance: textfield;
+}
+
+.pur-compact-num::-webkit-outer-spin-button,
+.pur-compact-num::-webkit-inner-spin-button { -webkit-appearance: none; }
+
+/* ── Category search drop in table rows ─────────────────────── */
+.pur-cat-drop {
+  min-width: 200px;
+  left: 0;
+  right: auto;
 }
 
 /* ── Specs row & panel ─────────────────────────────────────── */

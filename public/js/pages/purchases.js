@@ -68,6 +68,33 @@ async function loadCategoryData(catId) {
   return null;
 }
 
+// ── Category search (per-row, client-side) ───────────────────
+function showCatDrop(rid, q) {
+  var drop = document.getElementById('cat-drop-' + rid);
+  if (!drop) return;
+  var ql = (q || '').toLowerCase().trim();
+  var filtered = ql
+    ? _categories.filter(function (c) { return c.name.toLowerCase().indexOf(ql) !== -1; })
+    : _categories;
+  if (!filtered.length) {
+    drop.innerHTML = '<div class="p-drop-empty">No categories found</div>';
+    drop.style.display = 'block';
+    return;
+  }
+  drop.innerHTML = filtered.slice(0, 10).map(function (c) {
+    return '<div class="p-drop-item pur-cat-drop-item"' +
+      ' data-cat-id="' + c.id + '" data-cat-name="' + escH(c.name) + '">' +
+      '<span>' + escH(c.name) + '</span>' +
+    '</div>';
+  }).join('');
+  drop.style.display = 'block';
+}
+
+function hideCatDrop(rid) {
+  var drop = document.getElementById('cat-drop-' + rid);
+  if (drop) drop.style.display = 'none';
+}
+
 // ── Tab switching ────────────────────────────────────────────
 function switchTab(tab) {
   document.getElementById('content-history').style.display = tab === 'history' ? '' : 'none';
@@ -189,7 +216,7 @@ function getRow(rid) {
 function renderSimpleTable() {
   var tbody = document.getElementById('simple-tbody');
   if (!_lineItems.length) {
-    tbody.innerHTML = '<tr class="pur-empty-row"><td colspan="12">Click <strong>+ Add Row</strong> or use <strong>Generate Rows</strong> in Bill Details to begin.</td></tr>';
+    tbody.innerHTML = '<tr class="pur-empty-row"><td colspan="11">Click <strong>+ Add Row</strong> or use <strong>Generate Rows</strong> in Bill Details to begin.</td></tr>';
     return;
   }
 
@@ -197,7 +224,6 @@ function renderSimpleTable() {
   _lineItems.forEach(function (li, idx) {
     html += buildDataRow(li, idx);
     html += buildSpecsRow(li);
-    html += buildBreakdownRow(li);
   });
   tbody.innerHTML = html;
 }
@@ -205,18 +231,17 @@ function renderSimpleTable() {
 function buildDataRow(li, idx) {
   var rid = li.row_id;
 
-  // Category dropdown — Task 1: use form-select, Task 3: add Item Specs button
-  var catOpts = '<option value="">— Category —</option>' +
-    _categories.map(function (c) {
-      return '<option value="' + c.id + '"' + (li.category_id == c.id ? ' selected' : '') + '>' + escH(c.name) + '</option>';
-    }).join('');
+  // Category — search-and-select input with dropdown
+  var catCell = '<td style="position:relative">' +
+    '<input class="form-input js-row-cat-search" type="text"' +
+      ' value="' + escH(li.category_name) + '"' +
+      ' placeholder="Search category…" autocomplete="off" />' +
+    '<div class="p-drop pur-cat-drop" id="cat-drop-' + rid + '" style="display:none"></div>' +
+  '</td>';
 
-  // Item Specs button state
-  var specsHasSettings = li.set_def || Object.keys(li.fixed_attrs || {}).length > 0;
-  var specsBtnCls  = 'pur-specs-btn js-row-specs' + (specsHasSettings ? ' active' : '') + (li.specs_open ? ' open' : '');
-  var specsBtnText = specsHasSettings
-    ? '⚙ Item Specs <span style="color:var(--green-600)">✓</span>'
-    : '⚙ Item Specs';
+  // Item Specs button
+  var specsHasSettings = !!(li.set_def || Object.keys(li.fixed_attrs || {}).length);
+  var specsCls = 'pur-specs-btn js-row-specs' + (specsHasSettings ? ' active' : '') + (li.specs_open ? ' open' : '');
 
   // GST %
   var gstPct = (li.gst_cgst || 0) + (li.gst_sgst || 0);
@@ -225,155 +250,43 @@ function buildDataRow(li, idx) {
   var amount = calcLineAmount(li);
   var total  = calcLineTotal(li);
 
-  // Margin labels — Task 1: same visual, just new classes
+  // Margin sub-labels
   var sellMargin = calcMarginPct(li.buy_price, li.sell_price);
   var mrpMargin  = calcMarginPct(li.buy_price, li.mrp);
   var lowWarn    = parseFloat(_settings.low_margin_warning || 0);
   var sellWarn   = sellMargin !== null && sellMargin < lowWarn;
   var mrpWarn    = mrpMargin  !== null && mrpMargin  < lowWarn;
 
-  // Expand button
-  var expandCls = li.expanded ? 'pur-expand-btn js-row-expand open' : 'pur-expand-btn js-row-expand';
-
-  // Task 1: use form-input / form-select (same as Bill Details)
-  // Task 2: removed Design Code, Packaging, Attr 1, Attr 2, Pcs/Sets toggle
-  // Task 3: Item Specs button lives inside the Category cell
   return '<tr class="pur-data-row" id="srow-' + rid + '" data-rid="' + rid + '">' +
-    '<td class="pur-row-num">' + (idx + 1) + '</td>' +
-    '<td>' +
-      '<select class="form-select js-row-cat">' + catOpts + '</select>' +
-      '<button class="' + specsBtnCls + '">' + specsBtnText + '</button>' +
-    '</td>' +
+    catCell +
     '<td><input class="form-input js-row-name" type="text" value="' + escH(li.item_name) + '" placeholder="Item name" /></td>' +
-    '<td><input class="form-input js-row-qty" type="number" min="0" value="' + (li.qty || '') + '" placeholder="0" style="font-family:var(--font-mono);text-align:right" /></td>' +
+    '<td class="pur-specs-col"><button class="' + specsCls + '" title="Item specs">⚙</button></td>' +
+    '<td><input class="form-input js-row-qty pur-compact-num" type="number" min="0" value="' + (li.qty || '') + '" placeholder="0" /></td>' +
     '<td class="pur-price-cell">' +
-      '<input class="form-input js-row-buy" type="number" min="0" value="' + (li.buy_price || '') + '" placeholder="0.00" style="font-family:var(--font-mono)" />' +
+      '<input class="form-input js-row-buy pur-compact-num" type="number" min="0" value="' + (li.buy_price || '') + '" placeholder="0" />' +
     '</td>' +
     '<td class="pur-price-cell">' +
-      '<input class="form-input js-row-sell" type="number" min="0" value="' + (li.sell_price || '') + '" placeholder="0.00" style="font-family:var(--font-mono)" />' +
-      (sellMargin !== null ? '<span class="pur-margin-sub' + (sellWarn ? ' warn' : '') + '">' + sellMargin + '% margin</span>' : '') +
+      '<input class="form-input js-row-sell pur-compact-num" type="number" min="0" value="' + (li.sell_price || '') + '" placeholder="0" />' +
+      (sellMargin !== null ? '<span class="pur-margin-sub' + (sellWarn ? ' warn' : '') + '">' + sellMargin + '%</span>' : '') +
     '</td>' +
     '<td class="pur-price-cell">' +
-      '<input class="form-input js-row-mrp" type="number" min="0" value="' + (li.mrp || '') + '" placeholder="0.00" style="font-family:var(--font-mono)" />' +
-      (mrpMargin !== null ? '<span class="pur-margin-sub' + (mrpWarn ? ' warn' : '') + '">' + mrpMargin + '% margin</span>' : '') +
+      '<input class="form-input js-row-mrp pur-compact-num" type="number" min="0" value="' + (li.mrp || '') + '" placeholder="0" />' +
+      (mrpMargin !== null ? '<span class="pur-margin-sub' + (mrpWarn ? ' warn' : '') + '">' + mrpMargin + '%</span>' : '') +
     '</td>' +
     '<td class="pur-gst-label">' + (gstPct ? gstPct + '%' : '—') + '</td>' +
     '<td class="pur-mono-val js-row-amount">' + (amount ? formatINR(amount) : '—') + '</td>' +
     '<td class="pur-total-val js-row-total">' + (total ? formatINR(total) : '—') + '</td>' +
-    '<td><button class="' + expandCls + '" title="Variant breakdown">▼</button></td>' +
     '<td><button class="pur-del-btn js-row-del" title="Delete row">×</button></td>' +
   '</tr>';
 }
 
-function buildAttrCell(li, attrSlot) {
-  if (!li.category) {
-    return '<td class="pur-attr-cell"></td>';
-  }
-
-  var attrs = li.category.attributes || [];
-
-  if (!li.set_def) {
-    // Loose mode — no fixed attr selection (handled in breakdown)
-    return '<td class="pur-attr-cell" style="text-align:center;color:var(--slate-300);font-size:var(--text-xs)">loose</td>';
-  }
-
-  // Set mode — show fixed attrs (all except varies_by)
-  var variesBy = detectVariesBy(li.set_def, li.category);
-  var fixedAttrs = attrs.filter(function (a) { return a.attribute_name !== variesBy; });
-
-  if (attrSlot >= fixedAttrs.length) {
-    return '<td class="pur-attr-cell"></td>';
-  }
-
-  var attr = fixedAttrs[attrSlot];
-  var currentVal = (li.fixed_attrs || {})[attr.attribute_name] || '';
-  var opts = '<option value="">—</option>' +
-    (attr.attribute_values || []).map(function (v) {
-      return '<option value="' + escH(v) + '"' + (currentVal === v ? ' selected' : '') + '>' + escH(v) + '</option>';
-    }).join('');
-
-  return '<td class="pur-attr-cell">' +
-    '<div class="pur-attr-name">' + escH(attr.attribute_name) + '</div>' +
-    '<select class="pur-attr-sel js-row-attr" data-attr-name="' + escH(attr.attribute_name) + '">' + opts + '</select>' +
-  '</td>';
-}
-
-// ── Breakdown row (hidden <tr> after each data row) ──────────
-function buildBreakdownRow(li) {
-  var rid = li.row_id;
-  var display = li.expanded ? '' : 'display:none';
-  return '<tr class="pur-breakdown-tr" id="bd-' + rid + '" style="' + display + '">' +
-    '<td colspan="12"><div class="pur-breakdown-panel" id="bd-panel-' + rid + '">' +
-      (li.expanded ? buildBreakdownContent(li) : '') +
-    '</div></td>' +
-  '</tr>';
-}
-
-function buildBreakdownContent(li) {
-  var variants = expandLineItem(li);
-  if (!variants.length) {
-    return '<p style="color:var(--slate-400);font-size:var(--text-sm)">Select a category and packaging to see variant breakdown.</p>';
-  }
-
-  var rid    = li.row_id;
-  var isLoose = !li.set_def;
-  var totalActual = variants.reduce(function (a, v) { return a + (v.actual_qty || 0); }, 0);
-  var modeInfo = isLoose
-    ? 'Loose — enter qty per combination'
-    : (li.qty_mode === 'sets'
-        ? (li.qty || 0) + ' sets × ' + escH(li.set_def.name) + ' = ' + totalActual + ' pcs'
-        : (li.qty || 0) + ' pcs total across ' + variants.length + ' variants');
-
-  var rows = variants.map(function (v) {
-    var attrsHtml = Object.entries(v.attributes).map(function (kv) {
-      return '<span class="pur-attr-tag"><strong>' + escH(kv[0]) + '</strong>: ' + escH(String(kv[1])) + '</span>';
-    }).join('');
-
-    var safeKey = escH(v._key);
-
-    // For loose mode: use js-bd-loose class; for set mode: use js-bd-actual
-    var qtyClass = isLoose ? 'pur-variant-qty-inp js-bd-loose' : 'pur-variant-qty-inp js-bd-actual';
-
-    // Variance badge (set mode only)
-    var varianceBadge = '';
-    if (v.expected_qty !== null) {
-      var diff = (v.actual_qty || 0) - v.expected_qty;
-      if (diff > 0) varianceBadge = '<span class="pur-var-excess">+' + diff + ' extra</span>';
-      else if (diff < 0) varianceBadge = '<span class="pur-var-short">' + diff + ' short</span>';
-    }
-
-    var lineAmt = formatINR((v.actual_qty || 0) * (li.buy_price || 0));
-    var actualVal = v.actual_qty != null ? v.actual_qty : 0;
-
-    return '<tr>' +
-      '<td class="pur-bd-attr">' + attrsHtml + '</td>' +
-      '<td class="pur-bd-exp">' + (v.expected_qty !== null ? v.expected_qty : '—') + '</td>' +
-      '<td><input class="' + qtyClass + '" type="number" min="0" value="' + actualVal + '"' +
-        ' data-rid="' + rid + '" data-key="' + safeKey + '" style="width:72px"></td>' +
-      '<td>' + varianceBadge + '</td>' +
-      '<td class="pur-mono-val">' + lineAmt + '</td>' +
-      '<td><input class="pur-cell-inp js-bd-ean" type="text" value="' + escH(v.ean || '') + '"' +
-        ' placeholder="EAN/UPC (optional)" data-rid="' + rid + '" data-key="' + safeKey + '"' +
-        ' style="min-width:120px"></td>' +
-    '</tr>';
-  }).join('');
-
-  return '<div style="font-size:var(--text-xs);color:var(--slate-500);margin-bottom:var(--space-2)">' + modeInfo + '</div>' +
-    '<table class="pur-breakdown-tbl">' +
-      '<thead><tr>' +
-        '<th>Variant</th><th style="text-align:right">Expected</th>' +
-        '<th>Actual Qty</th><th>Variance</th><th style="text-align:right">Amount</th><th>EAN / UPC</th>' +
-      '</tr></thead>' +
-      '<tbody>' + rows + '</tbody>' +
-    '</table>';
-}
 
 // ── Specs row (hidden <tr> after each data row) ───────────────
 function buildSpecsRow(li) {
   var rid     = li.row_id;
   var display = li.specs_open ? '' : 'display:none';
   return '<tr class="pur-specs-tr" id="specs-' + rid + '" data-rid="' + rid + '" style="' + display + '">' +
-    '<td colspan="12"><div class="pur-specs-panel" id="specs-panel-' + rid + '">' +
+    '<td colspan="11"><div class="pur-specs-panel" id="specs-panel-' + rid + '">' +
       (li.specs_open ? buildSpecsContent(li) : '') +
     '</div></td>' +
   '</tr>';
@@ -443,32 +356,6 @@ function toggleSpecs(rid) {
   }
 }
 
-// ── Toggle breakdown ─────────────────────────────────────────
-function toggleBreakdown(rid) {
-  var li = getRow(rid);
-  if (!li) return;
-  li.expanded = !li.expanded;
-
-  var bdRow      = document.getElementById('bd-' + rid);
-  var expandBtn  = document.querySelector('#srow-' + rid + ' .js-row-expand');
-  var panel      = document.getElementById('bd-panel-' + rid);
-
-  if (li.expanded) {
-    if (panel) panel.innerHTML = buildBreakdownContent(li);
-    if (bdRow) bdRow.style.display = '';
-    if (expandBtn) expandBtn.classList.add('open');
-  } else {
-    if (bdRow) bdRow.style.display = 'none';
-    if (expandBtn) expandBtn.classList.remove('open');
-  }
-}
-
-function refreshBreakdown(rid) {
-  var li = getRow(rid);
-  if (!li || !li.expanded) return;
-  var panel = document.getElementById('bd-panel-' + rid);
-  if (panel) panel.innerHTML = buildBreakdownContent(li);
-}
 
 // ── Event delegation: Simple tbody ───────────────────────────
 function bindGlobalEvents() {
@@ -483,16 +370,33 @@ function bindGlobalEvents() {
   var dtbody = document.getElementById('detail-tbody');
   dtbody.addEventListener('change', onDetailTbodyChange);
 
-  // Supplier dropdown — delegated click on document
+  // Supplier + Category dropdowns — delegated click on document
   document.addEventListener('click', function (e) {
-    var item = e.target.closest('.p-drop-item');
-    if (item && item.dataset.sup) {
-      try { selectSupplier(JSON.parse(item.dataset.sup)); } catch (ex) {}
+    // Supplier dropdown
+    var supItem = e.target.closest('.p-drop-item[data-sup]');
+    if (supItem) {
+      try { selectSupplier(JSON.parse(supItem.dataset.sup)); } catch (ex) {}
       return;
     }
     if (!e.target.closest('#sup-search-input') && !e.target.closest('#sup-drop')) {
       var drop = document.getElementById('sup-drop');
       if (drop) drop.style.display = 'none';
+    }
+
+    // Category dropdown
+    var catItem = e.target.closest('.pur-cat-drop-item');
+    if (catItem) {
+      var rid = getRowId(catItem);
+      if (rid) {
+        var input = document.querySelector('#srow-' + rid + ' .js-row-cat-search');
+        if (input) input.value = catItem.dataset.catName || '';
+        hideCatDrop(rid);
+        onCatChange(rid, catItem.dataset.catId);
+      }
+      return;
+    }
+    if (!e.target.closest('.js-row-cat-search') && !e.target.closest('.pur-cat-drop')) {
+      document.querySelectorAll('.pur-cat-drop').forEach(function (d) { d.style.display = 'none'; });
     }
   });
 }
@@ -507,12 +411,8 @@ function onSimpleTbodyChange(e) {
   var rid = getRowId(t);
   if (!rid) return;
 
-  if (t.matches('.js-row-cat'))   { onCatChange(rid, t.value);   return; }
-  if (t.matches('.js-row-pkg'))   { onSetDefChange(rid, t.value); return; }
-  if (t.matches('.js-row-attr'))  { onFixedAttrChange(rid, t.dataset.attrName, t.value); return; }
-  if (t.matches('.js-bd-actual')) { onBreakdownActualChange(rid, t.dataset.key, t.value); return; }
-  if (t.matches('.js-bd-loose'))  { onLooseQtyChange(rid, t.dataset.key, t.value); return; }
-  if (t.matches('.js-bd-ean'))    { onEanChange(rid, t.dataset.key, t.value); return; }
+  if (t.matches('.js-row-pkg'))  { onSetDefChange(rid, t.value); return; }
+  if (t.matches('.js-row-attr')) { onFixedAttrChange(rid, t.dataset.attrName, t.value); return; }
 }
 
 function onSimpleTbodyInput(e) {
@@ -523,11 +423,12 @@ function onSimpleTbodyInput(e) {
   var li = getRow(rid);
   if (!li) return;
 
-  if (t.matches('.js-row-name'))  { li.item_name  = t.value; updateFooter(); return; }
-  if (t.matches('.js-row-qty'))   { li.qty = parseFloat(t.value) || 0; li.overrides = {}; updateRowAmounts(rid); return; }
-  if (t.matches('.js-row-buy'))   { li.buy_price  = parseFloat(t.value) || 0; updateRowAmounts(rid); return; }
-  if (t.matches('.js-row-sell'))  { li.sell_price = parseFloat(t.value) || 0; updateRowAmounts(rid); return; }
-  if (t.matches('.js-row-mrp'))   { li.mrp        = parseFloat(t.value) || 0; updateRowAmounts(rid); return; }
+  if (t.matches('.js-row-cat-search')) { showCatDrop(rid, t.value); return; }
+  if (t.matches('.js-row-name'))       { li.item_name  = t.value; updateFooter(); return; }
+  if (t.matches('.js-row-qty'))        { li.qty = parseFloat(t.value) || 0; li.overrides = {}; updateRowAmounts(rid); return; }
+  if (t.matches('.js-row-buy'))        { li.buy_price  = parseFloat(t.value) || 0; updateRowAmounts(rid); return; }
+  if (t.matches('.js-row-sell'))       { li.sell_price = parseFloat(t.value) || 0; updateRowAmounts(rid); return; }
+  if (t.matches('.js-row-mrp'))        { li.mrp        = parseFloat(t.value) || 0; updateRowAmounts(rid); return; }
 }
 
 function onSimpleTbodyClick(e) {
@@ -537,14 +438,6 @@ function onSimpleTbodyClick(e) {
   if (t.matches('.js-row-del') || t.closest('.js-row-del')) {
     var rid = getRowId(t.closest('.js-row-del') || t);
     if (rid) deleteRow(rid);
-    return;
-  }
-
-  // Expand breakdown
-  if (t.matches('.js-row-expand') || t.closest('.js-row-expand')) {
-    var btn = t.matches('.js-row-expand') ? t : t.closest('.js-row-expand');
-    var rid = getRowId(btn);
-    if (rid) toggleBreakdown(rid);
     return;
   }
 
@@ -651,8 +544,6 @@ function onFixedAttrChange(rid, attrName, value) {
   li.fixed_attrs[attrName] = value;
   li.overrides = {};
 
-  // Refresh breakdown if open
-  refreshBreakdown(rid);
   updateFooter();
   if (_currentSubTab === 'detail') renderDetailView();
 }
@@ -674,33 +565,6 @@ function onQtyModeChange(rid, mode) {
   }
 
   updateRowAmounts(rid);
-  refreshBreakdown(rid);
-  if (_currentSubTab === 'detail') renderDetailView();
-}
-
-// ── Breakdown actual qty change ──────────────────────────────
-function onBreakdownActualChange(rid, key, value) {
-  var li = getRow(rid);
-  if (!li) return;
-  li.overrides[key] = parseInt(value) || 0;
-
-  // Update variance badge in breakdown panel
-  var panel = document.getElementById('bd-panel-' + rid);
-  if (panel) panel.innerHTML = buildBreakdownContent(li);
-
-  updateRowAmounts(rid);
-  if (_currentSubTab === 'detail') renderDetailView();
-}
-
-// ── Loose qty change ─────────────────────────────────────────
-function onLooseQtyChange(rid, key, value) {
-  var li = getRow(rid);
-  if (!li) return;
-  var qty = parseInt(value) || 0;
-  if (qty > 0) li.loose_qtys[key] = qty;
-  else delete li.loose_qtys[key];
-
-  updateRowAmounts(rid);
   if (_currentSubTab === 'detail') renderDetailView();
 }
 
@@ -717,7 +581,6 @@ function onDetailActualQtyChange(rid, key, value) {
   var li = getRow(rid);
   if (!li) return;
   li.overrides[key] = parseInt(value) || 0;
-  refreshBreakdown(rid);
   updateRowAmounts(rid);
   // Refresh the single row in detail view (just the variance cell)
   renderDetailView();

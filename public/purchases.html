@@ -156,29 +156,28 @@
               <div id="simple-entry-wrap" style="overflow-x:auto">
                 <table class="pur-entry-tbl" id="simple-tbl">
                   <thead>
-                    <!-- Row 1: Column labels (12 cols) -->
+                    <!-- Row 1: Column labels (11 cols) -->
                     <tr class="pur-th-labels">
-                      <th style="width:36px">#</th>
-                      <th style="min-width:210px">Category</th>
-                      <th style="min-width:160px">Item Name</th>
-                      <th style="width:80px">Qty</th>
-                      <th style="min-width:90px">Buy ₹</th>
-                      <th style="min-width:100px">Sell ₹</th>
-                      <th style="min-width:100px">MRP ₹</th>
-                      <th style="width:58px">GST%</th>
-                      <th style="min-width:90px">Amount</th>
-                      <th style="min-width:90px">Total</th>
-                      <th style="width:36px"></th>
+                      <th style="min-width:180px">Category</th>
+                      <th style="min-width:150px">Item Name</th>
+                      <th style="width:48px">Specs</th>
+                      <th style="width:72px">Qty</th>
+                      <th style="min-width:82px">Buy ₹</th>
+                      <th style="min-width:82px">Sell ₹</th>
+                      <th style="min-width:82px">MRP ₹</th>
+                      <th style="width:52px">GST%</th>
+                      <th style="min-width:88px">Amount</th>
+                      <th style="min-width:88px">Total</th>
                       <th style="width:32px"></th>
                     </tr>
                     <!-- Row 2: Apply-to-all controls -->
                     <tr class="pur-th-apply">
-                      <td></td>
                       <td>
                         <select class="pur-apply-sel" id="apply-cat" onchange="onApplyAllCatChange(this.value)">
                           <option value="">Apply category to all…</option>
                         </select>
                       </td>
+                      <td></td>
                       <td></td>
                       <td>
                         <input class="pur-apply-inp" type="number" id="apply-qty" min="0"
@@ -196,12 +195,12 @@
                         <input class="pur-apply-inp" type="number" id="apply-mrp" min="0"
                           placeholder="MRP ₹" onchange="applyToAllField('mrp', this.value)" />
                       </td>
-                      <td colspan="5"></td>
+                      <td colspan="4"></td>
                     </tr>
                   </thead>
                   <tbody id="simple-tbody">
                     <tr class="pur-empty-row">
-                      <td colspan="12">Click <strong>+ Add Row</strong> or use <strong>Generate Rows</strong> in Bill Details to begin.</td>
+                      <td colspan="11">Click <strong>+ Add Row</strong> or use <strong>Generate Rows</strong> in Bill Details to begin.</td>
                     </tr>
                   </tbody>
                 </table>
