@@ -27,9 +27,19 @@ function bindEvents() {
     }
   });
 
-  // Keyboard: escape closes search
   document.getElementById('item-search').addEventListener('keydown', function(e) {
-    if (e.key === 'Escape') document.getElementById('search-results').style.display = 'none';
+    if (e.key === 'Escape') {
+      document.getElementById('search-results').style.display = 'none';
+      return;
+    }
+    // Enter: skip debounce and search immediately (handles barcode scanner)
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      var q = this.value.trim();
+      if (!q) return;
+      clearTimeout(_searchTimer);
+      doSearch(q, true);  // true = enterPressed → auto-add on exact match
+    }
   });
 }
 
@@ -41,14 +51,42 @@ function onSearchInput(q) {
   _searchTimer = setTimeout(function() { doSearch(q.trim()); }, 280);
 }
 
-async function doSearch(q) {
+async function doSearch(q, enterPressed) {
   var resultsEl = document.getElementById('search-results');
   resultsEl.style.display = 'block';
   resultsEl.innerHTML = '<div class="pos-search-loading">Searching...</div>';
 
   try {
     var result = await apiFetch('/items/search/query?q=' + encodeURIComponent(q));
-    if (!result.ok || !result.data.length) {
+    if (!result.ok) {
+      resultsEl.innerHTML = '<div class="pos-search-loading">Search failed</div>';
+      return;
+    }
+
+    // ── Exact barcode / SKU match → auto-add to cart ──────────
+    if (result.data.exact) {
+      var v = result.data.variant;
+      resultsEl.style.display = 'none';
+      document.getElementById('item-search').value = '';
+      if (v.stock <= 0) {
+        showToast('Out of stock: ' + v.sku, 'amber');
+        return;
+      }
+      addToCart({
+        variant_id: v.variant_id,
+        item_id:    v.item_id,
+        item_name:  v.item_name,
+        sku:        v.sku,
+        attributes: v.attributes || {},
+        unit_price: parseFloat(v.sell_price || 0),
+        cgst_rate:  parseFloat(v.cgst_rate  || 0),
+        sgst_rate:  parseFloat(v.sgst_rate  || 0),
+        max_stock:  parseFloat(v.stock      || 0)
+      });
+      return;
+    }
+
+    if (!result.data.length) {
       resultsEl.innerHTML = '<div class="pos-search-loading">No items found</div>';
       return;
     }

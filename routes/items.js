@@ -417,30 +417,51 @@ router.get("/search/query", async (req, res) => {
     const { q } = req.query;
     if (!q) return res.status(400).json({ error: "Search query required" });
 
+    // ── 1. Exact barcode / SKU match (highest priority) ────────
+    // Returns a single variant directly — POS can auto-add to cart
+    const [exactRows] = await db.execute(
+      `SELECT
+         iv.id          AS variant_id,
+         iv.sku,
+         iv.barcode,
+         iv.attributes,
+         iv.sell_price,
+         iv.stock,
+         i.id           AS item_id,
+         i.name         AS item_name,
+         i.cgst_rate,
+         i.sgst_rate,
+         c.name         AS category_name
+       FROM item_variants iv
+       JOIN items      i ON iv.item_id    = i.id
+       JOIN categories c ON i.category_id = c.id
+       WHERE iv.status = 'active'
+         AND i.status  = 'active'
+         AND (iv.barcode = ? OR iv.sku = ? OR i.internal_barcode = ? OR i.ean_upc = ?)
+       LIMIT 1`,
+      [q, q, q, q]
+    );
+
+    if (exactRows.length) {
+      const v = exactRows[0];
+      try { v.attributes = JSON.parse(v.attributes || '{}'); } catch(e) { v.attributes = {}; }
+      return res.json({ exact: true, variant: v });
+    }
+
+    // ── 2. Fuzzy name search (item name only — no SKU/barcode LIKE) ─
     const like = `%${q}%`;
     const [results] = await db.execute(
-      `
-      SELECT i.id, i.name, i.internal_barcode, c.name AS category_name,
-             COUNT(iv.id) AS variant_count
-      FROM items i
-      LEFT JOIN categories   c  ON i.category_id  = c.id
-      LEFT JOIN item_variants iv ON iv.item_id     = i.id AND iv.status = 'active'
-      WHERE i.status = 'active'
-        AND (
-          i.name             LIKE ? OR
-          i.internal_barcode LIKE ? OR
-          i.ean_upc          LIKE ? OR
-          EXISTS (
-            SELECT 1 FROM item_variants iv2
-            WHERE iv2.item_id = i.id
-              AND iv2.status  = 'active'
-              AND (iv2.sku LIKE ? OR iv2.barcode LIKE ?)
-          )
-        )
-      GROUP BY i.id
-      ORDER BY i.name ASC
-      LIMIT 20`,
-      [like, like, like, like, like],
+      `SELECT i.id, i.name, i.internal_barcode, c.name AS category_name,
+              COUNT(iv.id) AS variant_count
+       FROM items i
+       LEFT JOIN categories   c  ON i.category_id = c.id
+       LEFT JOIN item_variants iv ON iv.item_id    = i.id AND iv.status = 'active'
+       WHERE i.status = 'active'
+         AND (i.name LIKE ? OR i.internal_barcode LIKE ? OR i.ean_upc LIKE ?)
+       GROUP BY i.id
+       ORDER BY i.name ASC
+       LIMIT 20`,
+      [like, like, like]
     );
     res.json(results);
   } catch (error) {
