@@ -285,8 +285,10 @@ async function onCategoryFilterChange(id, keepAttrs) {
   var html = '<div class="sf-row sf-attr-section">';
   attributes.forEach(function(attr) {
     var attrName = attr.attribute_name;
-    var values = [];
-    try { values = JSON.parse(attr.attribute_values || '[]'); } catch(e) {}
+    // Route already parses attribute_values into an array — use directly
+    var values = Array.isArray(attr.attribute_values)
+      ? attr.attribute_values
+      : (function() { try { return JSON.parse(attr.attribute_values || '[]'); } catch(e) { return []; } }());
     if (!values.length) return;
     html += _renderAttrMs(attrName, values);
   });
